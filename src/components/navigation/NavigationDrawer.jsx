@@ -13,7 +13,7 @@ export const NavigationDrawer = () => {
   const { isAuthenticated } = useAuth();
 
   const screens = [
-    { name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' },
+    ...(!isAuthenticated ? [{ name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' }] : []),
     ...(!isAuthenticated ? [{ name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' }] : []),
     { name: 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
     { name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
