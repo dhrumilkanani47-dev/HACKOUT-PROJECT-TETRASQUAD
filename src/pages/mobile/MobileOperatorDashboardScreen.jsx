@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
+import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
 import { Sliders, Zap, TrendingUp, Radio, Leaf, Activity, Clock3 } from 'lucide-react';
 
 export const MobileOperatorDashboardScreen = () => {
@@ -152,6 +153,7 @@ export const MobileOperatorDashboardScreen = () => {
           </div>
         </div>
       </div>
+      <MobileBottomBar />
     </div>
   );
 };
