@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useVehicles } from '../../context/VehicleContext';
+import { useStations } from '../../context/StationContext';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
 import { HamburgerButton } from '../../components/navigation/HamburgerButton';
@@ -23,6 +24,19 @@ export const MobileHomeScreen = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { vehicles } = useVehicles();
+  const { stations } = useStations();
+  const [notificationToast, setNotificationToast] = useState('');
+
+  const nearbyStations = useMemo(() => stations.filter((station) => (station.distanceKm || 99) <= 5), [stations]);
+  const cheapestStation = [...nearbyStations].sort((a, b) => a.pricePerKwh - b.pricePerKwh)[0];
+  const expensiveStation = [...nearbyStations].sort((a, b) => b.pricePerKwh - a.pricePerKwh)[0];
+
+  useEffect(() => {
+    if (!cheapestStation || !expensiveStation) return undefined;
+    setNotificationToast(`${cheapestStation.name} is ₹${cheapestStation.pricePerKwh.toFixed(2)}/kWh nearby. ${expensiveStation.name} is currently the highest at ₹${expensiveStation.pricePerKwh.toFixed(2)}/kWh.`);
+    const timer = setTimeout(() => setNotificationToast(''), 6000);
+    return () => clearTimeout(timer);
+  }, [cheapestStation?.id, expensiveStation?.id]);
 
   // Fallback vehicle list if none loaded
   const carList = vehicles && vehicles.length > 0 ? vehicles : [
@@ -63,6 +77,17 @@ export const MobileHomeScreen = () => {
 
   return (
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
+      {notificationToast && (
+        <button
+          type="button"
+          onClick={() => navigate('/notifications')}
+          className="fixed top-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-[360px] rounded-2xl bg-slate-900 text-white text-left px-3 py-2.5 shadow-xl animate-slide-up"
+          aria-label="View charging notifications"
+        >
+          <span className="flex items-center gap-1.5 text-[10px] text-emerald-300 font-bold"><Bell className="w-3 h-3" /> Charging update</span>
+          <span className="block text-[10px] leading-snug mt-1">{notificationToast}</span>
+        </button>
+      )}
       {/* Top Section */}
       <div className="flex-1 flex flex-col overflow-y-auto">
         <MobileStatusBar />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
@@ -12,7 +12,7 @@ export const MobileStationDetailsScreen = () => {
   const { stations } = useStations();
   const [showWhyPrice, setShowWhyPrice] = useState(false);
   const [selectedTime, setSelectedTime] = useState('11:00 AM');
-  const [reservedTime, setReservedTime] = useState(null);
+  const [reservedTime, setReservedTime] = useState(() => localStorage.getItem(`egc_booking_${id}`));
   const station = stations.find((item) => item.id === id) || stations[0];
   const price = station?.pricePerKwh || 8.4;
   const availableChargers = station?.availableChargers ?? 4;
@@ -20,6 +20,20 @@ export const MobileStationDetailsScreen = () => {
   const connectors = station?.connectors?.length ? station.connectors : ['CCS2', 'Type 2'];
   const isFull = availableChargers <= 0 || station?.isAvailable === false;
   const timeSlots = ['10:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'];
+
+  useEffect(() => {
+    setReservedTime(localStorage.getItem(`egc_booking_${id}`));
+  }, [id]);
+
+  const handleCancelBooking = () => {
+    localStorage.removeItem(`egc_booking_${id}`);
+    setReservedTime(null);
+  };
+
+  const handleBookSlot = () => {
+    localStorage.setItem(`egc_booking_${id}`, selectedTime);
+    setReservedTime(selectedTime);
+  };
 
   return (
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
@@ -128,7 +142,7 @@ export const MobileStationDetailsScreen = () => {
               </span>
               <button
                 type="button"
-                onClick={() => setReservedTime(null)}
+                onClick={handleCancelBooking}
                 className="p-1.5 rounded-lg text-red-600 hover:bg-red-100"
                 aria-label="Delete reserved time slot"
                 title="Delete time slot"
@@ -165,7 +179,7 @@ export const MobileStationDetailsScreen = () => {
               ))}
             </div>
             <button
-              onClick={() => setReservedTime(selectedTime)}
+              onClick={handleBookSlot}
               className="app-btn w-full text-sm font-bold shadow-md"
             >
               Book {selectedTime}
