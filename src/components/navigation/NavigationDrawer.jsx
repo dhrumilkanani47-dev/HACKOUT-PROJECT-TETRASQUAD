@@ -11,18 +11,18 @@ export const NavigationDrawer = () => {
   const navigate = useNavigate();
 
   const screens = [
-    { num: '01', name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' },
-    { num: '02', name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' },
-    { num: '03', name: 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
-    { num: '04', name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
-    { num: '05', name: 'Station Details', path: '/station/st_01', match: (p) => p.startsWith('/station') },
-    { num: '07', name: 'Smart Charging AI', path: '/smart-charge', match: (p) => p.startsWith('/smart-charge') },
-    { num: '08', name: 'Live Charging Session', path: '/charging', match: (p) => p.startsWith('/charging') },
-    { num: '09', name: 'Price & Green Score', path: '/price-score', match: (p) => p.startsWith('/price-score') },
-    { num: '10', name: 'Charging History', path: '/history', match: (p) => p.startsWith('/history') || p.startsWith('/activity') },
-    { num: '11', name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') },
-    { num: '12', name: 'Operator Dashboard', path: '/operator', match: (p) => p.startsWith('/operator') },
-    { num: '13', name: 'Profile & Settings', path: '/profile', match: (p) => p.startsWith('/profile') || p.startsWith('/settings') },
+    { name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' },
+    { name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' },
+    { name: 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
+    { name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
+    { name: 'Station Details', path: '/station/st_01', match: (p) => p.startsWith('/station') },
+    { name: 'Smart Charging AI', path: '/smart-charge', match: (p) => p.startsWith('/smart-charge') },
+    { name: 'Live Charging Session', path: '/charging', match: (p) => p.startsWith('/charging') },
+    { name: 'Price & Green Score', path: '/price-score', match: (p) => p.startsWith('/price-score') },
+    { name: 'Charging History', path: '/history', match: (p) => p.startsWith('/history') || p.startsWith('/activity') },
+    { name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') },
+    { name: 'Operator Dashboard', path: '/operator', match: (p) => p.startsWith('/operator') },
+    { name: 'Profile & Settings', path: '/profile', match: (p) => p.startsWith('/profile') || p.startsWith('/settings') },
   ];
 
   const handleItemClick = (path) => {
@@ -62,8 +62,7 @@ export const NavigationDrawer = () => {
             const isActive = screen.match(location.pathname);
             return (
               <SidebarMenuItem
-                key={screen.num}
-                num={screen.num}
+                key={screen.path}
                 name={screen.name}
                 isActive={isActive}
                 onClick={() => handleItemClick(screen.path)}

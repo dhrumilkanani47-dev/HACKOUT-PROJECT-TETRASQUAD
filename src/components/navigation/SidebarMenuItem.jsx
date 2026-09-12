@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
 
-export const SidebarMenuItem = ({ num, name, isActive, onClick }) => {
+export const SidebarMenuItem = ({ name, isActive, onClick }) => {
   return (
     <button
       onClick={onClick}
@@ -12,15 +12,6 @@ export const SidebarMenuItem = ({ num, name, isActive, onClick }) => {
       }`}
     >
       <div className="flex items-center gap-3 truncate">
-        <span
-          className={`text-[11px] font-mono px-2 py-0.5 rounded-md font-semibold ${
-            isActive
-              ? 'bg-emerald-600/30 text-slate-950 font-bold'
-              : 'bg-slate-800/90 text-slate-400'
-          }`}
-        >
-          {num}
-        </span>
         <span className="text-[13px] truncate">{name}</span>
       </div>
       <ChevronRight
