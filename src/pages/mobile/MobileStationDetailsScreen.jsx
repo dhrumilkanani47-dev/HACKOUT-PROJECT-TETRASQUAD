@@ -4,11 +4,18 @@ import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { WhyThisPriceModal } from '../../components/mobile/WhyThisPriceModal';
 import { Zap, MapPin, ShieldCheck, Clock, HelpCircle } from 'lucide-react';
+import { useStations } from '../../context/StationContext';
 
 export const MobileStationDetailsScreen = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { stations } = useStations();
   const [showWhyPrice, setShowWhyPrice] = useState(false);
+  const station = stations.find((item) => item.id === id) || stations[0];
+  const price = station?.pricePerKwh || 8.4;
+  const availableChargers = station?.availableChargers ?? 4;
+  const totalChargers = station?.totalChargers ?? 6;
+  const connectors = station?.connectors?.length ? station.connectors : ['CCS2', 'Type 2'];
 
   return (
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
@@ -41,17 +48,17 @@ export const MobileStationDetailsScreen = () => {
           {/* Station Title & Location matching attachment */}
           <div>
             <h2 className="font-heading font-extrabold text-[18px] text-slate-900">
-              GreenHub Station
+              {station?.name || 'GreenHub Station'}
             </h2>
             <div className="text-[11px] text-slate-500 -mt-0.5">
-              Ahmedabad, Gujarat · 1.8 km
+              {station?.city || 'Ahmedabad'}, {station?.state || 'Gujarat'} · {station?.distanceKm || '1.8'} km
             </div>
           </div>
 
           {/* Renewable Pill matching attachment */}
           <div>
             <span className="pill-tag green">
-              ☀ 90% renewable now
+              ☀ {station?.renewablePct || 90}% renewable now
             </span>
           </div>
 
@@ -59,17 +66,17 @@ export const MobileStationDetailsScreen = () => {
           <div className="grid grid-cols-3 gap-2">
             <div className="app-card text-center py-2 px-1">
               <div className="text-[9px] text-slate-500 font-medium">Speed</div>
-              <b className="font-heading text-[12px] text-slate-900">Fast DC</b>
+              <b className="font-heading text-[12px] text-slate-900">{station?.speedLabel || 'Fast DC'}</b>
             </div>
 
             <div className="app-card text-center py-2 px-1">
               <div className="text-[9px] text-slate-500 font-medium">Available</div>
-              <b className="font-heading text-[12px] text-slate-900">4 / 6</b>
+              <b className="font-heading text-[12px] text-slate-900">{availableChargers} / {totalChargers}</b>
             </div>
 
             <div className="app-card text-center py-2 px-1">
               <div className="text-[9px] text-slate-500 font-medium">Price</div>
-              <b className="font-heading text-[12px] text-emerald-700 font-bold">₹8.40</b>
+              <b className="font-heading text-[12px] text-emerald-700 font-bold">₹{price.toFixed(2)}</b>
             </div>
           </div>
 
@@ -80,7 +87,7 @@ export const MobileStationDetailsScreen = () => {
           >
             <span className="flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
-              Why is charging ₹8.40/kWh?
+              Why is charging ₹{price.toFixed(2)}/kWh?
             </span>
             <span className="text-[11px] text-slate-500 font-normal">View breakdown ›</span>
           </button>
@@ -92,13 +99,15 @@ export const MobileStationDetailsScreen = () => {
             </div>
             <div className="flex flex-wrap gap-1.5 pt-1">
               <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[10px] font-mono border border-slate-200">
-                CCS2 (60 kW)
+                {connectors[0]} ({station?.powerKw || 60} kW)
               </span>
+              {connectors.slice(1).map((connector) => (
+                <span key={connector} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[10px] font-mono border border-slate-200">
+                  {connector}
+                </span>
+              ))}
               <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[10px] font-mono border border-slate-200">
-                Type 2 (22 kW)
-              </span>
-              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[10px] font-mono border border-slate-200">
-                AC Lounge & WiFi
+                {station?.amenities?.[0] || 'AC Lounge & WiFi'}
               </span>
             </div>
           </div>
@@ -119,7 +128,7 @@ export const MobileStationDetailsScreen = () => {
       <WhyThisPriceModal
         isOpen={showWhyPrice}
         onClose={() => setShowWhyPrice(false)}
-        price={8.40}
+        price={price}
       />
     </div>
   );
