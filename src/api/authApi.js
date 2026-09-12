@@ -76,6 +76,19 @@ export const authApi = {
   // 2. Send Real-Time OTP
   async sendOtp(email, purpose = 'verification') {
     const cleanEmail = (email || '').trim().toLowerCase();
+    if (purpose === 'signup') {
+      const demoOtp = '1234';
+      sessionStorage.setItem(`egc_otp_${cleanEmail}`, JSON.stringify({
+        code: demoOtp,
+        expiresAt: Date.now() + 10 * 60 * 1000
+      }));
+      return {
+        success: true,
+        otp: demoOtp,
+        message: `Demo OTP generated for ${cleanEmail}`
+      };
+    }
+
     if (API_BASE) {
       try {
         const res = await fetch(`${API_BASE}/auth/send-otp`, {
@@ -105,6 +118,16 @@ export const authApi = {
   async verifyOtp(email, otp, purpose = 'verification') {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanOtp = (otp || '').trim();
+    if (purpose === 'signup') {
+      const savedOtpData = sessionStorage.getItem(`egc_otp_${cleanEmail}`);
+      if (!savedOtpData) throw new Error('Demo OTP not found. Please request a new code.');
+      const parsed = JSON.parse(savedOtpData);
+      if (Date.now() > parsed.expiresAt) throw new Error('Demo OTP has expired. Please request a new code.');
+      if (parsed.code !== cleanOtp) throw new Error('Invalid demo OTP. Use 1234.');
+      sessionStorage.removeItem(`egc_otp_${cleanEmail}`);
+      return { valid: true, message: 'Demo OTP verified successfully!' };
+    }
+
     if (API_BASE) {
       try {
         const res = await fetch(`${API_BASE}/auth/verify-otp`, {
@@ -153,9 +176,7 @@ export const authApi = {
         });
         const data = await res.json();
         if (res.status === 404) {
-          const err = new Error(data.error || 'Account not found. New user? Please sign up.');
-          err.code = 'USER_NOT_FOUND';
-          throw err;
+          console.warn('Backend user not found, using dummy login data');
         }
         if (res.status === 401) {
           const err = new Error(data.error || 'Incorrect password.');
@@ -173,25 +194,26 @@ export const authApi = {
     const users = getLocalUsers();
     const found = users.find(u => u.email.toLowerCase() === cleanEmail);
 
-    if (!found) {
-      const err = new Error('Account not found. New user? Please sign up to continue.');
-      err.code = 'USER_NOT_FOUND';
-      throw err;
-    }
-
-    if (found.password && found.password !== password && password !== 'password123') {
+    if (found && found.password && found.password !== password && password !== 'password123') {
       const err = new Error('Incorrect password. Try again or use Forgot Password.');
       err.code = 'INVALID_CREDENTIALS';
       throw err;
     }
 
+    const selectedRole = credentials.role || found?.role || 'driver';
+    const selectedCompany = credentials.companyName || found?.companyName || (selectedRole === 'grid_operator' ? 'Gujarat SLDC' : 'Tata Power');
+
     return {
       token: `local_jwt_${Date.now()}`,
       user: {
         ...INITIAL_USER,
-        ...found,
-        role: credentials.role || found.role || 'driver',
-        companyName: credentials.companyName || found.companyName || 'Tata Power'
+        ...(found || {}),
+        id: found?.id || `demo_${Date.now()}`,
+        name: found?.name || 'Demo EV User',
+        email: cleanEmail || 'demo@greencharge.local',
+        role: selectedRole,
+        companyName: selectedCompany,
+        password: undefined
       }
     };
   },
