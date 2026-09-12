@@ -17,7 +17,6 @@ import { MobilePriceGreenScoreScreen } from './pages/mobile/MobilePriceGreenScor
 import { MobileHistoryScreen } from './pages/mobile/MobileHistoryScreen';
 import { MobileNotificationsScreen } from './pages/mobile/MobileNotificationsScreen';
 import { MobileOperatorDashboardScreen } from './pages/mobile/MobileOperatorDashboardScreen';
-import { MobileGridOperatorDashboardScreen } from './pages/mobile/MobileGridOperatorDashboardScreen';
 import { MobileProfileScreen } from './pages/mobile/MobileProfileScreen';
 
 export const App = () => {
@@ -63,7 +62,6 @@ export const App = () => {
 
               {/* Screen 12: Operator Dashboard */}
               <Route path="/operator" element={<MobileOperatorDashboardScreen />} />
-              <Route path="/grid-operator" element={<MobileGridOperatorDashboardScreen />} />
 
               {/* Screen 13: Profile & Settings */}
               <Route path="/profile" element={<MobileProfileScreen />} />
