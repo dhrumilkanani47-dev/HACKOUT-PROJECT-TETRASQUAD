@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
-import { Zap, Activity } from 'lucide-react';
+import { Zap, Activity, Sun, Wind, Leaf, Clock3 } from 'lucide-react';
 
 export const MobileChargingSessionScreen = () => {
   const navigate = useNavigate();
@@ -76,9 +76,52 @@ export const MobileChargingSessionScreen = () => {
             </b>
           </div>
 
-          {/* Environmental live stat */}
-          <div className="w-full text-center text-[10.5px] text-emerald-900 font-heading font-bold bg-green-50 py-2 px-2.5 rounded-xl border border-green-200">
-            🌱 92% Powered by Gujarat Solar & Wind Energy
+          {/* Renewable Energy Timing and Mix */}
+          <div className="w-full app-card p-3 bg-emerald-50 border border-emerald-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <Leaf className="w-4 h-4 text-emerald-700" />
+                <span className="text-[11px] font-heading font-extrabold text-emerald-950">
+                  Renewable Energy Progress
+                </span>
+              </div>
+              <span className="text-[9px] text-emerald-700 font-bold">Live mix</span>
+            </div>
+
+            <div className="flex h-2 rounded-full overflow-hidden bg-slate-200 mb-2">
+              <div className="w-[68%] bg-emerald-500" title="68% renewable energy" />
+              <div className="w-[32%] bg-slate-500" title="32% fossil fuel energy" />
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[9.5px] mb-3">
+              <div className="flex items-center gap-1.5 text-emerald-900 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" /> Renewable energy: 68%
+              </div>
+              <div className="flex items-center gap-1.5 text-slate-700 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-slate-500" /> Fossil fuel energy: 32%
+              </div>
+            </div>
+
+            <div className="text-[9px] text-slate-600 font-semibold mb-1.5">Energy availability timeline</div>
+            <div className="relative h-8 rounded-lg bg-white border border-emerald-100 overflow-hidden">
+              <div className="absolute left-[46%] right-[26%] top-0 bottom-0 bg-amber-200/80" />
+              <div className="absolute left-[4%] right-[72%] top-0 bottom-0 bg-sky-200/80" />
+              <div className="relative h-full flex items-end justify-between px-2 pb-1 text-[8px] text-slate-500 font-mono">
+                <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="flex items-start gap-1.5">
+                <Sun className="w-3.5 h-3.5 text-amber-500 mt-0.5" />
+                <div><b className="block text-[9.5px] text-slate-800">Peak solar</b><span className="text-[9px] text-slate-500">11 AM - 3 PM</span></div>
+              </div>
+              <div className="flex items-start gap-1.5">
+                <Wind className="w-3.5 h-3.5 text-sky-600 mt-0.5" />
+                <div><b className="block text-[9.5px] text-slate-800">Peak wind</b><span className="text-[9px] text-slate-500">1 AM - 5 AM</span></div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-emerald-200 text-[10px] text-emerald-900 font-bold">
+              <Clock3 className="w-3.5 h-3.5" /> Best recommended charging time: 1 PM - 3 PM
+            </div>
           </div>
         </div>
       </div>
