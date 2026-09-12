@@ -53,6 +53,7 @@ export const MobileMapScreen = () => {
   const [sortBy, setSortBy] = useState('smart'); // 'smart' | 'price' | 'distance'
   const [searchQuery, setSearchQuery] = useState('');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [showTopPickBanner, setShowTopPickBanner] = useState(true);
 
   // 1. Enrich stations with dynamic distances and AI Recommendation Scores
   const scoredStations = useMemo(() => {
@@ -217,7 +218,7 @@ export const MobileMapScreen = () => {
           </div>
 
           {/* AI Best Recommendation Banner (Smart Distance + Price Callout) */}
-          {topRecommended && activeFilter === 'recommended' && (
+          {showTopPickBanner && topRecommended && activeFilter === 'recommended' && (
             <div
               onClick={() => setSelectedStation(topRecommended)}
               className="p-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-700 to-emerald-800 text-white shadow-sm flex items-center justify-between cursor-pointer hover:shadow-md transition-all active:scale-[0.99] border border-emerald-400/40"
@@ -248,17 +249,32 @@ export const MobileMapScreen = () => {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleStartNavigation(topRecommended);
-                }}
-                className="px-2.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-heading font-extrabold text-[10.5px] flex items-center gap-1 shrink-0 shadow-xs active:scale-95 transition-all ml-2"
-              >
-                <Navigation className="w-3 h-3 fill-current" />
-                <span>Go</span>
-              </button>
+              {/* Action Buttons: Go + Close (✕) */}
+              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStartNavigation(topRecommended);
+                  }}
+                  className="px-2.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-heading font-extrabold text-[10.5px] flex items-center gap-1 shadow-xs active:scale-95 transition-all cursor-pointer"
+                >
+                  <Navigation className="w-3 h-3 fill-current" />
+                  <span>Go</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowTopPickBanner(false);
+                  }}
+                  aria-label="Close AI Top Pick"
+                  className="w-6 h-6 rounded-full bg-black/25 hover:bg-black/40 text-white/90 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-white/20"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           )}
 
