@@ -1,17 +1,46 @@
 import { STATIONS_DATA, CURRENT_LIVE_METRICS, INITIAL_VEHICLES } from '../utils/mockData';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { API_BASE } from './config';
 
 export const aiApi = {
   async askGreenChargeAi(prompt, userVehicle = INITIAL_VEHICLES[0], mode = 'smart') {
     if (API_BASE) {
       try {
-        const res = await fetch(`${API_BASE}/ai/query`, {
+        const res = await fetch(`${API_BASE}/ai/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, userVehicle, mode })
+          body: JSON.stringify({
+            message: prompt,
+            vehicleId: userVehicle?.id,
+            mode: (mode || 'SMART').toUpperCase(),
+          })
         });
-        if (res.ok) return await res.json();
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data) {
+            const topRec = json.data.recommendations?.[0];
+            return {
+              id: `ai_${Date.now()}`,
+              query: prompt,
+              recommendation: json.data.message,
+              station: topRec?.station || STATIONS_DATA[0],
+              price: topRec ? `₹${topRec.estimatedPricePerKWh.toFixed(2)}/kWh` : '₹7.60/kWh',
+              priceType: 'Estimated Dynamic Charging Price',
+              distance: topRec ? `${topRec.distanceKm} km` : '1.2 km',
+              chargingTime: topRec ? `${topRec.chargingTimeMinutes} mins` : '25 mins',
+              renewablePct: topRec ? topRec.renewablePercentage : 82,
+              greenScore: topRec ? topRec.greenScore : 91,
+              reasons: topRec?.reasons || ['Optimal clean energy mix', 'Compatible charger'],
+              confidence: json.data.confidence || 'High',
+              confidenceScore: 95,
+              dataFreshness: json.data.dataFreshness || 'Live multi-network sync',
+              action: json.data.actions?.[0] || {
+                type: 'VIEW_STATION',
+                label: 'View Station Details',
+                stationId: topRec?.stationId || 'st_01'
+              }
+            };
+          }
+        }
       } catch (e) {
         console.warn('aiApi: fallback to local AI engine', e);
       }

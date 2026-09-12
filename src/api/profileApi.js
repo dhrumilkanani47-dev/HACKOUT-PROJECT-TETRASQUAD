@@ -1,6 +1,5 @@
 import { INITIAL_USER, PAST_SESSIONS, NOTIFICATIONS_DATA, OPERATOR_DATA } from '../utils/mockData';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { API_BASE } from './config';
 
 export const profileApi = {
   async getProfile() {

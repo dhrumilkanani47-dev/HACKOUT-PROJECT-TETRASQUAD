@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String            @id @default(uuid())
+  name           String
+  email          String            @unique
+  passwordHash   String
+  phone          String
+  state          String
+  city           String
+  latitude       Float?
+  longitude      Float?
+  locationSource String            @default("manual")
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  role           String            @default("DRIVER")
+
+  vehicles       Vehicle[]
+  sessions       ChargingSession[]
+  savedStations  SavedStation[]
+  preferences    UserPreference?
+  priceAlerts    PriceAlert[]
+  notifications  Notification[]
+  operatedStations Station[]       @relation("OperatorStations")
+  bookings       Booking[]
+  paymentMethods PaymentMethod[]
+
+  @@map("users")
+}
+
+model Vehicle {
+  id                      String            @id @default(uuid())
+  userId                  String
+  type                    String
+  brand                   String
+  model                   String
+  nickname                String?
+  batteryCapacityKWh      Float
+  connectorType           String
+  maxChargingPowerKW      Float
+  currentBatteryPercentage Int
+  targetBatteryPercentage  Int
+  isPrimary               Boolean           @default(false)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  user                    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions                ChargingSession[]
+
+  @@map("vehicles")
+}
+
+model ChargingNetwork {
+  id        String    @id @default(uuid())
+  name      String
+  logo      String?
+  website   String?
+  active    Boolean   @default(true)
+  metadata  String?
+
+  stations  Station[]
+
+  @@map("charging_networks")
+}
+
+model Station {
+  id                String                 @id @default(uuid())
+  networkId         String
+  name              String
+  latitude          Float
+  longitude         Float
+  address           String
+  city              String
+  state             String
+  connectors        String
+  chargingPowerKW   Float
+  availability      String                 @default("AVAILABLE")
+  pricePerKWh       Float
+  priceType         String                 @default("ESTIMATED")
+  openingStatus     String                 @default("OPEN_24_7")
+  lastUpdated       DateTime               @default(now())
+  availableChargers Int                    @default(1)
+  totalChargers     Int                    @default(2)
+  operatorId        String?
+
+  network           ChargingNetwork        @relation(fields: [networkId], references: [id])
+  operator          User?                  @relation("OperatorStations", fields: [operatorId], references: [id])
+  pricingRecords    StationPricing[]
+  availabilityRecords StationAvailability[]
+  sessions          ChargingSession[]
+  savedByUsers      SavedStation[]
+  bookings          Booking[]
+
+  @@map("stations")
+}
+
+model StationPricing {
+  id            String   @id @default(uuid())
+  stationId     String
+  pricePerKWh   Float
+  priceType     String
+  solarDiscount Float    @default(0)
+  peakSurcharge Float    @default(0)
+  timestamp     DateTime @default(now())
+
+  station       Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@map("station_pricing")
+}
+
+model StationAvailability {
+  id             String   @id @default(uuid())
+  stationId      String
+  availablePorts Int
+  totalPorts     Int
+  status         String
+  timestamp      DateTime @default(now())
+
+  station        Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@map("station_availability")
+}
+
+model Hospital {
+  id                 String   @id @default(uuid())
+  name               String
+  latitude           Float
+  longitude          Float
+  address            String
+  city               String
+  state              String
+  phone              String?
+  emergencyAvailable String?
+  distanceKm         Float?
+  lastUpdated        DateTime @default(now())
+
+  @@map("hospitals")
+}
+
+model SavedStation {
+  id        String   @id @default(uuid())
+  userId    String
+  stationId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  station   Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, stationId])
+  @@map("saved_stations")
+}
+
+model UserPreference {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  preferredMode         String   @default("SMART")
+  preferredNetworks     String   @default("all")
+  preferredChargingTime String?
+  targetBattery         Int      @default(80)
+  costPreference        Int      @default(50)
+  speedPreference       Int      @default(50)
+  greenPreference       Int      @default(50)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model PriceAlert {
+  id              String   @id @default(uuid())
+  userId          String
+  vehicleId       String?
+  targetPrice     Float
+  latitude        Float?
+  longitude       Float?
+  radiusKm        Float    @default(10)
+  triggered       Boolean  @default(false)
+  isForecastBased Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("price_alerts")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  read      Boolean  @default(false)
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model ChargingSession {
+  id                         String    @id @default(uuid())
+  userId                     String
+  vehicleId                  String
+  stationId                  String
+  startTime                  DateTime  @default(now())
+  endTime                    DateTime?
+  energyConsumedKWh          Float
+  pricePerKWh                Float
+  totalCost                  Float
+  energyMix                  String
+  greenScore                 Int
+  carbonEstimate             Float
+  status                     String
+  co2AvoidedKg               Float?
+  currentBatteryPercentage   Int?
+  estimatedCompletionMinutes Int?
+  targetBatteryPercentage    Int?
+  timeElapsedSeconds         Int?
+
+  user                       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicle                    Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  station                    Station   @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@map("charging_sessions")
+}
+
+model Booking {
+  id              String   @id @default(uuid())
+  userId          String
+  stationId       String
+  vehicleId       String?
+  slotTime        DateTime
+  durationMinutes Int
+  estimatedCost   Float
+  connectorType   String
+  status          String   @default("CONFIRMED")
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  station         Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+model PaymentMethod {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  details   String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
+}
+

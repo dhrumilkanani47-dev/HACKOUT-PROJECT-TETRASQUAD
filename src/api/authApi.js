@@ -1,6 +1,5 @@
 import { INITIAL_USER } from '../utils/mockData';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { API_BASE } from './config';
 
 export const authApi = {
   async login(credentials) {
