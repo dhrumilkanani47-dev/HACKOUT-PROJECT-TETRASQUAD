@@ -20,17 +20,23 @@ import {
   Radio
 } from 'lucide-react';
 
-// Tile provider URLs with modern sleek aesthetics
+// Tile provider URLs with reliable standard fallbacks
 const MAP_LAYERS = {
   streets: {
+    name: 'Standard Map',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19,
+  },
+  voyager: {
     name: 'Eco Voyager',
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    url: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     attribution: '&copy; CARTO &copy; OpenStreetMap',
     maxZoom: 19,
   },
   dark: {
     name: 'Cyber Dark',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    url: 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     attribution: '&copy; CARTO',
     maxZoom: 19,
   },
@@ -49,12 +55,11 @@ export const InteractiveMap = ({
   recommendedStationId,
   onSelectStation,
   userLocation: propUserLocation,
-  height = '420px',
+  height = '360px',
   showRoute = true,
   className = '',
 }) => {
-  const { vehicles, primaryVehicle } = useVehicles();
-  const activeVehicle = primaryVehicle || vehicles?.[0] || {
+  let activeVehicle = {
     name: 'Nexon EV',
     brand: 'Tata',
     type: 'SUV',
@@ -62,6 +67,14 @@ export const InteractiveMap = ({
     currentBatteryPct: 76,
     currentRangeEstimate: 248
   };
+
+  try {
+    const vehCtx = useVehicles();
+    if (vehCtx?.primaryVehicle) activeVehicle = vehCtx.primaryVehicle;
+    else if (vehCtx?.vehicles?.[0]) activeVehicle = vehCtx.vehicles[0];
+  } catch (e) {
+    // Safe fallback if outside provider
+  }
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -72,7 +85,6 @@ export const InteractiveMap = ({
 
   const [activeLayerKey, setActiveLayerKey] = useState('streets');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
   const [userLivePos, setUserLivePos] = useState(
     propUserLocation || { lat: 23.1884, lng: 72.6289, label: 'Gandhinagar' }
   );
@@ -93,7 +105,7 @@ export const InteractiveMap = ({
     });
 
     // Base Tile Layer
-    const currentLayerCfg = MAP_LAYERS[activeLayerKey];
+    const currentLayerCfg = MAP_LAYERS[activeLayerKey] || MAP_LAYERS.streets;
     const tileLayer = L.tileLayer(currentLayerCfg.url, {
       maxZoom: currentLayerCfg.maxZoom,
       subdomains: 'abcd',
@@ -107,9 +119,18 @@ export const InteractiveMap = ({
 
     mapInstanceRef.current = map;
 
+    // Force map container layout computation
     setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    }, 150);
+
+    setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    }, 500);
 
     return () => {
       map.remove();
@@ -120,7 +141,7 @@ export const InteractiveMap = ({
   // Update Tile Layer on Switch
   useEffect(() => {
     if (!mapInstanceRef.current) return;
-    const currentCfg = MAP_LAYERS[activeLayerKey];
+    const currentCfg = MAP_LAYERS[activeLayerKey] || MAP_LAYERS.streets;
     if (tileLayerRef.current) {
       mapInstanceRef.current.removeLayer(tileLayerRef.current);
     }
@@ -247,105 +268,121 @@ export const InteractiveMap = ({
     markersGroup.clearLayers();
 
     // Render Hospital Markers
-    hospitals.forEach((hosp) => {
-      const lat = hosp.lat || hosp.latitude || (userLivePos?.lat ? userLivePos.lat + 0.015 : 23.195);
-      const lng = hosp.lng || hosp.longitude || (userLivePos?.lng ? userLivePos.lng + 0.012 : 72.635);
+    if (Array.isArray(hospitals)) {
+      hospitals.forEach((hosp) => {
+        const lat = hosp.lat || hosp.latitude || (userLivePos?.lat ? userLivePos.lat + 0.015 : 23.195);
+        const lng = hosp.lng || hosp.longitude || (userLivePos?.lng ? userLivePos.lng + 0.012 : 72.635);
 
-      const hospHtml = `
-        <div class="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500 text-white font-bold text-xs shadow-md border-2 border-white hover:scale-125 transition-transform cursor-pointer">
-          ✚
-        </div>
-      `;
+        const hospHtml = `
+          <div class="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500 text-white font-bold text-xs shadow-md border-2 border-white hover:scale-125 transition-transform cursor-pointer">
+            ✚
+          </div>
+        `;
 
-      const hospIcon = L.divIcon({
-        className: 'custom-hosp-pin',
-        html: hospHtml,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
+        const hospIcon = L.divIcon({
+          className: 'custom-hosp-pin',
+          html: hospHtml,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+        });
+
+        const m = L.marker([lat, lng], { icon: hospIcon });
+        m.bindPopup(`
+          <div class="text-xs p-1 font-sans">
+            <b class="text-slate-900 block">${hosp.name || 'Emergency Medical Hub'}</b>
+            <span class="text-slate-500 text-[10px]">Hospital & Emergency Charger Corridor</span>
+          </div>
+        `);
+        markersGroup.addLayer(m);
       });
-
-      const m = L.marker([lat, lng], { icon: hospIcon });
-      m.bindPopup(`
-        <div class="text-xs p-1 font-sans">
-          <b class="text-slate-900 block">${hosp.name || 'Emergency Medical Hub'}</b>
-          <span class="text-slate-500 text-[10px]">Hospital & Emergency Charger Corridor</span>
-        </div>
-      `);
-      markersGroup.addLayer(m);
-    });
+    }
 
     // Render Clean Station Markers
-    stations.forEach((st) => {
-      const isSelected = selectedStation?.id === st.id;
-      const isRecommended = recommendedStationId && recommendedStationId === st.id;
-      const lat = st.lat || st.latitude || 23.1884;
-      const lng = st.lng || st.longitude || 72.6289;
-      const price = st.pricePerKwh ? `₹${st.pricePerKwh.toFixed(2)}` : (st.price || '₹8.40');
-      const isFast = st.isFast || (st.powerKw && st.powerKw >= 50);
+    if (Array.isArray(stations)) {
+      stations.forEach((st) => {
+        const isSelected = selectedStation?.id === st.id;
+        const isRecommended = recommendedStationId && recommendedStationId === st.id;
+        const lat = st.lat || st.latitude || 23.1884;
+        const lng = st.lng || st.longitude || 72.6289;
+        const price = st.pricePerKwh ? `₹${st.pricePerKwh.toFixed(2)}` : (st.price || '₹8.40');
+        const isFast = st.isFast || (st.powerKw && st.powerKw >= 50);
 
-      const markerHtml = `
-        <div class="relative cursor-pointer transition-transform duration-200 ${
-          isSelected ? 'scale-115 z-50' : isRecommended ? 'scale-110 z-40' : 'hover:scale-108'
-        }">
-          ${
-            isRecommended
-              ? '<div class="absolute -inset-1 rounded-full bg-amber-400/40 animate-ping pointer-events-none"></div>'
-              : ''
-          }
-          <div class="flex items-center gap-1 px-2.5 py-1 rounded-full shadow-lg border-2 ${
-            isSelected
-              ? 'bg-emerald-600 text-white border-white ring-2 ring-emerald-400'
-              : isRecommended
-              ? 'bg-amber-500 text-slate-950 border-amber-300 ring-2 ring-amber-400/60 font-bold'
-              : 'bg-white text-slate-900 border-emerald-500 hover:border-emerald-600'
+        const markerHtml = `
+          <div class="relative cursor-pointer transition-transform duration-200 ${
+            isSelected ? 'scale-115 z-50' : isRecommended ? 'scale-110 z-40' : 'hover:scale-108'
           }">
-            <div class="w-3.5 h-3.5 rounded-full ${
-              isSelected
-                ? 'bg-white text-emerald-700'
-                : isRecommended
-                ? 'bg-amber-950 text-amber-300'
-                : 'bg-emerald-500 text-white'
-            } flex items-center justify-center font-bold text-[9px]">
-              ${isRecommended ? '👑' : '⚡'}
-            </div>
-            <span class="font-heading font-extrabold text-[11px] whitespace-nowrap leading-none">
-              ${price}
-            </span>
             ${
               isRecommended
-                ? '<span class="text-[8.5px] px-1 py-0.2 rounded bg-amber-900 text-amber-100 font-bold">Best</span>'
-                : isFast
-                ? '<span class="text-[9px] px-1 py-0.2 rounded bg-amber-400 text-slate-950 font-bold font-mono">DC</span>'
+                ? '<div class="absolute -inset-1 rounded-full bg-amber-400/40 animate-ping pointer-events-none"></div>'
                 : ''
             }
+            <div class="flex items-center gap-1 px-2.5 py-1 rounded-full shadow-lg border-2 ${
+              isSelected
+                ? 'bg-emerald-600 text-white border-white ring-2 ring-emerald-400'
+                : isRecommended
+                ? 'bg-amber-500 text-slate-950 border-amber-300 ring-2 ring-amber-400/60 font-bold'
+                : 'bg-white text-slate-900 border-emerald-500 hover:border-emerald-600'
+            }">
+              <div class="w-3.5 h-3.5 rounded-full ${
+                isSelected
+                  ? 'bg-white text-emerald-700'
+                  : isRecommended
+                  ? 'bg-amber-950 text-amber-300'
+                  : 'bg-emerald-500 text-white'
+              } flex items-center justify-center font-bold text-[9px]">
+                ${isRecommended ? '👑' : '⚡'}
+              </div>
+              <span class="font-heading font-extrabold text-[11px] whitespace-nowrap leading-none">
+                ${price}
+              </span>
+              ${
+                isRecommended
+                  ? '<span class="text-[8.5px] px-1 py-0.2 rounded bg-amber-900 text-amber-100 font-bold">Best</span>'
+                  : isFast
+                  ? '<span class="text-[9px] px-1 py-0.2 rounded bg-amber-400 text-slate-950 font-bold font-mono">DC</span>'
+                  : ''
+              }
+            </div>
+            <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] ${
+              isSelected
+                ? 'border-t-emerald-600'
+                : isRecommended
+                ? 'border-t-amber-500'
+                : 'border-t-emerald-500'
+            } mx-auto -mt-0.5"></div>
           </div>
-          <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] ${
-            isSelected
-              ? 'border-t-emerald-600'
-              : isRecommended
-              ? 'border-t-amber-500'
-              : 'border-t-emerald-500'
-          } mx-auto -mt-0.5"></div>
-        </div>
-      `;
+        `;
 
-      const icon = L.divIcon({
-        className: 'custom-station-pin',
-        html: markerHtml,
-        iconSize: [60, 30],
-        iconAnchor: [30, 28],
+        const icon = L.divIcon({
+          className: 'custom-station-pin',
+          html: markerHtml,
+          iconSize: [60, 30],
+          iconAnchor: [30, 28],
+        });
+
+        const marker = L.marker([lat, lng], { icon });
+
+        marker.on('click', (e) => {
+          L.DomEvent.stopPropagation(e);
+          if (onSelectStation) {
+            if (selectedStation?.id === st.id) {
+              onSelectStation(null);
+            } else {
+              onSelectStation(st);
+              map.flyTo([lat, lng], Math.max(map.getZoom(), 14), { duration: 0.8 });
+            }
+          }
+        });
+
+        markersGroup.addLayer(marker);
       });
+    }
 
-      const marker = L.marker([lat, lng], { icon });
-
-      marker.on('click', () => {
-        if (onSelectStation) {
-          onSelectStation(st);
-        }
-        map.flyTo([lat, lng], Math.max(map.getZoom(), 14), { duration: 0.8 });
-      });
-
-      markersGroup.addLayer(marker);
+    // Map background click deselects
+    map.on('click', () => {
+      if (onSelectStation) {
+        onSelectStation(null);
+      }
     });
   }, [stations, hospitals, selectedStation, recommendedStationId, onSelectStation]);
 
@@ -394,7 +431,6 @@ export const InteractiveMap = ({
     }
   };
 
-  // Center & fly directly to our vehicle marker
   const handleRecenterVehicle = () => {
     if (!mapInstanceRef.current || !userLivePos?.lat || !userLivePos?.lng) return;
     mapInstanceRef.current.flyTo([userLivePos.lat, userLivePos.lng], 15, {
@@ -404,11 +440,11 @@ export const InteractiveMap = ({
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-2xl bg-slate-900 border border-green-200/60 shadow-md ${className}`}
-      style={{ height }}
+      className={`relative w-full h-full min-h-[300px] overflow-hidden rounded-2xl bg-slate-100 border border-green-200 shadow-md ${className}`}
+      style={{ minHeight: '300px', height }}
     >
       {/* Leaflet Container */}
-      <div ref={mapContainerRef} className="w-full h-full z-0" />
+      <div ref={mapContainerRef} className="w-full h-full min-h-[300px] z-0" />
 
       {/* ========================================================= */}
       {/* TOP FLOATING CONTROLS: MY VEHICLE RECENTER & MAP STYLES */}

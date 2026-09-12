@@ -132,8 +132,8 @@ export const MobileMapScreen = () => {
     return list;
   }, [scoredStations, searchQuery, activeFilter, sortBy]);
 
-  // Active Station (default to selected or top recommended)
-  const activeStation = selectedStation || topRecommended || stations[0];
+  // Active Station (only shown when explicitly selected by user or clicked)
+  const activeStation = selectedStation;
 
   // Launch Google Maps Turn-by-Turn Directions
   const handleStartNavigation = (station) => {
@@ -287,9 +287,9 @@ export const MobileMapScreen = () => {
           </div>
 
           {/* Real Leaflet Map with Google Maps Style Controls & Recommended Crown Pin */}
-          <div className="relative flex-1 rounded-2xl overflow-hidden border border-green-200 min-h-[200px]">
+          <div className="relative flex-1 rounded-2xl overflow-hidden border border-green-200 min-h-[300px] h-[340px]">
             <InteractiveMap
-              stations={filteredStations}
+              stations={filteredStations.length ? filteredStations : scoredStations}
               hospitals={hospitals}
               selectedStation={activeStation}
               recommendedStationId={topRecommended?.id}
@@ -306,8 +306,8 @@ export const MobileMapScreen = () => {
 
           {/* Active Station Preview & Navigation Bottom Sheet */}
           {activeStation && (
-            <div className="app-card p-3 bg-white border border-green-200 shadow-sm flex flex-col gap-2 animate-slide-up">
-              {/* Top Row: Title, Network, Score Badge, Live Price */}
+            <div className="app-card p-3 bg-white border border-green-200 shadow-lg flex flex-col gap-2 animate-slide-up relative">
+              {/* Top Row: Title, Network, Score Badge, Live Price, Close Button */}
               <div className="flex justify-between items-start">
                 <div className="flex-1 pr-2 truncate">
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -332,15 +332,27 @@ export const MobileMapScreen = () => {
                   </div>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <div className="text-[9px] text-slate-400">Live Rate</div>
-                  <b className="font-heading text-emerald-700 text-sm font-extrabold block">
-                    ₹{(activeStation.pricePerKwh || activeStation.dynamicPrice || 8.4).toFixed(2)}
-                    <span className="text-[9px] font-normal text-slate-500">/kWh</span>
-                  </b>
-                  <span className="text-[9px] text-emerald-700 font-semibold font-mono">
-                    {activeStation.renewablePct || 90}% Solar
-                  </span>
+                <div className="flex items-start gap-2 shrink-0">
+                  <div className="text-right">
+                    <div className="text-[9px] text-slate-400">Live Rate</div>
+                    <b className="font-heading text-emerald-700 text-sm font-extrabold block">
+                      ₹{(activeStation.pricePerKwh || activeStation.dynamicPrice || 8.4).toFixed(2)}
+                      <span className="text-[9px] font-normal text-slate-500">/kWh</span>
+                    </b>
+                    <span className="text-[9px] text-emerald-700 font-semibold font-mono">
+                      {activeStation.renewablePct || 90}% Solar
+                    </span>
+                  </div>
+
+                  {/* Close / Dismiss Button */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedStation(null)}
+                    aria-label="Close"
+                    className="w-6 h-6 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
