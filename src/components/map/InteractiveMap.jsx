@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
+import { useVehicles } from '../../context/VehicleContext';
 import {
   Zap,
   Navigation,
@@ -14,45 +15,32 @@ import {
   Clock,
   Compass,
   Sparkles,
+  Car,
+  BatteryCharging,
+  Radio
 } from 'lucide-react';
 
-// Tile provider URLs
+// Tile provider URLs with modern sleek aesthetics
 const MAP_LAYERS = {
   streets: {
-    name: 'Standard Streets',
+    name: 'Eco Voyager',
     url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19,
-  },
-  satellite: {
-    name: 'Satellite View',
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: '&copy; Esri &copy; OpenStreetMap contributors',
+    attribution: '&copy; CARTO &copy; OpenStreetMap',
     maxZoom: 19,
   },
   dark: {
-    name: 'Dark Night Mode',
+    name: 'Cyber Dark',
     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    attribution: '&copy; CARTO',
+    maxZoom: 19,
+  },
+  satellite: {
+    name: 'Satellite',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; Esri',
     maxZoom: 19,
   },
 };
-
-// Haversine distance calculator in km
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-  const R = 6371; // Earth radius in km
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) *
-      Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return (R * c).toFixed(1);
-}
 
 export const InteractiveMap = ({
   stations = [],
@@ -65,11 +53,21 @@ export const InteractiveMap = ({
   showRoute = true,
   className = '',
 }) => {
+  const { vehicles, primaryVehicle } = useVehicles();
+  const activeVehicle = primaryVehicle || vehicles?.[0] || {
+    name: 'Nexon EV',
+    brand: 'Tata',
+    type: 'SUV',
+    plateNumber: 'GJ 01 EV 4821',
+    currentBatteryPct: 76,
+    currentRangeEstimate: 248
+  };
+
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const tileLayerRef = useRef(null);
   const markersGroupRef = useRef(null);
-  const userMarkerRef = useRef(null);
+  const vehicleMarkerRef = useRef(null);
   const routePolylineRef = useRef(null);
 
   const [activeLayerKey, setActiveLayerKey] = useState('streets');
@@ -90,11 +88,11 @@ export const InteractiveMap = ({
     const map = L.map(mapContainerRef.current, {
       center: [initialLat, initialLng],
       zoom: 13,
-      zoomControl: false, // We render custom Google Maps-like zoom controls
+      zoomControl: false,
       attributionControl: false,
     });
 
-    // Add base tile layer
+    // Base Tile Layer
     const currentLayerCfg = MAP_LAYERS[activeLayerKey];
     const tileLayer = L.tileLayer(currentLayerCfg.url, {
       maxZoom: currentLayerCfg.maxZoom,
@@ -109,7 +107,6 @@ export const InteractiveMap = ({
 
     mapInstanceRef.current = map;
 
-    // Trigger map resize after slight delay to ensure container dimensions
     setTimeout(() => {
       map.invalidateSize();
     }, 200);
@@ -120,7 +117,7 @@ export const InteractiveMap = ({
     };
   }, []);
 
-  // Update Tile Layer when layer key changes
+  // Update Tile Layer on Switch
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     const currentCfg = MAP_LAYERS[activeLayerKey];
@@ -141,10 +138,10 @@ export const InteractiveMap = ({
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
-        setUserLivePos({ lat: latitude, lng: longitude, accuracy, label: 'Your Live Location' });
+        setUserLivePos({ lat: latitude, lng: longitude, accuracy, label: 'Live Location' });
       },
       (err) => {
-        console.warn('Live location permission or GPS error:', err?.message);
+        console.warn('Geolocation:', err?.message);
       },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
     );
@@ -154,44 +151,92 @@ export const InteractiveMap = ({
     };
   }, []);
 
-  // Render User Location Pulse Marker
+  // =========================================================================
+  // RENDER OUR VEHICLE ICON MARKER ON MAP
+  // =========================================================================
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !userLivePos?.lat || !userLivePos?.lng) return;
 
-    if (userMarkerRef.current) {
-      map.removeLayer(userMarkerRef.current);
+    if (vehicleMarkerRef.current) {
+      map.removeLayer(vehicleMarkerRef.current);
     }
 
-    const userHtml = `
-      <div class="relative flex items-center justify-center -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none">
-        <div class="absolute w-9 h-9 rounded-full bg-blue-500/25 animate-ping"></div>
-        <div class="relative w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-lg flex items-center justify-center">
-          <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+    const isScooter = activeVehicle?.type === 'Scooter' || activeVehicle?.type === 'Motorcycle' || activeVehicle?.brand === 'Ather' || activeVehicle?.brand === 'Ola';
+    const vehicleIconSymbol = isScooter ? '🛵' : '🚗';
+    const vehName = activeVehicle?.nickname || activeVehicle?.name || 'My EV';
+    const vehPlate = activeVehicle?.plateNumber || 'GJ 01 EV 0000';
+    const battPct = activeVehicle?.currentBatteryPct || 76;
+    const rangeEst = activeVehicle?.currentRangeEstimate || 248;
+
+    const vehicleMarkerHtml = `
+      <div class="relative flex flex-col items-center select-none cursor-pointer group -translate-x-1/2 -translate-y-[80%]">
+        <!-- Floating Vehicle Info Card Pill -->
+        <div class="mb-1 flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-950 text-white border-2 border-emerald-400 shadow-[0_4px_16px_rgba(16,185,129,0.4)] backdrop-blur-md transition-transform group-hover:scale-110">
+          <span class="text-xs">${vehicleIconSymbol}</span>
+          <div class="flex flex-col text-left leading-tight">
+            <div class="font-heading font-extrabold text-[11px] text-emerald-300 flex items-center gap-1">
+              <span>${vehName}</span>
+              <span class="text-[9px] font-mono text-white bg-emerald-700/80 px-1 py-0.2 rounded font-bold">${battPct}%</span>
+            </div>
+            <span class="text-[8.5px] text-slate-300 font-mono">${vehPlate} • ${rangeEst} km</span>
+          </div>
         </div>
+
+        <!-- Animated Radar Ping Waves -->
+        <div class="relative flex items-center justify-center">
+          <div class="absolute w-12 h-12 rounded-full bg-emerald-500/25 animate-ping pointer-events-none"></div>
+          <div class="absolute w-8 h-8 rounded-full bg-emerald-500/35 animate-pulse pointer-events-none"></div>
+          
+          <!-- Central Vehicle Pin Center Hub -->
+          <div class="relative w-8 h-8 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 border-2 border-white shadow-[0_0_15px_#2ee6a8] flex items-center justify-center text-sm shadow-md">
+            <span>${vehicleIconSymbol}</span>
+          </div>
+        </div>
+
+        <!-- Pin Pointer Stem -->
+        <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-emerald-600 -mt-0.5 shadow-sm"></div>
       </div>
     `;
 
-    const userIcon = L.divIcon({
-      className: 'custom-user-pin',
-      html: userHtml,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10],
+    const customVehicleIcon = L.divIcon({
+      className: 'custom-vehicle-map-pin',
+      html: vehicleMarkerHtml,
+      iconSize: [120, 60],
+      iconAnchor: [60, 56],
     });
 
     const marker = L.marker([userLivePos.lat, userLivePos.lng], {
-      icon: userIcon,
-      zIndexOffset: 1000,
+      icon: customVehicleIcon,
+      zIndexOffset: 1200,
     }).addTo(map);
 
-    marker.bindTooltip('📍 You are here', {
-      direction: 'top',
-      offset: [0, -12],
-      className: 'bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow',
+    marker.bindPopup(`
+      <div class="p-1 font-sans text-xs min-w-[170px]">
+        <div class="flex items-center gap-1.5 pb-1 border-b border-slate-200">
+          <span class="text-sm">${vehicleIconSymbol}</span>
+          <div>
+            <b class="text-slate-900 block leading-tight font-heading">${vehName}</b>
+            <span class="text-[10px] text-emerald-700 font-mono font-bold">${vehPlate}</span>
+          </div>
+        </div>
+        <div class="mt-1.5 flex flex-col gap-1 text-[11px] text-slate-600">
+          <div class="flex justify-between">
+            <span>Live Status:</span>
+            <b class="text-emerald-600 font-bold">🟢 Connected</b>
+          </div>
+          <div class="flex justify-between">
+            <span>Battery SoC:</span>
+            <b class="text-slate-900 font-bold">${battPct}% (${rangeEst} km)</b>
+          </div>
+        </div>
+      </div>
+    `, {
+      offset: [0, -45]
     });
 
-    userMarkerRef.current = marker;
-  }, [userLivePos]);
+    vehicleMarkerRef.current = marker;
+  }, [userLivePos, activeVehicle]);
 
   // Render Station Markers & Hospital Markers
   useEffect(() => {
@@ -201,7 +246,7 @@ export const InteractiveMap = ({
 
     markersGroup.clearLayers();
 
-    // Render Hospital Markers if any
+    // Render Hospital Markers
     hospitals.forEach((hosp) => {
       const lat = hosp.lat || hosp.latitude || (userLivePos?.lat ? userLivePos.lat + 0.015 : 23.195);
       const lng = hosp.lng || hosp.longitude || (userLivePos?.lng ? userLivePos.lng + 0.012 : 72.635);
@@ -229,7 +274,7 @@ export const InteractiveMap = ({
       markersGroup.addLayer(m);
     });
 
-    // Render Station Markers
+    // Render Clean Station Markers
     stations.forEach((st) => {
       const isSelected = selectedStation?.id === st.id;
       const isRecommended = recommendedStationId && recommendedStationId === st.id;
@@ -247,7 +292,7 @@ export const InteractiveMap = ({
               ? '<div class="absolute -inset-1 rounded-full bg-amber-400/40 animate-ping pointer-events-none"></div>'
               : ''
           }
-          <div class="flex items-center gap-1 px-2 py-1 rounded-full shadow-lg border-2 ${
+          <div class="flex items-center gap-1 px-2.5 py-1 rounded-full shadow-lg border-2 ${
             isSelected
               ? 'bg-emerald-600 text-white border-white ring-2 ring-emerald-400'
               : isRecommended
@@ -337,146 +382,121 @@ export const InteractiveMap = ({
     }
   }, [selectedStation, userLivePos, showRoute]);
 
-  // Controls: Zoom In
   const handleZoomIn = () => {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.zoomIn();
     }
   };
 
-  // Controls: Zoom Out
   const handleZoomOut = () => {
     if (mapInstanceRef.current) {
       mapInstanceRef.current.zoomOut();
     }
   };
 
-  // Controls: My Location
-  const handleLocateMe = () => {
-    setIsLocating(true);
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setIsLocating(false);
-          const { latitude, longitude, accuracy } = pos.coords;
-          setUserLivePos({ lat: latitude, lng: longitude, accuracy, label: 'Your Location' });
-          if (mapInstanceRef.current) {
-            mapInstanceRef.current.flyTo([latitude, longitude], 15, { duration: 1 });
-          }
-        },
-        (err) => {
-          setIsLocating(false);
-          // Default to Gandhinagar
-          if (mapInstanceRef.current) {
-            mapInstanceRef.current.flyTo([23.1884, 72.6289], 14, { duration: 1 });
-          }
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
-      );
-    } else {
-      setIsLocating(false);
-    }
+  // Center & fly directly to our vehicle marker
+  const handleRecenterVehicle = () => {
+    if (!mapInstanceRef.current || !userLivePos?.lat || !userLivePos?.lng) return;
+    mapInstanceRef.current.flyTo([userLivePos.lat, userLivePos.lng], 15, {
+      duration: 0.9,
+    });
   };
-
-  // Turn-by-Turn Navigation via Google Maps
-  const handleOpenGoogleMaps = (st) => {
-    const destinationLat = st.lat || st.latitude || 23.1884;
-    const destinationLng = st.lng || st.longitude || 72.6289;
-    const originParam = userLivePos?.lat && userLivePos?.lng ? `&origin=${userLivePos.lat},${userLivePos.lng}` : '';
-    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1${originParam}&destination=${destinationLat},${destinationLng}&travelmode=driving`;
-    window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
-  };
-
-  const calculatedDist = useMemo(() => {
-    if (!selectedStation || !userLivePos?.lat || !userLivePos?.lng) return null;
-    const stLat = selectedStation.lat || selectedStation.latitude;
-    const stLng = selectedStation.lng || selectedStation.longitude;
-    return calculateDistance(userLivePos.lat, userLivePos.lng, stLat, stLng);
-  }, [selectedStation, userLivePos]);
 
   return (
-    <div className={`relative w-full rounded-2xl overflow-hidden border border-green-200 shadow-sm bg-slate-100 select-none ${className}`} style={{ height }}>
-      {/* Real Leaflet Map DOM Node */}
+    <div
+      className={`relative w-full overflow-hidden rounded-2xl bg-slate-900 border border-green-200/60 shadow-md ${className}`}
+      style={{ height }}
+    >
+      {/* Leaflet Container */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {/* Floating Google Maps-like Control Bar (Top Right) */}
-      <div className="absolute top-3 right-3 z-30 flex flex-col gap-1.5">
-        {/* Layer Selector Button */}
+      {/* ========================================================= */}
+      {/* TOP FLOATING CONTROLS: MY VEHICLE RECENTER & MAP STYLES */}
+      {/* ========================================================= */}
+      <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5">
+        {/* Recenter on Our Vehicle Button */}
+        <button
+          type="button"
+          onClick={handleRecenterVehicle}
+          className="px-2.5 py-1.5 rounded-xl bg-white/95 text-slate-900 hover:text-emerald-700 shadow-md border border-slate-200/80 font-heading font-extrabold text-[11px] flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+        >
+          <span className="text-xs">🚗</span>
+          <span>My Vehicle</span>
+        </button>
+
+        {/* Layer Style Switcher */}
         <div className="relative">
           <button
             type="button"
-            onClick={() => setShowLayerMenu((p) => !p)}
-            className="w-9 h-9 rounded-xl bg-white/95 text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center hover:bg-green-50 hover:text-emerald-700 active:scale-95 transition-all"
-            title="Map Layers (Satellite / Street / Dark)"
+            onClick={() => setShowLayerMenu(!showLayerMenu)}
+            className="w-8 h-8 rounded-xl bg-white/95 text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center hover:text-emerald-700 active:scale-95 transition-all cursor-pointer backdrop-blur-md"
+            title="Switch Map Theme"
           >
-            <Layers className="w-4 h-4" />
+            <Layers className="w-3.5 h-3.5" />
           </button>
 
           {showLayerMenu && (
-            <div className="absolute right-0 top-11 w-44 bg-white rounded-2xl shadow-xl border border-green-200 p-1.5 z-40 text-xs animate-slide-up">
-              <div className="px-2 py-1 text-[10px] font-heading font-bold text-slate-400 uppercase">
-                Map Types
+            <div className="absolute right-0 top-10 z-40 w-36 bg-white rounded-2xl shadow-2xl border border-slate-200 p-1.5 animate-slide-up text-xs">
+              <div className="text-[9.5px] font-mono text-slate-400 font-bold uppercase px-2 py-1">
+                Map Theme
               </div>
-              {Object.entries(MAP_LAYERS).map(([key, cfg]) => (
+              {Object.entries(MAP_LAYERS).map(([k, cfg]) => (
                 <button
-                  key={key}
+                  key={k}
+                  type="button"
                   onClick={() => {
-                    setActiveLayerKey(key);
+                    setActiveLayerKey(k);
                     setShowLayerMenu(false);
                   }}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-xl font-heading font-semibold text-xs flex items-center justify-between transition-colors ${
-                    activeLayerKey === key
-                      ? 'bg-emerald-500 text-white shadow-2xs'
-                      : 'text-slate-700 hover:bg-green-50'
+                  className={`w-full text-left px-2.5 py-1.5 rounded-xl font-heading font-semibold text-[11px] transition-colors flex items-center justify-between cursor-pointer ${
+                    activeLayerKey === k
+                      ? 'bg-emerald-50 text-emerald-800 font-bold'
+                      : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
                   <span>{cfg.name}</span>
-                  {activeLayerKey === key && <span className="text-[10px]">✓</span>}
+                  {activeLayerKey === k && <span className="text-emerald-600">✓</span>}
                 </button>
               ))}
             </div>
           )}
         </div>
+      </div>
 
-        {/* Locate Me (GPS Track) Button */}
-        <button
-          type="button"
-          onClick={handleLocateMe}
-          className={`w-9 h-9 rounded-xl bg-white/95 shadow-md border border-slate-200/80 flex items-center justify-center active:scale-95 transition-all ${
-            isLocating ? 'text-blue-600 bg-blue-50 ring-2 ring-blue-400 animate-pulse' : 'text-slate-700 hover:text-emerald-700 hover:bg-green-50'
-          }`}
-          title="Track Live GPS Location"
-        >
-          <Crosshair className="w-4 h-4" />
-        </button>
-
-        {/* Zoom In Button */}
+      {/* ========================================================= */}
+      {/* BOTTOM CONTROLS: ZOOM & LIVE GPS STATS */}
+      {/* ========================================================= */}
+      <div className="absolute bottom-3 right-3 z-30 flex flex-col gap-1">
         <button
           type="button"
           onClick={handleZoomIn}
-          className="w-9 h-9 rounded-xl bg-white/95 text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center hover:bg-green-50 hover:text-emerald-700 active:scale-95 transition-all"
+          className="w-8 h-8 rounded-xl bg-white/95 text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center hover:bg-green-50 hover:text-emerald-700 active:scale-95 transition-all cursor-pointer backdrop-blur-md"
           title="Zoom In"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
         </button>
-
-        {/* Zoom Out Button */}
         <button
           type="button"
           onClick={handleZoomOut}
-          className="w-9 h-9 rounded-xl bg-white/95 text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center hover:bg-green-50 hover:text-emerald-700 active:scale-95 transition-all"
+          className="w-8 h-8 rounded-xl bg-white/95 text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center hover:bg-green-50 hover:text-emerald-700 active:scale-95 transition-all cursor-pointer backdrop-blur-md"
           title="Zoom Out"
         >
-          <Minus className="w-4 h-4" />
+          <Minus className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {/* Floating GPS Accuracy & Live Status Pill (Bottom Left) */}
-      <div className="absolute bottom-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/90 backdrop-blur-md border border-green-200/80 text-[10px] text-slate-700 font-medium shadow-sm">
-        <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-        <span className="font-heading font-semibold text-slate-900">Live GPS</span>
+      {/* Bottom Left: Live Vehicle Telematics Link Pill */}
+      <div
+        onClick={handleRecenterVehicle}
+        className="absolute bottom-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-emerald-500/40 text-[10px] text-white shadow-lg cursor-pointer hover:border-emerald-400 transition-all"
+      >
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        <span className="font-heading font-extrabold text-emerald-300">{activeVehicle?.name || 'EV Connected'}</span>
         <span className="text-slate-400">•</span>
-        <span className="text-slate-500 font-mono">{stations.length} Chargers</span>
+        <span className="text-slate-300 font-mono">{stations.length} Green Hubs</span>
       </div>
     </div>
   );
