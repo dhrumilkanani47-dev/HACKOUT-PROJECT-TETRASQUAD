@@ -4,6 +4,7 @@ import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
 import { useAuth } from '../../context/AuthContext';
+import { useStations } from '../../context/StationContext';
 import {
   Radio,
   Zap,
@@ -23,6 +24,7 @@ import {
 export const MobileManageStationsScreen = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { operatorBaseTariff, updateOperatorBaseTariff } = useStations();
   const isOperator = user?.role === 'operator';
 
   // Operator Company Name from sign-in / profile
@@ -175,8 +177,12 @@ export const MobileManageStationsScreen = () => {
 
   const handleAdjustTariff = (stationId, delta) => {
     setTariffUpdates((prev) => {
-      const current = prev[stationId] ?? stationsList.find((s) => s.id === stationId)?.basePrice;
+      const fallbackPrice = stationId === 'st_01' ? (operatorBaseTariff || 8.40) : (stationsList.find((s) => s.id === stationId)?.basePrice || 8.40);
+      const current = prev[stationId] ?? fallbackPrice;
       const updated = Math.max(5.00, +(current + delta).toFixed(2));
+      if (stationId === 'st_01') {
+        updateOperatorBaseTariff(updated);
+      }
       return { ...prev, [stationId]: updated };
     });
     setToastMsg('Tariff updated successfully!');
@@ -322,7 +328,8 @@ export const MobileManageStationsScreen = () => {
               </div>
             ) : (
               filteredStations.map((station) => {
-                const currentPrice = tariffUpdates[station.id] ?? station.basePrice;
+                const defaultBase = station.id === 'st_01' ? (operatorBaseTariff || 8.40) : (station.basePrice || 8.40);
+                const currentPrice = tariffUpdates[station.id] ?? defaultBase;
                 return (
                   <div
                     key={station.id}

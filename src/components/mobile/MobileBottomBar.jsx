@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, MapPin, History, User } from 'lucide-react';
+import { Home, MapPin, History, User, CalendarCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const MobileBottomBar = () => {
@@ -27,7 +27,7 @@ export const MobileBottomBar = () => {
     { label: 'Home', path: '/', active: isHome, icon: Home },
     { label: 'Map', path: '/map', active: isMap, icon: MapPin },
     ...(isGridOperator ? [{ label: 'Alerts', path: '/notifications', active: currentPath.startsWith('/notifications'), icon: History }] : []),
-    ...(isOperator ? [{ label: 'Controls', path: '/operator', active: currentPath.startsWith('/operator'), icon: History }] : []),
+    ...(isOperator ? [{ label: 'Requests', path: '/operator/bookings', active: currentPath.startsWith('/operator/bookings'), icon: CalendarCheck }] : []),
     { label: 'Profile', path: '/profile', active: isProfile, icon: User },
   ];
   const tabs = isGridOperator || isOperator ? roleTabs : driverTabs;

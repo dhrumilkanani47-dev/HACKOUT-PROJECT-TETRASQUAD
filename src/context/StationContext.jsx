@@ -93,6 +93,35 @@ export const StationProvider = ({ children }) => {
     return completedSession;
   };
 
+  // Operator Dynamic Pricing & Renewable Target Shared State
+  const [operatorBaseTariff, setOperatorBaseTariffState] = useState(() => {
+    const saved = localStorage.getItem('egc_operator_base_tariff');
+    return saved ? parseFloat(saved) : 8.40;
+  });
+
+  const [operatorRenewableTarget, setOperatorRenewableTargetState] = useState(() => {
+    const saved = localStorage.getItem('egc_operator_renewable_target');
+    return saved ? parseInt(saved, 10) : 78;
+  });
+
+  const updateOperatorBaseTariff = (newTariff) => {
+    setOperatorBaseTariffState((prev) => {
+      const val = typeof newTariff === 'function' ? newTariff(prev) : newTariff;
+      const rounded = Number(parseFloat(val).toFixed(2));
+      localStorage.setItem('egc_operator_base_tariff', rounded.toString());
+      return rounded;
+    });
+  };
+
+  const updateOperatorRenewableTarget = (newTarget) => {
+    setOperatorRenewableTargetState((prev) => {
+      const val = typeof newTarget === 'function' ? newTarget(prev) : newTarget;
+      const rounded = Math.round(val);
+      localStorage.setItem('egc_operator_renewable_target', rounded.toString());
+      return rounded;
+    });
+  };
+
   return (
     <StationContext.Provider value={{
       stations,
@@ -101,6 +130,10 @@ export const StationProvider = ({ children }) => {
       filters,
       selectedStation,
       activeSession,
+      operatorBaseTariff,
+      operatorRenewableTarget,
+      updateOperatorBaseTariff,
+      updateOperatorRenewableTarget,
       setSelectedStation,
       setFilters,
       updateFilter,

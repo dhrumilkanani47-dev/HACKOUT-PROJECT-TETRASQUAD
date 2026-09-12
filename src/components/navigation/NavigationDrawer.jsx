@@ -28,7 +28,6 @@ export const NavigationDrawer = () => {
     ...(isOperator ? [
       { name: 'Manage Stations', path: '/manage-stations', match: (p) => p.startsWith('/manage-stations') },
       { name: 'Slot Booking Requests', path: '/operator/bookings', match: (p) => p.startsWith('/operator/bookings') },
-      { name: 'Operator Controls', path: '/operator', match: (p) => p.startsWith('/operator') },
     ] : []),
     ...(isGridOperator ? [{ name: 'Grid Alerts & Data', path: '/notifications', match: (p) => p.startsWith('/notifications'), disabled: true }] : []),
     ...(!isGridOperator ? [{ name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications'), disabled: true }] : []),

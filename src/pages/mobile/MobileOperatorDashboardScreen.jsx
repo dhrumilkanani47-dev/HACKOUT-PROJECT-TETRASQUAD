@@ -4,6 +4,7 @@ import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
 import { useAuth } from '../../context/AuthContext';
+import { useStations } from '../../context/StationContext';
 import { bookingApi } from '../../api/bookingApi';
 import {
   Sliders,
@@ -25,9 +26,9 @@ import {
 export const MobileOperatorDashboardScreen = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { operatorBaseTariff, updateOperatorBaseTariff } = useStations();
   const operatorCompany = user?.companyName?.trim() || 'Tata Power';
 
-  const [stationTariff, setStationTariff] = useState(8.40);
   const [activeChargers] = useState(23);
   const [toastMsg, setToastMsg] = useState('');
   const [bookingStats, setBookingStats] = useState({ total: 4, pending: 2, accepted: 1, rejected: 1, todayActive: 4 });
@@ -350,23 +351,27 @@ export const MobileOperatorDashboardScreen = () => {
                 Station Base Rate:
               </span>
               <b className="font-heading text-emerald-800 font-extrabold text-sm">
-                ₹{stationTariff.toFixed(2)}/kWh
+                ₹{(operatorBaseTariff || 8.40).toFixed(2)}/kWh
               </b>
             </div>
             <div className="flex gap-2 mt-2">
               <button
+                type="button"
                 onClick={() => {
-                  setStationTariff((p) => +(p - 0.2).toFixed(2));
-                  triggerToast(`Base rate adjusted to ₹${(stationTariff - 0.2).toFixed(2)}/kWh`);
+                  const newVal = Number(((operatorBaseTariff || 8.40) - 0.2).toFixed(2));
+                  updateOperatorBaseTariff(newVal);
+                  triggerToast(`Base rate adjusted to ₹${newVal.toFixed(2)}/kWh`);
                 }}
                 className="app-btn ghost flex-1 py-1.5 text-xs font-bold active:scale-95 cursor-pointer"
               >
                 − ₹0.20
               </button>
               <button
+                type="button"
                 onClick={() => {
-                  setStationTariff((p) => +(p + 0.2).toFixed(2));
-                  triggerToast(`Base rate adjusted to ₹${(stationTariff + 0.2).toFixed(2)}/kWh`);
+                  const newVal = Number(((operatorBaseTariff || 8.40) + 0.2).toFixed(2));
+                  updateOperatorBaseTariff(newVal);
+                  triggerToast(`Base rate adjusted to ₹${newVal.toFixed(2)}/kWh`);
                 }}
                 className="app-btn outline flex-1 py-1.5 text-xs font-bold active:scale-95 cursor-pointer"
               >

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useStations } from '../../context/StationContext';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
@@ -40,6 +41,7 @@ import {
 export const MobileProfileScreen = () => {
   const navigate = useNavigate();
   const { user, logout, updateProfile } = useAuth();
+  const { operatorBaseTariff, updateOperatorBaseTariff, operatorRenewableTarget, updateOperatorRenewableTarget } = useStations();
 
   // Active Modal State ('edit_profile' | 'vehicle' | 'payment' | 'price_target' | 'preferences' | 'notifications' | 'operator_pricing' | 'operator_energy' | 'operator_reports' | null)
   const [activeModal, setActiveModal] = useState(null);
@@ -63,10 +65,6 @@ export const MobileProfileScreen = () => {
   const [sessionAlertsActive, setSessionAlertsActive] = useState(true);
   const [greenSpikeAlerts, setGreenSpikeAlerts] = useState(true);
   const [whatsappAlerts, setWhatsappAlerts] = useState(true);
-
-  // Operator states
-  const [operatorTariff, setOperatorTariff] = useState(8.40);
-  const [operatorRenewableTarget, setOperatorRenewableTarget] = useState(78);
 
   // Security & Password states
   const [currentPw, setCurrentPw] = useState('');
@@ -111,8 +109,8 @@ export const MobileProfileScreen = () => {
     ]
     : user?.role === 'operator'
     ? [
-      { id: 'pricing', title: 'Pricing & Green Incentives', sub: `Dynamic Rate: ₹${operatorTariff.toFixed(2)}/kWh`, icon: Sliders, action: () => setActiveModal('operator_pricing') },
-      { id: 'energy', title: 'Energy & Renewable Mix', sub: `${operatorRenewableTarget}% target renewable supply`, icon: Zap, action: () => setActiveModal('operator_energy') },
+      { id: 'pricing', title: 'Pricing & Green Incentives', sub: `Dynamic Rate: ₹${(operatorBaseTariff || 8.40).toFixed(2)}/kWh`, icon: Sliders, action: () => setActiveModal('operator_pricing') },
+      { id: 'energy', title: 'Energy & Renewable Mix', sub: `${operatorRenewableTarget || 78}% target renewable supply`, icon: Zap, action: () => setActiveModal('operator_energy') },
       { id: 'reports', title: 'Network Analytics', sub: 'Revenue: ₹24,580 • 128 Sessions', icon: BarChart3, action: () => setActiveModal('operator_reports') },
       { id: 'notifications', title: 'Operator Alerts', sub: 'Grid peak & queue alerts enabled', icon: Bell, action: () => setActiveModal('notifications') },
       { id: 'security', title: 'Security & Password', sub: 'Change password or reset via OTP', icon: KeyRound, action: () => { setSecurityStep('change'); setPwError(''); setPwSuccess(''); setActiveModal('security'); } },
@@ -689,7 +687,7 @@ export const MobileProfileScreen = () => {
           <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl border border-green-200 animate-slide-up">
             <div className="flex justify-between items-center mb-3">
               <h4 className="font-heading font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
-                <Sliders className="w-4 h-4 text-emerald-600" /> Operator Pricing Controls
+                <Sliders className="w-4 h-4 text-emerald-600" /> Pricing &amp; Green Incentives
               </h4>
               <button
                 onClick={() => setActiveModal(null)}
@@ -702,29 +700,32 @@ export const MobileProfileScreen = () => {
             <div className="space-y-3 text-xs">
               <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-200">
                 <span className="font-heading font-bold text-slate-700">Station Base Tariff:</span>
-                <b className="font-heading text-base text-emerald-800 font-extrabold">₹{operatorTariff.toFixed(2)}/kWh</b>
+                <b className="font-heading text-base text-emerald-800 font-extrabold">₹{(operatorBaseTariff || 8.40).toFixed(2)}/kWh</b>
               </div>
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => setOperatorTariff((p) => +(p - 0.2).toFixed(2))}
-                  className="app-btn ghost flex-1 font-bold py-2"
+                  type="button"
+                  onClick={() => updateOperatorBaseTariff((p) => +(p - 0.2).toFixed(2))}
+                  className="app-btn ghost flex-1 font-bold py-2 active:scale-95"
                 >
                   − ₹0.20
                 </button>
                 <button
-                  onClick={() => setOperatorTariff((p) => +(p + 0.2).toFixed(2))}
-                  className="app-btn outline flex-1 font-bold py-2"
+                  type="button"
+                  onClick={() => updateOperatorBaseTariff((p) => +(p + 0.2).toFixed(2))}
+                  className="app-btn outline flex-1 font-bold py-2 active:scale-95"
                 >
                   + ₹0.20
                 </button>
               </div>
 
               <button
+                type="button"
                 onClick={showSuccessFeedback}
-                className="app-btn w-full font-bold py-2.5 mt-2"
+                className="app-btn w-full font-bold py-2.5 mt-2 shadow-md"
               >
-                Update Network Tariffs
+                {saveSuccess ? 'Base Rate Saved to Dashboard!' : 'Save & Update Dashboard Rate'}
               </button>
             </div>
           </div>
@@ -751,7 +752,7 @@ export const MobileProfileScreen = () => {
               <div className="text-center py-2 bg-emerald-50 rounded-2xl border border-emerald-200">
                 <span className="text-[10px] text-slate-500 uppercase font-semibold">Target Clean Energy Dispatch</span>
                 <div className="font-heading font-extrabold text-2xl text-emerald-800">
-                  {operatorRenewableTarget}%
+                  {operatorRenewableTarget || 78}%
                 </div>
               </div>
 
@@ -759,16 +760,17 @@ export const MobileProfileScreen = () => {
                 type="range"
                 min="50"
                 max="100"
-                value={operatorRenewableTarget}
-                onChange={(e) => setOperatorRenewableTarget(parseInt(e.target.value))}
+                value={operatorRenewableTarget || 78}
+                onChange={(e) => updateOperatorRenewableTarget(parseInt(e.target.value, 10))}
                 className="w-full accent-emerald-500 cursor-pointer h-2 bg-green-100 rounded-lg"
               />
 
               <button
+                type="button"
                 onClick={showSuccessFeedback}
                 className="app-btn w-full font-bold py-2.5 mt-2"
               >
-                Save Renewable Target
+                {saveSuccess ? 'Renewable Target Saved!' : 'Save Renewable Target'}
               </button>
             </div>
           </div>
