@@ -21,6 +21,7 @@ import { MobileOperatorDashboardScreen } from './pages/mobile/MobileOperatorDash
 import { MobileGridOperatorDashboardScreen } from './pages/mobile/MobileGridOperatorDashboardScreen';
 import { MobileManageStationsScreen } from './pages/mobile/MobileManageStationsScreen';
 import { MobileProfileScreen } from './pages/mobile/MobileProfileScreen';
+import { MobileVehiclesScreen } from './pages/mobile/MobileVehiclesScreen';
 import { useAuth } from './context/AuthContext';
 
 const RoleHome = () => {
@@ -110,6 +111,9 @@ export const App = () => {
 
                 {/* Screen 07: Smart Charging */}
                 <Route path="/smart-charge" element={<RequireDriver><MobileSmartChargingScreen /></RequireDriver>} />
+
+                {/* All Vehicles / Fleet Management */}
+                <Route path="/vehicles" element={<RequireDriver><MobileVehiclesScreen /></RequireDriver>} />
 
                 {/* Screen 08: Charging Session Progress */}
                 <Route path="/charging" element={<RequireDriver><MobileChargingSessionScreen /></RequireDriver>} />

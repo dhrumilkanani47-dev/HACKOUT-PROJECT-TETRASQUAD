@@ -20,6 +20,7 @@ export const NavigationDrawer = () => {
     { name: isGridOperator ? 'Grid Operations' : isOperator ? 'Operator Dashboard' : 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
     { name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
     ...(!isOperator && !isGridOperator ? [
+      { name: 'All Vehicles', path: '/vehicles', match: (p) => p.startsWith('/vehicles') },
       { name: 'Smart Charging AI', path: '/smart-charge', match: (p) => p.startsWith('/smart-charge') },
       { name: 'Live Charging Session', path: '/charging', match: (p) => p.startsWith('/charging') },
       { name: 'Price & Green Score', path: '/price-score', match: (p) => p.startsWith('/price-score') },

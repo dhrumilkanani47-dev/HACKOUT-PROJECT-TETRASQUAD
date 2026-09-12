@@ -207,9 +207,13 @@ export const MobileHomeScreen = () => {
                   Registered Vehicles ({carList.length})
                 </h3>
               </div>
-              <span className="text-[9.5px] text-slate-400 font-medium">
-                Live Status
-              </span>
+              <button
+                onClick={() => navigate('/vehicles')}
+                className="text-[10px] text-emerald-700 font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+              >
+                <span>View All &amp; Add</span>
+                <span>›</span>
+              </button>
             </div>
 
             {/* List of Cars */}
@@ -218,11 +222,13 @@ export const MobileHomeScreen = () => {
                 const pct = vehicle.currentBatteryPct || 68;
                 const range = vehicle.currentRangeEstimate || Math.round(((vehicle.standardRange || 453) * pct) / 100);
                 const isPrimary = vehicle.isPrimary;
+                const odo = vehicle.odometerKm || 14200;
 
                 return (
                   <div
                     key={vehicle.id}
-                    className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col gap-2 transition-all"
+                    onClick={() => navigate('/vehicles')}
+                    className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col gap-2 transition-all hover:border-emerald-300 cursor-pointer active:scale-[0.99]"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2.5">
@@ -233,21 +239,24 @@ export const MobileHomeScreen = () => {
                           <div className="font-heading font-bold text-[12.5px] text-slate-900 leading-tight">
                             {vehicle.name}
                           </div>
-                          <div className="text-[10px] text-slate-500 mt-0.5">
-                            {vehicle.nickname ? `"${vehicle.nickname}" • ` : ''}{vehicle.connector || 'CCS2'} • {vehicle.batteryCapacity || 40} kWh
+                          <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1.5">
+                            <span>{vehicle.connector || 'CCS2'} • {vehicle.batteryCapacity || 40} kWh</span>
+                            <span>•</span>
+                            <span className="font-mono text-slate-700 font-semibold">{odo.toLocaleString()} km run</span>
                           </div>
                         </div>
                       </div>
 
-                      {isPrimary ? (
-                        <span className="pill-tag green text-[9px] px-2 py-0.5 flex items-center gap-1">
-                          <CheckCircle2 className="w-2.5 h-2.5" /> Primary
-                        </span>
-                      ) : (
-                        <span className="pill-tag sky text-[9px] px-2 py-0.5">
-                          Ready
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="px-1.5 py-0.5 bg-emerald-700 text-white rounded font-mono font-bold text-[9px] tracking-wide">
+                          {vehicle.plateNumber || 'GJ 01 EV 0000'}
+                        </div>
+                        {isPrimary && (
+                          <span className="pill-tag green text-[9px] px-1.5 py-0.5 flex items-center gap-0.5">
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Battery progress and range estimate */}
@@ -265,7 +274,7 @@ export const MobileHomeScreen = () => {
                           {pct}%
                         </span>
                       </div>
-                      <span className="text-[10.5px] text-slate-600 font-medium shrink-0">
+                      <span className="text-[10.5px] text-emerald-700 font-bold shrink-0">
                         {range} km range
                       </span>
                     </div>

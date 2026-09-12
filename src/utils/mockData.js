@@ -30,6 +30,10 @@ export const INITIAL_VEHICLES = [
     type: 'SUV',
     brand: 'Tata',
     model: 'Nexon EV Empowered+',
+    plateNumber: 'GJ 01 EV 4821',
+    odometerKm: 18420,
+    year: 2024,
+    vin: 'MAT612056NP182934',
     batteryCapacity: 40.5,
     currentBatteryPct: 68,
     targetBatteryPct: 85,
@@ -40,6 +44,8 @@ export const INITIAL_VEHICLES = [
     greenScore: 94,
     healthScore: 98,
     efficiency: '132 Wh/km',
+    insuranceExpiry: '15 Nov 2026',
+    serviceDueKm: 25000,
     isPrimary: true
   },
   {
@@ -49,6 +55,10 @@ export const INITIAL_VEHICLES = [
     type: 'Scooter',
     brand: 'Ather',
     model: '450X Gen 3',
+    plateNumber: 'GJ 27 AK 8920',
+    odometerKm: 6210,
+    year: 2023,
+    vin: 'ATH450X2023K1894',
     batteryCapacity: 3.7,
     currentBatteryPct: 84,
     targetBatteryPct: 100,
@@ -59,6 +69,8 @@ export const INITIAL_VEHICLES = [
     greenScore: 96,
     healthScore: 99,
     efficiency: '32 Wh/km',
+    insuranceExpiry: '22 Aug 2025',
+    serviceDueKm: 10000,
     isPrimary: false
   },
   {
@@ -68,6 +80,10 @@ export const INITIAL_VEHICLES = [
     type: 'SUV',
     brand: 'MG',
     model: 'ZS EV Exclusive Plus',
+    plateNumber: 'GJ 06 MG 7311',
+    odometerKm: 24150,
+    year: 2024,
+    vin: 'MGZSEV2024V98124',
     batteryCapacity: 50.3,
     currentBatteryPct: 32,
     targetBatteryPct: 80,
@@ -78,6 +94,8 @@ export const INITIAL_VEHICLES = [
     greenScore: 89,
     healthScore: 96,
     efficiency: '145 Wh/km',
+    insuranceExpiry: '10 Dec 2026',
+    serviceDueKm: 30000,
     isPrimary: false
   }
 ];
