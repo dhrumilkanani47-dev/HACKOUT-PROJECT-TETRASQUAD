@@ -8,36 +8,27 @@ import { bookingApi } from '../../api/bookingApi';
 import {
   CalendarCheck,
   Clock,
-  CheckCircle2,
-  XCircle,
+  Check,
+  X,
   AlertCircle,
   Search,
   Building2,
   Car,
   Zap,
-  Mail,
-  Send,
-  Filter,
   RefreshCw,
-  Plus,
-  ShieldCheck,
-  ChevronRight,
-  Info,
-  Radio,
-  FileText,
   User,
   Phone,
-  Layers,
-  X
+  Mail,
+  Info
 } from 'lucide-react';
 
 export const MobileOperatorBookingsScreen = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   // Operator's Company
   const registeredCompany = user?.companyName?.trim() || 'Tata Power';
-  
+
   // State
   const [bookings, setBookings] = useState([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, accepted: 0, rejected: 0, todayActive: 0 });
@@ -47,22 +38,7 @@ export const MobileOperatorBookingsScreen = () => {
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'accepted' | 'rejected'
   const [timeRange, setTimeRange] = useState('today'); // 'today' | 'yesterday' | 'past7days' | 'all'
   const [toastMsg, setToastMsg] = useState('');
-
-  // Modal State for Accept / Reject Action
-  const [activeModal, setActiveModal] = useState(null); // { type: 'accept' | 'reject', booking: {...} }
-  const [selectedBay, setSelectedBay] = useState('Bay 02');
-  const [operatorNote, setOperatorNote] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showEmailPreview, setShowEmailPreview] = useState(false);
-  const [lastDispatchedEmail, setLastDispatchedEmail] = useState(null);
-
-  // New Simulated Request Modal
-  const [isSimulateOpen, setIsSimulateOpen] = useState(false);
-  const [simDriverName, setSimDriverName] = useState('Krushil Gadhiya');
-  const [simDriverEmail, setSimDriverEmail] = useState('krushilgadhiya138@gmail.com');
-  const [simVehicle, setSimVehicle] = useState('Tata Nexon EV');
-  const [simPlate, setSimPlate] = useState('GJ 01 EV 4821');
-  const [simSlotTime, setSimSlotTime] = useState('02:00 PM');
+  const [updatingId, setUpdatingId] = useState(null);
 
   const triggerToast = (msg) => {
     setToastMsg(msg);
@@ -85,8 +61,8 @@ export const MobileOperatorBookingsScreen = () => {
         bookingApi.getStats({ company: registeredCompany })
       ]);
 
-      setBookings(list);
-      setStats(statsData);
+      setBookings(list || []);
+      setStats(statsData || { total: 0, pending: 0, accepted: 0, rejected: 0, todayActive: 0 });
     } catch (err) {
       console.error('Error loading bookings:', err);
     } finally {
@@ -99,93 +75,62 @@ export const MobileOperatorBookingsScreen = () => {
     loadData();
   }, [loadData]);
 
-  // Real-time polling every 6 seconds to capture live driver booking requests
+  // Real-time polling every 5 seconds to capture live driver booking requests
   useEffect(() => {
     const timer = setInterval(() => {
       loadData(true);
-    }, 6000);
+    }, 5000);
     return () => clearInterval(timer);
   }, [loadData]);
 
-  // Handle Open Accept Modal
-  const handleOpenAccept = (booking) => {
-    setSelectedBay(booking.bayNumber || 'Bay 01');
-    setOperatorNote(`Allocated to ${booking.bayNumber || 'Bay 01'} · Fast CCS2 Ready · 90% Verified Solar Mix`);
-    setActiveModal({ type: 'accept', booking });
-  };
+  // Instant 1-Click Accept or Reject Handler
+  const handleUpdateStatus = async (booking, newStatus) => {
+    setUpdatingId(booking.id);
+    const bayNumber = booking.bayNumber || 'Bay 02';
+    const notes =
+      newStatus === 'accepted'
+        ? `Allocated to ${bayNumber} · Fast CCS2 Ready · 90% Verified Solar Mix`
+        : 'Slot unavailable due to grid peak management. Please choose alternate solar window.';
 
-  // Handle Open Reject Modal
-  const handleOpenReject = (booking) => {
-    setOperatorNote('Grid peak shaving protocol in effect. Suggested off-peak solar window: 1:00 PM – 3:30 PM.');
-    setActiveModal({ type: 'reject', booking });
-  };
+    // 1. Optimistic local state update for instant UI feedback
+    setBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? { ...b, status: newStatus, bayNumber, operatorNotes: notes }
+          : b
+      )
+    );
 
-  // Submit Operator Decision
-  const handleConfirmAction = async () => {
-    if (!activeModal?.booking) return;
-    setIsSubmitting(true);
+    // Update stats optimistically
+    setStats((prev) => {
+      const oldStatus = booking.status;
+      return {
+        ...prev,
+        pending: oldStatus === 'pending' ? Math.max(0, prev.pending - 1) : prev.pending,
+        accepted: newStatus === 'accepted' ? prev.accepted + (oldStatus !== 'accepted' ? 1 : 0) : (oldStatus === 'accepted' ? Math.max(0, prev.accepted - 1) : prev.accepted),
+        rejected: newStatus === 'rejected' ? prev.rejected + (oldStatus !== 'rejected' ? 1 : 0) : (oldStatus === 'rejected' ? Math.max(0, prev.rejected - 1) : prev.rejected),
+      };
+    });
 
+    triggerToast(
+      newStatus === 'accepted'
+        ? `✅ Accepted ${booking.driverName}'s booking (${bayNumber})`
+        : `❌ Denied ${booking.driverName}'s booking`
+    );
+
+    // 2. Call backend in real-time
     try {
-      const res = await bookingApi.updateStatus({
-        bookingId: activeModal.booking.id,
-        status: activeModal.type === 'accept' ? 'accepted' : 'rejected',
-        bayNumber: selectedBay,
-        operatorNotes: operatorNote,
+      await bookingApi.updateStatus({
+        bookingId: booking.id,
+        status: newStatus,
+        bayNumber: bayNumber,
+        operatorNotes: notes,
         operatorName: `${registeredCompany} Station Operator`
       });
-
-      if (res.success) {
-        setLastDispatchedEmail({
-          recipient: res.emailSentTo,
-          subject: res.emailDraft?.subject,
-          body: res.emailDraft?.body,
-          status: activeModal.type === 'accept' ? 'Accepted' : 'Rejected',
-          bookingId: activeModal.booking.id,
-          driverName: activeModal.booking.driverName
-        });
-        setShowEmailPreview(true);
-        triggerToast(`Request ${activeModal.type === 'accept' ? 'Accepted' : 'Rejected'} & Email Sent!`);
-        setActiveModal(null);
-        await loadData();
-      } else {
-        triggerToast('Failed to update status. Please try again.');
-      }
     } catch (err) {
-      console.error(err);
-      triggerToast('Error updating status.');
+      console.error('Error updating status in backend:', err);
     } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Simulate Incoming Driver Request
-  const handleSimulateRequest = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await bookingApi.createBooking({
-        driverName: simDriverName,
-        driverEmail: simDriverEmail,
-        driverPhone: '+91 98250 12345',
-        vehicleModel: simVehicle,
-        vehiclePlate: simPlate,
-        companyName: registeredCompany,
-        stationId: 'st_01',
-        stationName: `${registeredCompany} Supercharger Hub`,
-        slotTime: simSlotTime,
-        slotDate: new Date().toISOString().split('T')[0],
-        targetKwh: 28.0,
-        estimatedPrice: 8.40,
-        bayNumber: 'Bay 02'
-      });
-
-      if (res.success) {
-        setIsSimulateOpen(false);
-        triggerToast('⚡ New Driver Request Received in Real-Time!');
-        await loadData();
-      }
-    } catch (err) {
-      console.error(err);
-      triggerToast('Failed to create simulation request.');
+      setUpdatingId(null);
     }
   };
 
@@ -194,7 +139,6 @@ export const MobileOperatorBookingsScreen = () => {
       {/* Toast Notification */}
       {toastMsg && (
         <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 px-3.5 py-1.5 bg-slate-900 text-white text-[11px] rounded-full shadow-lg font-heading font-medium animate-fade-in flex items-center gap-1.5 backdrop-blur-xs">
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
           <span>{toastMsg}</span>
         </div>
       )}
@@ -223,7 +167,7 @@ export const MobileOperatorBookingsScreen = () => {
               <div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-[9px] uppercase tracking-wider font-mono px-2 py-0.5 rounded-md bg-white/20 font-bold backdrop-blur-xs">
-                    Real-Time Dispatch Desk
+                    Operator Dispatch Desk
                   </span>
                   <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-emerald-400 text-emerald-950 font-heading font-extrabold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-950 animate-ping" />
@@ -238,15 +182,6 @@ export const MobileOperatorBookingsScreen = () => {
                   Showing slot requests strictly for <b>{registeredCompany}</b> branches
                 </p>
               </div>
-
-              <button
-                onClick={() => setIsSimulateOpen(true)}
-                className="px-2.5 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-emerald-950 text-[10px] font-heading font-extrabold flex items-center gap-1 shadow-sm active:scale-95 transition-transform"
-                title="Send test driver booking request"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Test Req</span>
-              </button>
             </div>
 
             {/* Quick Summary Counts Row */}
@@ -274,7 +209,7 @@ export const MobileOperatorBookingsScreen = () => {
           <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-2xs">
             <div className="flex items-center justify-between mb-1.5 px-1">
               <span className="text-[10px] font-heading font-bold text-slate-700 flex items-center gap-1">
-                <Clock className="w-3 h-3 text-emerald-600" /> Time Horizon &amp; 1-Day Queue:
+                <Clock className="w-3 h-3 text-emerald-600" /> Time Horizon:
               </span>
               <span className="text-[8.5px] text-slate-500 font-medium">
                 Auto-clears daily queue · Saved forever in DB
@@ -371,18 +306,13 @@ export const MobileOperatorBookingsScreen = () => {
                     ? "No pending slot requests received today for your company. New requests will notify automatically."
                     : "No historical records match the selected status or date filters."}
                 </p>
-                <button
-                  onClick={() => setIsSimulateOpen(true)}
-                  className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-[10.5px] font-bold shadow-xs active:scale-95"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Send Test Booking Request
-                </button>
               </div>
             ) : (
               bookings.map((booking) => {
                 const isPending = booking.status === 'pending';
                 const isAccepted = booking.status === 'accepted';
                 const isRejected = booking.status === 'rejected';
+                const isBusy = updatingId === booking.id;
 
                 return (
                   <div
@@ -438,9 +368,9 @@ export const MobileOperatorBookingsScreen = () => {
                             : 'bg-rose-100 text-rose-900 border border-rose-300'
                         }`}
                       >
-                        {isPending && <AlertCircle className="w-3 h-3 text-amber-600" />}
-                        {isAccepted && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
-                        {isRejected && <XCircle className="w-3 h-3 text-rose-600" />}
+                        {isPending && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
+                        {isAccepted && <Check className="w-3 h-3 text-emerald-600" />}
+                        {isRejected && <X className="w-3 h-3 text-rose-600" />}
                         <span className="capitalize">{booking.status}</span>
                       </span>
                     </div>
@@ -487,7 +417,7 @@ export const MobileOperatorBookingsScreen = () => {
                       </div>
                     )}
 
-                    {/* Action Controls for Operator */}
+                    {/* Action Controls for Operator (Instant 1-Click Accept / Reject) */}
                     <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
                       <span className="text-[9px] font-mono text-slate-400">
                         ID: {booking.id}
@@ -497,48 +427,44 @@ export const MobileOperatorBookingsScreen = () => {
                         {isPending ? (
                           <>
                             <button
-                              onClick={() => handleOpenReject(booking)}
-                              className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10.5px] font-heading font-bold flex items-center gap-1 active:scale-95 transition-all"
+                              disabled={isBusy}
+                              onClick={() => handleUpdateStatus(booking, 'rejected')}
+                              className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10.5px] font-heading font-extrabold flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
                             >
-                              <XCircle className="w-3 h-3" />
-                              <span>Deny / Reject</span>
+                              <X className="w-3.5 h-3.5 text-rose-600 stroke-[2.5]" />
+                              <span>Reject</span>
                             </button>
 
                             <button
-                              onClick={() => handleOpenAccept(booking)}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10.5px] font-heading font-extrabold flex items-center gap-1 shadow-xs active:scale-95 transition-all"
+                              disabled={isBusy}
+                              onClick={() => handleUpdateStatus(booking, 'accepted')}
+                              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10.5px] font-heading font-black flex items-center gap-1 shadow-xs active:scale-95 transition-all cursor-pointer"
                             >
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>Accept Request</span>
+                              <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
+                              <span>Accept</span>
                             </button>
                           </>
                         ) : (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => {
-                                setLastDispatchedEmail({
-                                  recipient: booking.driverEmail,
-                                  subject: isAccepted ? `Slot Confirmed · ${booking.stationName}` : `Slot Request Update`,
-                                  body: `Status: ${booking.status.toUpperCase()}\nStation: ${booking.stationName}\nSlot: ${booking.slotDate} ${booking.slotTime}\nVehicle: ${booking.vehiclePlate}\nNotes: ${booking.operatorNotes}`,
-                                  status: isAccepted ? 'Accepted' : 'Rejected',
-                                  bookingId: booking.id,
-                                  driverName: booking.driverName
-                                });
-                                setShowEmailPreview(true);
-                              }}
-                              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-heading font-bold flex items-center gap-1"
-                            >
-                              <Mail className="w-3 h-3 text-slate-500" />
-                              <span>View Mail Log</span>
-                            </button>
-
-                            {/* Re-evaluate / Change status button */}
-                            <button
-                              onClick={() => isAccepted ? handleOpenReject(booking) : handleOpenAccept(booking)}
-                              className="px-2 py-1 rounded-lg text-[9.5px] text-slate-500 hover:text-slate-800 hover:bg-slate-100 font-semibold"
-                            >
-                              Modify
-                            </button>
+                          <div className="flex items-center gap-1.5">
+                            {isAccepted ? (
+                              <button
+                                disabled={isBusy}
+                                onClick={() => handleUpdateStatus(booking, 'rejected')}
+                                className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-heading font-bold flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+                              >
+                                <X className="w-3 h-3" />
+                                <span>Change to Reject</span>
+                              </button>
+                            ) : (
+                              <button
+                                disabled={isBusy}
+                                onClick={() => handleUpdateStatus(booking, 'accepted')}
+                                className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-heading font-bold flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+                              >
+                                <Check className="w-3 h-3" />
+                                <span>Change to Accept</span>
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -552,346 +478,6 @@ export const MobileOperatorBookingsScreen = () => {
       </div>
 
       <MobileBottomBar />
-
-      {/* ------------------------------------------------------------- */}
-      {/* ACCEPT / REJECT OPERATOR ACTION MODAL */}
-      {/* ------------------------------------------------------------- */}
-      {activeModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-3 animate-fade-in">
-          <div className="w-full max-w-[390px] bg-white rounded-3xl p-4 shadow-2xl border border-slate-200 animate-slide-up">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                {activeModal.type === 'accept' ? (
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center">
-                    <XCircle className="w-5 h-5 text-rose-600" />
-                  </div>
-                )}
-                <div>
-                  <h4 className="font-heading font-extrabold text-[14px] text-slate-900">
-                    {activeModal.type === 'accept' ? 'Confirm Slot & Allocate Bay' : 'Deny Slot Request'}
-                  </h4>
-                  <div className="text-[10px] text-slate-500">
-                    Driver: <b>{activeModal.booking.driverName}</b> ({activeModal.booking.vehiclePlate})
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setActiveModal(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="py-3 flex flex-col gap-3">
-              {activeModal.type === 'accept' && (
-                <div>
-                  <label className="block text-[10.5px] font-heading font-bold text-slate-700 mb-1.5">
-                    Assign Charging Bay:
-                  </label>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {['Bay 01', 'Bay 02', 'Bay 03', 'Bay 04'].map((bay) => (
-                      <button
-                        key={bay}
-                        type="button"
-                        onClick={() => {
-                          setSelectedBay(bay);
-                          setOperatorNote(`Allocated to ${bay} · Fast DC CCS2 Ready · 90% Verified Solar Mix`);
-                        }}
-                        className={`py-1.5 rounded-xl text-[10px] font-heading font-extrabold border transition-all ${
-                          selectedBay === bay
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-emerald-50'
-                        }`}
-                      >
-                        ⚡ {bay}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {activeModal.type === 'reject' && (
-                <div>
-                  <label className="block text-[10.5px] font-heading font-bold text-slate-700 mb-1.5">
-                    Quick Rejection Reason:
-                  </label>
-                  <div className="flex flex-col gap-1">
-                    {[
-                      'Grid peak shaving protocol in effect. Suggested off-peak window: 1:00 PM – 3:30 PM.',
-                      'Charging bay undergoing scheduled maintenance.',
-                      'Full station capacity booked for this specific time slot.'
-                    ].map((reason, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setOperatorNote(reason)}
-                        className={`p-2 rounded-xl text-left text-[10px] font-medium border transition-all ${
-                          operatorNote === reason
-                            ? 'bg-rose-50 border-rose-300 text-rose-900 font-bold'
-                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                        }`}
-                      >
-                        {reason}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-[10.5px] font-heading font-bold text-slate-700 mb-1">
-                  Operator Note &amp; Email Message to Driver:
-                </label>
-                <textarea
-                  value={operatorNote}
-                  onChange={(e) => setOperatorNote(e.target.value)}
-                  rows={2}
-                  className="app-field w-full text-xs p-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl"
-                  placeholder="Note to driver..."
-                />
-              </div>
-
-              {/* Real-time Email Alert Banner */}
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[10px] text-slate-600 flex items-center gap-2">
-                <Mail className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>
-                  Real-time notification email will be dispatched directly to <b>{activeModal.booking.driverEmail}</b>.
-                </span>
-              </div>
-            </div>
-
-            {/* Modal Actions */}
-            <div className="flex items-center gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setActiveModal(null)}
-                className="app-btn ghost flex-1 py-2 text-xs font-bold"
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmAction}
-                disabled={isSubmitting}
-                className={`app-btn flex-1 py-2 text-xs font-bold text-white shadow-md ${
-                  activeModal.type === 'accept' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-rose-600 hover:bg-rose-500'
-                }`}
-              >
-                {isSubmitting ? (
-                  <RefreshCw className="w-4 h-4 animate-spin mx-auto" />
-                ) : activeModal.type === 'accept' ? (
-                  'Confirm & Send Email'
-                ) : (
-                  'Deny & Send Email'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* REAL-TIME EMAIL DISPATCH PREVIEW MODAL */}
-      {/* ------------------------------------------------------------- */}
-      {showEmailPreview && lastDispatchedEmail && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 animate-fade-in">
-          <div className="w-full max-w-[400px] bg-white rounded-3xl p-4 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                  <Mail className="w-4 h-4 text-emerald-700" />
-                </div>
-                <div>
-                  <h4 className="font-heading font-extrabold text-[13.5px] text-slate-900">
-                    Real-Time Email Dispatched
-                  </h4>
-                  <div className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Delivered to Driver Inbox
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowEmailPreview(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto py-3 flex flex-col gap-2.5">
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">To:</span>
-                  <b className="text-slate-800 font-mono text-[11px]">{lastDispatchedEmail.recipient}</b>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Subject:</span>
-                  <b className="text-slate-900 text-[11px] truncate max-w-[220px]">{lastDispatchedEmail.subject}</b>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Status:</span>
-                  <span className={`pill-tag ${lastDispatchedEmail.status === 'Accepted' ? 'green' : 'red'} text-[9px]`}>
-                    {lastDispatchedEmail.status}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10.5px] font-heading font-bold text-slate-700 mb-1">
-                  Email Content Sent:
-                </label>
-                <div className="p-3 rounded-xl bg-slate-900 text-slate-100 font-mono text-[10px] whitespace-pre-line leading-relaxed max-h-[200px] overflow-y-auto border border-slate-800 shadow-inner">
-                  {lastDispatchedEmail.body}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-slate-100">
-              <button
-                onClick={() => setShowEmailPreview(false)}
-                className="app-btn w-full py-2 text-xs font-bold"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* SIMULATE INCOMING DRIVER REQUEST MODAL */}
-      {/* ------------------------------------------------------------- */}
-      {isSimulateOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 animate-fade-in">
-          <form
-            onSubmit={handleSimulateRequest}
-            className="w-full max-w-[390px] bg-white rounded-3xl p-4 shadow-2xl border border-slate-200"
-          >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                  <Plus className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h4 className="font-heading font-extrabold text-[14px] text-slate-900">
-                    Simulate Driver Slot Request
-                  </h4>
-                  <div className="text-[10px] text-slate-500">
-                    Creates instant real-time incoming request for {registeredCompany}
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSimulateOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="py-3 flex flex-col gap-2.5 text-xs">
-              <div>
-                <label className="block text-[10.5px] font-heading font-bold text-slate-700 mb-1">
-                  Driver Name:
-                </label>
-                <input
-                  type="text"
-                  value={simDriverName}
-                  onChange={(e) => setSimDriverName(e.target.value)}
-                  required
-                  className="app-field w-full text-xs p-2 bg-slate-50 border border-slate-200 text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10.5px] font-heading font-bold text-slate-700 mb-1">
-                  Driver Email (for live notification email):
-                </label>
-                <input
-                  type="email"
-                  value={simDriverEmail}
-                  onChange={(e) => setSimDriverEmail(e.target.value)}
-                  required
-                  className="app-field w-full text-xs p-2 bg-slate-50 border border-slate-200 text-slate-800"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10.5px] font-heading font-bold text-slate-700 mb-1">
-                    Vehicle Model:
-                  </label>
-                  <input
-                    type="text"
-                    value={simVehicle}
-                    onChange={(e) => setSimVehicle(e.target.value)}
-                    required
-                    className="app-field w-full text-xs p-2 bg-slate-50 border border-slate-200 text-slate-800"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10.5px] font-heading font-bold text-slate-700 mb-1">
-                    Plate Number:
-                  </label>
-                  <input
-                    type="text"
-                    value={simPlate}
-                    onChange={(e) => setSimPlate(e.target.value)}
-                    required
-                    className="app-field w-full text-xs p-2 bg-slate-50 border border-slate-200 text-slate-800"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10.5px] font-heading font-bold text-slate-700 mb-1">
-                  Preferred Time Slot:
-                </label>
-                <div className="grid grid-cols-4 gap-1">
-                  {['10:00 AM', '11:30 AM', '02:00 PM', '04:30 PM'].map((slot) => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setSimSlotTime(slot)}
-                      className={`py-1.5 rounded-lg text-[9.5px] font-heading font-bold border transition-all ${
-                        simSlotTime === slot
-                          ? 'bg-emerald-600 text-white border-emerald-600'
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-emerald-50'
-                      }`}
-                    >
-                      {slot}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setIsSimulateOpen(false)}
-                className="app-btn ghost flex-1 py-2 text-xs font-bold"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="app-btn flex-1 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md"
-              >
-                Submit Test Request
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 };

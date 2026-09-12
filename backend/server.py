@@ -18,6 +18,14 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timedelta
 from urllib.parse import urlparse, parse_qs
 
+try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
 PORT = 5000
 DB_FILE = os.path.join(os.path.dirname(__file__), 'database.sqlite')
 TARGET_ADMIN_EMAIL = 'krushilgadhiya138@gmail.com'
@@ -167,12 +175,17 @@ def send_inbox_optimized_email(to_email: str, subject: str, plain_text: str, htm
     Sends anti-spam optimized email with standard RFC 2822 MIME headers
     to maximize deliverability directly into User's Inbox (not Spam).
     """
-    print(f"\n================ [EMAIL DISPATCH TO INBOX] ================", flush=True)
-    print(f"TO: {to_email}", flush=True)
-    print(f"ADMIN CC: {TARGET_ADMIN_EMAIL}", flush=True)
-    print(f"SUBJECT: {subject}", flush=True)
-    print(f"CONTENT PREVIEW:\n{plain_text}", flush=True)
-    print(f"===========================================================\n", flush=True)
+    try:
+        safe_subject = subject.encode('ascii', 'replace').decode('ascii')
+        safe_preview = plain_text.encode('ascii', 'replace').decode('ascii')[:200]
+        print(f"\n================ [EMAIL DISPATCH TO INBOX] ================", flush=True)
+        print(f"TO: {to_email}", flush=True)
+        print(f"ADMIN CC: {TARGET_ADMIN_EMAIL}", flush=True)
+        print(f"SUBJECT: {safe_subject}", flush=True)
+        print(f"CONTENT PREVIEW:\n{safe_preview}...", flush=True)
+        print(f"===========================================================\n", flush=True)
+    except Exception:
+        pass
 
     # Record in SQLite email_logs
     try:
@@ -855,14 +868,22 @@ EV GreenCharge Team"""
             # 9. OPERATOR ACCEPT / REJECT SLOT BOOKING & EMAIL DRIVER
             # -------------------------------------------------------------
             elif self.path == '/api/bookings/update-status':
-                booking_id = body.get('bookingId')
-                new_status = (body.get('status') or '').strip().lower() # 'accepted' | 'rejected'
-                bay_number = body.get('bayNumber', 'Bay 02')
-                operator_notes = body.get('operatorNotes', '').strip()
-                operator_name = body.get('operatorName', 'Station Manager')
+                booking_id = (body.get('bookingId') or body.get('id') or body.get('booking_id') or '').strip()
+                raw_status = (body.get('status') or body.get('action') or '').strip().lower()
+                
+                if raw_status in ['accept', 'accepted', 'confirm', 'confirmed', 'approve', 'approved']:
+                    new_status = 'accepted'
+                elif raw_status in ['reject', 'rejected', 'deny', 'denied', 'decline', 'declined']:
+                    new_status = 'rejected'
+                else:
+                    new_status = raw_status
+
+                bay_number = body.get('bayNumber') or body.get('bay_number') or 'Bay 02'
+                operator_notes = (body.get('operatorNotes') or body.get('operator_notes') or '').strip()
+                operator_name = body.get('operatorName') or body.get('operator_name') or 'Station Manager'
 
                 if not booking_id or new_status not in ['accepted', 'rejected']:
-                    return self._send_json(400, {'error': 'Valid bookingId and status (accepted/rejected) required'})
+                    return self._send_json(400, {'error': f'Valid bookingId ({booking_id}) and status (accepted/rejected, got: {raw_status}) required'})
 
                 conn = sqlite3.connect(DB_FILE)
                 cursor = conn.cursor()
