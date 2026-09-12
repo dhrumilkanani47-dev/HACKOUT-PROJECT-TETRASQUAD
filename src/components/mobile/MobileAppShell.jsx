@@ -1,17 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+<<<<<<< HEAD
 import { Layers, ChevronRight, Smartphone, Monitor } from 'lucide-react';
+=======
+import { Layers, ChevronRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+>>>>>>> fdfc26171042111c33bfb0825089fe0715a3c9e9
 
 export const MobileAppShell = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
+<<<<<<< HEAD
   const [deviceMode, setDeviceMode] = useState('framed'); // 'framed' | 'fluid'
+=======
+  const { isAuthenticated, user } = useAuth();
+>>>>>>> fdfc26171042111c33bfb0825089fe0715a3c9e9
 
   useEffect(() => {
     document.documentElement.classList.remove('dark');
   }, []);
 
   const screens = [
+<<<<<<< HEAD
     { num: '01', name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' },
     { num: '02', name: 'Login', path: '/login', match: (p) => p === '/login' || p === '/signup' },
     { num: '03', name: 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
@@ -24,6 +34,20 @@ export const MobileAppShell = ({ children }) => {
     { num: '11', name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') },
     { num: '12', name: 'Operator Dashboard', path: '/operator', match: (p) => p.startsWith('/operator') },
     { num: '13', name: 'Profile & Settings', path: '/profile', match: (p) => p.startsWith('/profile') || p.startsWith('/settings') },
+=======
+    { name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' },
+    ...(!isAuthenticated ? [{ name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' }] : []),
+    { name: 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
+    { name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
+    { name: 'Station Details', path: '/station/st_01', match: (p) => p.startsWith('/station') },
+    { name: 'Smart Charging AI', path: '/smart-charge', match: (p) => p.startsWith('/smart-charge') },
+    { name: 'Live Charging Session', path: '/charging', match: (p) => p.startsWith('/charging') },
+    { name: 'Price & Green Score', path: '/price-score', match: (p) => p.startsWith('/price-score') },
+    { name: 'Charging History', path: '/history', match: (p) => p.startsWith('/history') || p.startsWith('/activity') },
+    { name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') },
+    ...(isAuthenticated && user?.role === 'operator' ? [{ name: 'Operator Dashboard', path: '/operator', match: (p) => p.startsWith('/operator') }] : []),
+    { name: 'Profile & Settings', path: '/profile', match: (p) => p.startsWith('/profile') || p.startsWith('/settings') },
+>>>>>>> fdfc26171042111c33bfb0825089fe0715a3c9e9
   ];
 
   return (
@@ -51,15 +75,6 @@ export const MobileAppShell = ({ children }) => {
                 }`}
               >
                 <div className="flex items-center gap-3 truncate">
-                  <span
-                    className={`text-[11px] font-mono px-2 py-0.5 rounded-md font-semibold ${
-                      isActive
-                        ? 'bg-emerald-600/30 text-slate-950'
-                        : 'bg-slate-800/90 text-slate-400'
-                    }`}
-                  >
-                    {screen.num}
-                  </span>
                   <span className="text-[13px] truncate">{screen.name}</span>
                 </div>
                 <ChevronRight

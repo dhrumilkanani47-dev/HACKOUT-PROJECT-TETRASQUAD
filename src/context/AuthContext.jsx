@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
     return INITIAL_USER;
   });
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('egc_auth_token') ? true : true; // Default true for frictionless testing, can toggle
+    return Boolean(localStorage.getItem('egc_auth_token'));
   });
   const [isLoading, setIsLoading] = useState(false);
 

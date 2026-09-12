@@ -18,6 +18,23 @@ import { MobileHistoryScreen } from './pages/mobile/MobileHistoryScreen';
 import { MobileNotificationsScreen } from './pages/mobile/MobileNotificationsScreen';
 import { MobileOperatorDashboardScreen } from './pages/mobile/MobileOperatorDashboardScreen';
 import { MobileProfileScreen } from './pages/mobile/MobileProfileScreen';
+import { useAuth } from './context/AuthContext';
+
+const RequireAuth = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
+
+const RequireOperator = ({ children }) => {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return user?.role === 'operator' ? children : <Navigate to="/" replace />;
+};
+
+const PublicOnly = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Navigate to="/" replace /> : children;
+};
 
 export const App = () => {
   return (
@@ -30,42 +47,42 @@ export const App = () => {
               <Route path="/splash" element={<MobileSplashScreen />} />
 
               {/* Screen 02: Login / Sign Up */}
-              <Route path="/login" element={<MobileLoginScreen />} />
-              <Route path="/signup" element={<MobileLoginScreen />} />
+              <Route path="/login" element={<PublicOnly><MobileLoginScreen /></PublicOnly>} />
+              <Route path="/signup" element={<PublicOnly><MobileLoginScreen /></PublicOnly>} />
 
               {/* Screen 03: Home / Dashboard */}
-              <Route path="/" element={<MobileHomeScreen />} />
-              <Route path="/dashboard" element={<MobileHomeScreen />} />
+              <Route path="/" element={<RequireAuth><MobileHomeScreen /></RequireAuth>} />
+              <Route path="/dashboard" element={<RequireAuth><MobileHomeScreen /></RequireAuth>} />
 
               {/* Screen 04: Map & Charging Stations */}
-              <Route path="/map" element={<MobileMapScreen />} />
+              <Route path="/map" element={<RequireAuth><MobileMapScreen /></RequireAuth>} />
 
               {/* Screen 05: Station Details */}
-              <Route path="/station/:id" element={<MobileStationDetailsScreen />} />
+              <Route path="/station/:id" element={<RequireAuth><MobileStationDetailsScreen /></RequireAuth>} />
 
               {/* Screen 07: Smart Charging */}
-              <Route path="/smart-charge" element={<MobileSmartChargingScreen />} />
+              <Route path="/smart-charge" element={<RequireAuth><MobileSmartChargingScreen /></RequireAuth>} />
 
               {/* Screen 08: Charging Session Progress */}
-              <Route path="/charging" element={<MobileChargingSessionScreen />} />
-              <Route path="/charging/:stationId" element={<MobileChargingSessionScreen />} />
+              <Route path="/charging" element={<RequireAuth><MobileChargingSessionScreen /></RequireAuth>} />
+              <Route path="/charging/:stationId" element={<RequireAuth><MobileChargingSessionScreen /></RequireAuth>} />
 
               {/* Screen 09: Price & Green Score */}
-              <Route path="/price-score" element={<MobilePriceGreenScoreScreen />} />
+              <Route path="/price-score" element={<RequireAuth><MobilePriceGreenScoreScreen /></RequireAuth>} />
 
               {/* Screen 10: Charging History */}
-              <Route path="/history" element={<MobileHistoryScreen />} />
-              <Route path="/activity" element={<MobileHistoryScreen />} />
+              <Route path="/history" element={<RequireAuth><MobileHistoryScreen /></RequireAuth>} />
+              <Route path="/activity" element={<RequireAuth><MobileHistoryScreen /></RequireAuth>} />
 
               {/* Screen 11: Notifications & Price Alert */}
-              <Route path="/notifications" element={<MobileNotificationsScreen />} />
+              <Route path="/notifications" element={<RequireAuth><MobileNotificationsScreen /></RequireAuth>} />
 
               {/* Screen 12: Operator Dashboard */}
-              <Route path="/operator" element={<MobileOperatorDashboardScreen />} />
+              <Route path="/operator" element={<RequireOperator><MobileOperatorDashboardScreen /></RequireOperator>} />
 
               {/* Screen 13: Profile & Settings */}
-              <Route path="/profile" element={<MobileProfileScreen />} />
-              <Route path="/settings" element={<MobileProfileScreen />} />
+              <Route path="/profile" element={<RequireAuth><MobileProfileScreen /></RequireAuth>} />
+              <Route path="/settings" element={<RequireAuth><MobileProfileScreen /></RequireAuth>} />
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
