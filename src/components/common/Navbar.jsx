@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Zap, Sparkles, MapPin, Car, Activity, User, Shield, Moon, Sun, Bell } from 'lucide-react';
+import { Zap, Sparkles, MapPin, Car, Activity, User, Moon, Sun, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const Navbar = () => {
-  const { user, isAuthenticated, toggleRole } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [isDark, setIsDark] = useState(false);
   const navigate = useNavigate();
 
@@ -100,16 +100,6 @@ export const Navbar = () => {
 
         {/* Right Action Icons & Profile */}
         <div className="flex items-center gap-2">
-          {/* Role Pill Switch */}
-          <button
-            onClick={toggleRole}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-heading font-semibold bg-white dark:bg-paper-cardDark border border-forest/15 hover:border-forest text-forest dark:text-emerald-400 shadow-sm transition-all"
-            title="Toggle between Driver and Operator mode"
-          >
-            <Shield className="w-3 h-3 text-leaf" />
-            <span>{user?.role === 'operator' ? 'Operator' : 'Driver'}</span>
-          </button>
-
           {/* Location Badge */}
           <Link
             to="/settings"

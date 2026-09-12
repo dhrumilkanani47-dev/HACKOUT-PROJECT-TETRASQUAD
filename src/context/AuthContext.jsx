@@ -68,13 +68,10 @@ export const AuthProvider = ({ children }) => {
     return updated;
   };
 
-  const toggleRole = () => {
-    const newRole = user.role === 'driver' ? 'operator' : 'driver';
-    updateProfile({ role: newRole });
-  };
-
   const logout = () => {
     localStorage.removeItem('egc_auth_token');
+    localStorage.removeItem('egc_user_profile');
+    setUser(null);
     setIsAuthenticated(false);
   };
 
@@ -87,8 +84,7 @@ export const AuthProvider = ({ children }) => {
       signup,
       logout,
       updateProfile,
-      updateLocation,
-      toggleRole
+      updateLocation
     }}>
       {children}
     </AuthContext.Provider>
