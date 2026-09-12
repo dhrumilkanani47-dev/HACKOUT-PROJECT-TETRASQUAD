@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --forest: #0F3D2E;
+    --forest-2: #155C41;
+    --leaf: #3FA66B;
+    --amber: #E8A33D;
+    --sky: #2E7BB6;
+    --paper: #F6F4EC;
+    --card: #FFFFFF;
+    --card-subtle: #FBFAF6;
+    --ink: #16201B;
+    --ink-soft: #57655C;
+    --line: rgba(15, 61, 46, 0.12);
+    --coal: #B0472F;
+  }
+
+  .dark {
+    --forest: #1DB978;
+    --forest-2: #155C41;
+    --leaf: #3FA66B;
+    --amber: #F0B354;
+    --sky: #4CA5E8;
+    --paper: #0B0F0D;
+    --card: #121815;
+    --card-subtle: #16221C;
+    --ink: #F0F4F2;
+    --ink-soft: #9BAEA3;
+    --line: rgba(255, 255, 255, 0.08);
+    --coal: #E06349;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 61, 46, 0.2);
+  border-radius: 999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Glassmorphism classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--line);
+}
+.dark .glass-panel {
+  background: rgba(18, 24, 21, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-nav {
+  background: rgba(246, 244, 236, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--line);
+}
+.dark .glass-nav {
+  background: rgba(11, 15, 13, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Pulsing Particle flow animation */
+@keyframes flow-right {
+  0% { transform: translateX(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+.animate-flow-right {
+  animation: flow-right 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Safe area insets for modern mobile devices */
+.safe-pb {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.safe-pt {
+  padding-top: env(safe-area-inset-top, 16px);
+}
