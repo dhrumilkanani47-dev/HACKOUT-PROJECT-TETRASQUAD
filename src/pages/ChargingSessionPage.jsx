@@ -79,7 +79,7 @@ export const ChargingSessionPage = () => {
   return (
     <div className="min-h-screen bg-paper text-ink dark:bg-paper-dark dark:text-white pb-24 md:pb-12">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6 space-y-6">
-        
+
         {/* Top Header */}
         <div className="flex items-center gap-3">
           <button
