@@ -1,13 +1,30 @@
 import { CURRENT_LIVE_METRICS, HOURLY_GRID_DATA } from '../utils/mockData';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { API_BASE } from './config';
 
 export const pricingApi = {
   async getLiveMetrics() {
     if (API_BASE) {
       try {
-        const res = await fetch(`${API_BASE}/pricing/live`);
-        if (res.ok) return await res.json();
+        const res = await fetch(`${API_BASE}/pricing/best-window`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data?.currentPrice) {
+            return {
+              ...CURRENT_LIVE_METRICS,
+              pricePerKwh: json.data.currentPrice.estimatedPricePerKWh,
+              priceType: json.data.currentPrice.label || 'Estimated charging price',
+              greenScore: json.data.currentPrice.greenScore,
+              status: json.data.currentPrice.status,
+              smartChargingWindow: {
+                bestWindow: json.data.bestWindow,
+                bestPrice: json.data.bestPrice,
+                bestRenewable: json.data.bestRenewable,
+                bestGreenScore: json.data.bestGreenScore,
+                saving: json.data.estimatedSavingInr,
+              },
+            };
+          }
+        }
       } catch (e) {
         console.warn('pricingApi: fallback to mock live data', e);
       }
@@ -18,8 +35,13 @@ export const pricingApi = {
   async getHourlyCurve() {
     if (API_BASE) {
       try {
-        const res = await fetch(`${API_BASE}/pricing/hourly`);
-        if (res.ok) return await res.json();
+        const res = await fetch(`${API_BASE}/pricing/forecast`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data?.forecast) {
+            return json.data.forecast;
+          }
+        }
       } catch (e) {
         console.warn('pricingApi: fallback to mock curve', e);
       }

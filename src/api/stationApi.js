@@ -1,6 +1,5 @@
 import { STATIONS_DATA, HOSPITALS_DATA } from '../utils/mockData';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { API_BASE } from './config';
 
 export const stationApi = {
   async getStations(filters = {}) {
