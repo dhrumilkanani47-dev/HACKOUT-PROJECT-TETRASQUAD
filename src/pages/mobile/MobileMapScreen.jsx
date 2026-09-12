@@ -70,7 +70,7 @@ export const MobileMapScreen = () => {
     stationsOnMap.find((s) => s.id === selectedStationId) || stationsOnMap[0];
 
   return (
-    <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-card dark:bg-[#121815] select-none">
+    <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
       <div className="flex-1 flex flex-col overflow-hidden">
         <MobileStatusBar />
         <MobileTopNav title="Find Charging Stations" onBack={() => navigate('/')} />
@@ -84,9 +84,9 @@ export const MobileMapScreen = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search location"
-              className="app-field w-full text-xs pl-8 pr-3 py-2"
+              className="app-field w-full text-xs pl-8 pr-3 py-2 bg-slate-50 border border-green-200 text-slate-800 focus:bg-white"
             />
-            <Search className="w-3.5 h-3.5 text-ink-soft dark:text-ink-muted absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Filter pills row matching attachment */}
@@ -94,7 +94,7 @@ export const MobileMapScreen = () => {
             <button
               onClick={() => setActiveFilter('nearby')}
               className={`pill-tag sky transition-all cursor-pointer ${
-                activeFilter === 'nearby' ? 'ring-2 ring-sky' : 'opacity-80'
+                activeFilter === 'nearby' ? 'ring-2 ring-blue-400 font-bold' : 'opacity-80'
               }`}
             >
               Nearby
@@ -102,7 +102,7 @@ export const MobileMapScreen = () => {
             <button
               onClick={() => setActiveFilter('available')}
               className={`pill-tag green transition-all cursor-pointer ${
-                activeFilter === 'available' ? 'ring-2 ring-leaf' : 'opacity-80'
+                activeFilter === 'available' ? 'ring-2 ring-emerald-500 font-bold' : 'opacity-80'
               }`}
             >
               Available
@@ -110,7 +110,7 @@ export const MobileMapScreen = () => {
             <button
               onClick={() => setActiveFilter('fast')}
               className={`pill-tag amber transition-all cursor-pointer ${
-                activeFilter === 'fast' ? 'ring-2 ring-amber' : 'opacity-80'
+                activeFilter === 'fast' ? 'ring-2 ring-amber-400 font-bold' : 'opacity-80'
               }`}
             >
               Fast DC
@@ -119,12 +119,12 @@ export const MobileMapScreen = () => {
 
           {/* Simulated Mobile Map matching attachment styling */}
           <div
-            className="relative flex-1 rounded-2xl overflow-hidden border border-forest/15 dark:border-white/10 min-h-[220px]"
+            className="relative flex-1 rounded-2xl overflow-hidden border border-green-200 min-h-[220px]"
             style={{
               background: `
                 radial-gradient(circle at 25% 30%, #DCEBDF 0, transparent 40%),
                 radial-gradient(circle at 75% 70%, #DCE6EF 0, transparent 45%),
-                #EEF0E6
+                #F4F6EE
               `,
             }}
           >
@@ -161,17 +161,17 @@ export const MobileMapScreen = () => {
           {/* Active Station Preview Card with Link to Station Details (Screen 05) */}
           <div
             onClick={() => navigate(`/station/${selectedStation.id}`)}
-            className="app-card py-2 px-3 flex items-center justify-between cursor-pointer hover:border-forest/40 transition-all border border-forest/20 shadow-xs"
+            className="app-card py-2.5 px-3 flex items-center justify-between cursor-pointer hover:border-emerald-400 transition-all border border-green-200 bg-white shadow-xs"
           >
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-forest/10 dark:bg-emerald-500/20 text-forest dark:text-emerald-400 flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-green-100 text-emerald-800 flex items-center justify-center font-bold">
                 <Zap className="w-4 h-4" />
               </div>
               <div>
-                <div className="font-heading font-bold text-xs text-ink dark:text-white">
+                <div className="font-heading font-extrabold text-xs text-slate-900">
                   {selectedStation.name}
                 </div>
-                <div className="text-[10px] text-ink-soft dark:text-ink-muted">
+                <div className="text-[10px] text-slate-500">
                   {selectedStation.city} · {selectedStation.distance} · {selectedStation.available} bays
                 </div>
               </div>
@@ -179,14 +179,14 @@ export const MobileMapScreen = () => {
 
             <div className="flex items-center gap-1.5 text-right">
               <div>
-                <div className="font-heading font-bold text-xs text-forest dark:text-emerald-400">
+                <div className="font-heading font-extrabold text-xs text-emerald-700">
                   {selectedStation.price}
                 </div>
-                <div className="text-[9px] text-emerald-600 dark:text-emerald-300 font-semibold">
+                <div className="text-[9.5px] text-emerald-700 font-semibold">
                   {selectedStation.renewable} green
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-ink-soft" />
+              <ChevronRight className="w-4 h-4 text-slate-400" />
             </div>
           </div>
         </div>

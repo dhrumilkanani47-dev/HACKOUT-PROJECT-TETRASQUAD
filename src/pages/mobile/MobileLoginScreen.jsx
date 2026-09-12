@@ -37,34 +37,34 @@ export const MobileLoginScreen = () => {
   };
 
   return (
-    <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-card dark:bg-[#121815] select-none">
+    <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
       <div>
         <MobileStatusBar />
 
         <div className="px-5 pt-3 pb-6 flex flex-col gap-3">
           {/* Header Title & Subtitle */}
           <div className="mt-2">
-            <h2 className="font-heading font-bold text-[20px] text-forest dark:text-emerald-400">
+            <h2 className="font-heading font-extrabold text-[22px] text-slate-900">
               Welcome back
             </h2>
-            <p className="text-[11.5px] text-ink-soft dark:text-ink-muted -mt-0.5">
+            <p className="text-[11.5px] text-slate-500 -mt-0.5">
               Continue your green charging journey
             </p>
           </div>
 
           {/* Role Choice Selector matching attachment */}
           <div className="my-1">
-            <label className="text-[10.5px] font-heading font-semibold text-ink-soft dark:text-ink-muted mb-1 block">
+            <label className="text-[10.5px] font-heading font-semibold text-slate-700 mb-1 block">
               Choose your role:
             </label>
-            <div className="grid grid-cols-2 gap-2 p-1 bg-paper dark:bg-paper-cardDark rounded-xl border border-forest/10 dark:border-white/10">
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-50 rounded-xl border border-green-200">
               <button
                 type="button"
                 onClick={() => handleRoleChange('driver')}
-                className={`py-1.5 text-xs font-heading font-semibold rounded-lg transition-all ${
+                className={`py-1.5 text-xs font-heading font-bold rounded-lg transition-all ${
                   role === 'driver'
-                    ? 'bg-forest text-white shadow-xs'
-                    : 'text-ink-soft dark:text-ink-muted hover:text-forest'
+                    ? 'bg-emerald-400 text-emerald-950 shadow-sm border border-emerald-500'
+                    : 'text-slate-600 hover:text-emerald-800'
                 }`}
               >
                 🚗 EV Driver
@@ -72,10 +72,10 @@ export const MobileLoginScreen = () => {
               <button
                 type="button"
                 onClick={() => handleRoleChange('operator')}
-                className={`py-1.5 text-xs font-heading font-semibold rounded-lg transition-all ${
+                className={`py-1.5 text-xs font-heading font-bold rounded-lg transition-all ${
                   role === 'operator'
-                    ? 'bg-forest text-white shadow-xs'
-                    : 'text-ink-soft dark:text-ink-muted hover:text-forest'
+                    ? 'bg-emerald-400 text-emerald-950 shadow-sm border border-emerald-500'
+                    : 'text-slate-600 hover:text-emerald-800'
                 }`}
               >
                 ⚡ Station Operator
@@ -86,7 +86,7 @@ export const MobileLoginScreen = () => {
           {/* Form Fields matching attachment */}
           <form onSubmit={handleLogin} className="flex flex-col gap-2.5 mt-1">
             <div>
-              <label className="text-[10px] text-ink-soft dark:text-ink-muted mb-1 block">
+              <label className="text-[10px] text-slate-700 font-semibold mb-1 block">
                 Email Address
               </label>
               <input
@@ -100,7 +100,7 @@ export const MobileLoginScreen = () => {
             </div>
 
             <div>
-              <label className="text-[10px] text-ink-soft dark:text-ink-muted mb-1 block">
+              <label className="text-[10px] text-slate-700 font-semibold mb-1 block">
                 Password
               </label>
               <input
@@ -140,14 +140,14 @@ export const MobileLoginScreen = () => {
           </div>
 
           {/* Subtext info */}
-          <div className="text-center text-[10.5px] text-ink-soft dark:text-ink-muted mt-2">
+          <div className="text-center text-[10.5px] text-slate-500 mt-2">
             Driver or Operator — choose your role
           </div>
         </div>
       </div>
 
       {/* Bottom hint */}
-      <div className="pb-4 text-center text-[10px] text-ink-soft/60">
+      <div className="pb-4 text-center text-[10px] text-slate-400">
         Demo mode active • Instant Login enabled
       </div>
     </div>
