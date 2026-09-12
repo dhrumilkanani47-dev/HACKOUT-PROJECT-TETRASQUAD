@@ -58,11 +58,11 @@ export const MobileOperatorBookingsScreen = () => {
           timeRange: timeRange,
           search: searchQuery
         }),
-        bookingApi.getStats({ company: registeredCompany })
+        bookingApi.getStats({ company: registeredCompany, timeRange: timeRange })
       ]);
 
       setBookings(list || []);
-      setStats(statsData || { total: 0, pending: 0, accepted: 0, rejected: 0, todayActive: 0 });
+      setStats(statsData || { total: 0, pending: 0, accepted: 0, rejected: 0, timeRange });
     } catch (err) {
       console.error('Error loading bookings:', err);
     } finally {
@@ -184,24 +184,67 @@ export const MobileOperatorBookingsScreen = () => {
               </div>
             </div>
 
-            {/* Quick Summary Counts Row */}
+            {/* Quick Summary Counts Row (Clickable filter triggers) */}
             <div className="mt-3 pt-2.5 border-t border-white/15 grid grid-cols-4 gap-1.5 text-center">
-              <div className="p-1 rounded-lg bg-white/10">
-                <div className="text-[8.5px] text-emerald-100">All Total</div>
-                <div className="font-heading text-[13px] font-black">{stats.total}</div>
-              </div>
-              <div className="p-1 rounded-lg bg-amber-400/20 border border-amber-300/30 text-amber-200">
-                <div className="text-[8.5px]">Pending</div>
-                <div className="font-heading text-[13px] font-black">{stats.pending}</div>
-              </div>
-              <div className="p-1 rounded-lg bg-emerald-400/20 border border-emerald-300/30 text-emerald-200">
-                <div className="text-[8.5px]">Accepted</div>
-                <div className="font-heading text-[13px] font-black">{stats.accepted}</div>
-              </div>
-              <div className="p-1 rounded-lg bg-rose-400/20 border border-rose-300/30 text-rose-200">
-                <div className="text-[8.5px]">Rejected</div>
-                <div className="font-heading text-[13px] font-black">{stats.rejected}</div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('all')}
+                className={`p-1.5 rounded-xl transition-all active:scale-95 text-left flex flex-col items-center justify-center ${
+                  statusFilter === 'all'
+                    ? 'bg-white text-slate-900 shadow-md ring-2 ring-emerald-300'
+                    : 'bg-white/10 hover:bg-white/20 text-white'
+                }`}
+              >
+                <div className={`text-[8.5px] font-bold ${statusFilter === 'all' ? 'text-slate-600' : 'text-emerald-100'}`}>
+                  All Total
+                </div>
+                <div className="font-heading text-[14px] font-black">{stats.total}</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter('pending')}
+                className={`p-1.5 rounded-xl transition-all active:scale-95 text-left flex flex-col items-center justify-center ${
+                  statusFilter === 'pending'
+                    ? 'bg-amber-400 text-amber-950 shadow-md ring-2 ring-amber-300'
+                    : 'bg-amber-400/20 border border-amber-300/30 text-amber-200 hover:bg-amber-400/30'
+                }`}
+              >
+                <div className={`text-[8.5px] font-bold ${statusFilter === 'pending' ? 'text-amber-950' : 'text-amber-200'}`}>
+                  Pending
+                </div>
+                <div className="font-heading text-[14px] font-black">{stats.pending}</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter('accepted')}
+                className={`p-1.5 rounded-xl transition-all active:scale-95 text-left flex flex-col items-center justify-center ${
+                  statusFilter === 'accepted'
+                    ? 'bg-emerald-400 text-emerald-950 shadow-md ring-2 ring-emerald-300'
+                    : 'bg-emerald-400/20 border border-emerald-300/30 text-emerald-200 hover:bg-emerald-400/30'
+                }`}
+              >
+                <div className={`text-[8.5px] font-bold ${statusFilter === 'accepted' ? 'text-emerald-950' : 'text-emerald-200'}`}>
+                  Accepted
+                </div>
+                <div className="font-heading text-[14px] font-black">{stats.accepted}</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatusFilter('rejected')}
+                className={`p-1.5 rounded-xl transition-all active:scale-95 text-left flex flex-col items-center justify-center ${
+                  statusFilter === 'rejected'
+                    ? 'bg-rose-400 text-rose-950 shadow-md ring-2 ring-rose-300'
+                    : 'bg-rose-400/20 border border-rose-300/30 text-rose-200 hover:bg-rose-400/30'
+                }`}
+              >
+                <div className={`text-[8.5px] font-bold ${statusFilter === 'rejected' ? 'text-rose-950' : 'text-rose-200'}`}>
+                  Rejected
+                </div>
+                <div className="font-heading text-[14px] font-black">{stats.rejected}</div>
+              </button>
             </div>
           </div>
 

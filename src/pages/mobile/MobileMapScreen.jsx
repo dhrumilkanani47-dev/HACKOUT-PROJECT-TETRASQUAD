@@ -58,6 +58,7 @@ export const MobileMapScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showTopPickBanner, setShowTopPickBanner] = useState(true);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
   const isOperator = user?.role === 'operator';
   const operatorCompany = user?.companyName?.trim() || 'Tata Power';
 

@@ -61,22 +61,18 @@ export const InteractiveMap = ({
   onSelectVehicle,
   className = '',
 }) => {
-  let activeVehicle = {
-    name: 'Nexon EV',
-    brand: 'Tata',
-    type: 'SUV',
-    plateNumber: 'GJ 01 EV 4821',
-    currentBatteryPct: 76,
-    currentRangeEstimate: 248
-  };
-
-  try {
-    const vehCtx = useVehicles();
-    if (vehCtx?.primaryVehicle) activeVehicle = vehCtx.primaryVehicle;
-    else if (vehCtx?.vehicles?.[0]) activeVehicle = vehCtx.vehicles[0];
-  } catch (e) {
-    // Safe fallback if outside provider
-  }
+  const vehCtx = useVehicles();
+  const activeVehicle =
+    vehCtx?.primaryVehicle ||
+    vehCtx?.vehicles?.[0] ||
+    vehicles?.[0] || {
+      name: 'Nexon EV',
+      brand: 'Tata',
+      type: 'SUV',
+      plateNumber: 'GJ 01 EV 4821',
+      currentBatteryPct: 76,
+      currentRangeEstimate: 248,
+    };
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -309,11 +305,12 @@ export const InteractiveMap = ({
     // Render Clean Station Markers
     if (Array.isArray(stations)) {
       stations.forEach((st) => {
-        const isSelected = selectedStation?.id === st.id;
-        const isRecommended = recommendedStationId && recommendedStationId === st.id;
         const lat = st.lat || st.latitude || 23.1884;
         const lng = st.lng || st.longitude || 72.6289;
-        const price = st.pricePerKwh ? `₹${st.pricePerKwh.toFixed(2)}` : (st.price || '₹8.40');
+        const isSelected = selectedStation?.id === st.id;
+        const isRecommended = recommendedStationId && recommendedStationId === st.id;
+        const rawPrice = parseFloat(st.pricePerKwh ?? (typeof st.price === 'string' ? st.price.replace(/[^0-9.]/g, '') : st.price) ?? 8.40);
+        const price = !isNaN(rawPrice) ? `₹${rawPrice.toFixed(2)}` : (st.price || '₹8.40');
         const isFast = st.isFast || (st.powerKw && st.powerKw >= 50);
 
         const markerHtml = `

@@ -26,10 +26,11 @@ export const bookingApi = {
     return [];
   },
 
-  async getStats({ company = '' } = {}) {
+  async getStats({ company = '', timeRange = 'today' } = {}) {
     try {
       const params = new URLSearchParams();
       if (company && company !== 'all') params.append('company', company);
+      if (timeRange) params.append('timeRange', timeRange);
 
       const res = await fetch(`${API_BASE}/bookings/stats?${params.toString()}`);
       if (res.ok) {
@@ -38,7 +39,7 @@ export const bookingApi = {
     } catch (err) {
       console.warn('[bookingApi] Stats fetch error:', err);
     }
-    return { total: 0, pending: 0, accepted: 0, rejected: 0, todayActive: 0 };
+    return { total: 0, pending: 0, accepted: 0, rejected: 0, timeRange };
   },
 
   async createBooking(bookingData) {

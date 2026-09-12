@@ -299,7 +299,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             # Parameters: company, status, timeRange (today | yesterday | past7days | all), search
             company = query_params.get('company', [''])[0].strip()
             status = query_params.get('status', [''])[0].strip().lower()
-            time_range = query_params.get('timeRange', [''])[0].strip().lower()
+            time_range = query_params.get('timeRange', ['today'])[0].strip().lower()
             search = query_params.get('search', [''])[0].strip().lower()
 
             today_str = datetime.now().strftime('%Y-%m-%d')
@@ -318,14 +318,14 @@ class RequestHandler(BaseHTTPRequestHandler):
                 params.append(status)
 
             if time_range == 'today':
-                query += " AND slot_date = ?"
-                params.append(today_str)
+                query += " AND (slot_date = ? OR date(created_at) = ?)"
+                params.extend([today_str, today_str])
             elif time_range == 'yesterday':
-                query += " AND slot_date = ?"
-                params.append(yesterday_str)
+                query += " AND (slot_date = ? OR date(created_at) = ?)"
+                params.extend([yesterday_str, yesterday_str])
             elif time_range == 'past7days':
-                query += " AND slot_date >= ?"
-                params.append(seven_days_ago)
+                query += " AND (slot_date >= ? OR date(created_at) >= ?)"
+                params.extend([seven_days_ago, seven_days_ago])
 
             if search:
                 query += " AND (LOWER(driver_name) LIKE ? OR LOWER(vehicle_plate) LIKE ? OR LOWER(station_name) LIKE ?)"
@@ -359,20 +359,34 @@ class RequestHandler(BaseHTTPRequestHandler):
                 'operatorNotes': r[15],
                 'createdAt': r[16],
                 'updatedAt': r[17],
-                'isToday': r[10] == today_str
+                'isToday': (r[10] == today_str or (r[16] and r[16].startswith(today_str)))
             } for r in rows]
 
             self._send_json(200, {'bookings': bookings, 'count': len(bookings)})
 
         elif path == '/api/bookings/stats':
             company = query_params.get('company', [''])[0].strip()
+            time_range = query_params.get('timeRange', ['today'])[0].strip().lower()
             today_str = datetime.now().strftime('%Y-%m-%d')
+            yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            seven_days_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
 
             base_query = "FROM slot_bookings WHERE 1=1"
             params = []
             if company and company.lower() != 'all':
                 base_query += " AND (LOWER(company_name) = ? OR LOWER(company_name) LIKE ?)"
                 params.extend([company.lower(), f"%{company.lower()}%"])
+
+            # Scope by time_range if specified
+            if time_range == 'today':
+                base_query += " AND (slot_date = ? OR date(created_at) = ?)"
+                params.extend([today_str, today_str])
+            elif time_range == 'yesterday':
+                base_query += " AND (slot_date = ? OR date(created_at) = ?)"
+                params.extend([yesterday_str, yesterday_str])
+            elif time_range == 'past7days':
+                base_query += " AND (slot_date >= ? OR date(created_at) >= ?)"
+                params.extend([seven_days_ago, seven_days_ago])
 
             conn = sqlite3.connect(DB_FILE)
             cursor = conn.cursor()
@@ -388,9 +402,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             cursor.execute(f"SELECT COUNT(*) {base_query} AND LOWER(status) = 'rejected'", params)
             rejected = cursor.fetchone()[0]
 
-            cursor.execute(f"SELECT COUNT(*) {base_query} AND slot_date = ?", params + [today_str])
-            today_active = cursor.fetchone()[0]
-
             conn.close()
 
             self._send_json(200, {
@@ -398,7 +409,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 'pending': pending,
                 'accepted': accepted,
                 'rejected': rejected,
-                'todayActive': today_active
+                'timeRange': time_range
             })
         else:
             self._send_json(404, {'error': 'Route not found'})
