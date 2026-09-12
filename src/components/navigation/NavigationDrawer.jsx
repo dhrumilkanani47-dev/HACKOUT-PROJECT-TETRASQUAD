@@ -46,9 +46,8 @@ export const NavigationDrawer = () => {
 
       {/* Slide-out Navigation Drawer from Left */}
       <div
-        className={`absolute top-0 bottom-0 left-0 w-[290px] max-w-[85%] bg-[#0A101D] z-50 shadow-[10px_0_30px_rgba(0,0,0,0.7)] flex flex-col p-4 border-r border-slate-800/80 transform transition-transform duration-300 ease-out select-none ${
-          isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
-        }`}
+        className={`absolute top-0 bottom-0 left-0 w-[290px] max-w-[85%] bg-[#0A101D] z-50 shadow-[10px_0_30px_rgba(0,0,0,0.7)] flex flex-col p-4 border-r border-slate-800/80 transform transition-transform duration-300 ease-out select-none ${isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
+          }`}
       >
         {/* Drawer Header matching reference image */}
         <div className="flex items-center justify-between px-2 pt-2 pb-3 mb-1 border-b border-slate-800/60">
