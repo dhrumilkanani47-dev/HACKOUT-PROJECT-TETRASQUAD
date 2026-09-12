@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { WhyThisPriceModal } from '../../components/mobile/WhyThisPriceModal';
-import { Zap, MapPin, ShieldCheck, Clock, HelpCircle } from 'lucide-react';
+import { Zap, MapPin, ShieldCheck, Clock, HelpCircle, Trash2, CheckCircle2 } from 'lucide-react';
 import { useStations } from '../../context/StationContext';
 
 export const MobileStationDetailsScreen = () => {
@@ -11,11 +11,15 @@ export const MobileStationDetailsScreen = () => {
   const { id } = useParams();
   const { stations } = useStations();
   const [showWhyPrice, setShowWhyPrice] = useState(false);
+  const [selectedTime, setSelectedTime] = useState('11:00 AM');
+  const [reservedTime, setReservedTime] = useState(null);
   const station = stations.find((item) => item.id === id) || stations[0];
   const price = station?.pricePerKwh || 8.4;
   const availableChargers = station?.availableChargers ?? 4;
   const totalChargers = station?.totalChargers ?? 6;
   const connectors = station?.connectors?.length ? station.connectors : ['CCS2', 'Type 2'];
+  const isFull = availableChargers <= 0 || station?.isAvailable === false;
+  const timeSlots = ['10:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'];
 
   return (
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
@@ -116,12 +120,58 @@ export const MobileStationDetailsScreen = () => {
 
       {/* Book Now Primary Action Button matching attachment */}
       <div className="p-4 pt-0">
-        <button
-          onClick={() => navigate('/charging')}
-          className="app-btn w-full text-sm font-bold shadow-md"
-        >
-          Book Now
-        </button>
+        {reservedTime ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+                <CheckCircle2 className="w-4 h-4" /> Reserved at {reservedTime}
+              </span>
+              <button
+                type="button"
+                onClick={() => setReservedTime(null)}
+                className="p-1.5 rounded-lg text-red-600 hover:bg-red-100"
+                aria-label="Delete reserved time slot"
+                title="Delete time slot"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+            <button onClick={() => navigate('/charging')} className="app-btn w-full text-xs font-bold mt-2">
+              Start Charging
+            </button>
+          </div>
+        ) : isFull ? (
+          <div className="w-full rounded-xl bg-slate-100 border border-slate-200 py-3 text-center text-sm font-bold text-slate-500">
+            Slots Full
+          </div>
+        ) : (
+          <div className="rounded-xl border border-green-200 bg-white p-2.5">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-700 mb-2">
+              <Clock className="w-3.5 h-3.5 text-emerald-700" /> Choose a charging time
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 mb-2">
+              {timeSlots.map((slot) => (
+                <button
+                  key={slot}
+                  type="button"
+                  onClick={() => setSelectedTime(slot)}
+                  className={`py-1.5 rounded-lg text-[9px] font-bold border transition-colors ${selectedTime === slot
+                    ? 'bg-emerald-600 text-white border-emerald-600'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-green-50'
+                    }`}
+                >
+                  {slot}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setReservedTime(selectedTime)}
+              className="app-btn w-full text-sm font-bold shadow-md"
+            >
+              Book {selectedTime}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Why This Price Modal (Screen 06) */}
