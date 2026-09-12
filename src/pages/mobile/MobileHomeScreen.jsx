@@ -1,51 +1,65 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useVehicles } from '../../context/VehicleContext';
-import { useStations } from '../../context/StationContext';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
-import { WhyThisPriceModal } from '../../components/mobile/WhyThisPriceModal';
 import { HamburgerButton } from '../../components/navigation/HamburgerButton';
 import {
   Bell,
   Sparkles,
-  ChevronRight,
-  Zap,
   MapPin,
   Leaf,
   BatteryCharging,
   Sun,
   Wind,
   Flame,
-  ArrowRight,
-  ShieldCheck,
-  QrCode
+  Car,
+  Zap,
+  CheckCircle2
 } from 'lucide-react';
 
 export const MobileHomeScreen = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { primaryVehicle } = useVehicles();
-  const { stations } = useStations();
-  const [showWhyPrice, setShowWhyPrice] = useState(false);
+  const { vehicles } = useVehicles();
 
-  // Active or primary vehicle data
-  const vehicleName = primaryVehicle?.name || 'Tata Nexon EV';
-  const batteryPct = primaryVehicle?.currentBatteryPct || 68;
-  const rangeKm = Math.round(((primaryVehicle?.rangeKm || 453) * batteryPct) / 100);
-
-  // Nearest recommended station
-  const nearestStation = stations?.[0] || {
-    id: 'st_ahmedabad_1',
-    name: 'GreenHub Station',
-    location: 'Ahmedabad, Gujarat',
-    distanceKm: 1.8,
-    availableSlots: 4,
-    totalSlots: 6,
-    pricePerKwh: 8.40,
-    renewablePct: 90
-  };
+  // Fallback vehicle list if none loaded
+  const carList = vehicles && vehicles.length > 0 ? vehicles : [
+    {
+      id: 'veh_01',
+      name: 'Nexon EV Long Range',
+      nickname: 'Stealth Green',
+      brand: 'Tata',
+      batteryCapacity: 40.5,
+      currentBatteryPct: 68,
+      connector: 'CCS2',
+      currentRangeEstimate: 308,
+      isPrimary: true
+    },
+    {
+      id: 'veh_02',
+      name: 'Ather 450X',
+      nickname: 'City Dart',
+      brand: 'Ather',
+      batteryCapacity: 3.7,
+      currentBatteryPct: 84,
+      connector: 'Type 2',
+      currentRangeEstimate: 126,
+      isPrimary: false
+    },
+    {
+      id: 'veh_03',
+      name: 'MG ZS EV',
+      nickname: 'Family Cruiser',
+      brand: 'MG',
+      batteryCapacity: 50.3,
+      currentBatteryPct: 32,
+      connector: 'CCS2',
+      currentRangeEstimate: 148,
+      isPrimary: false
+    }
+  ];
 
   return (
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
@@ -54,59 +68,34 @@ export const MobileHomeScreen = () => {
         <MobileStatusBar />
 
         {/* Content Container */}
-        <div className="px-4 pt-2 pb-4 flex flex-col gap-3">
-          {/* Greeting Header with Hamburger Menu, Profile Avatar & Notification Bell */}
+        <div className="px-4 pt-2 pb-5 flex flex-col gap-3">
+          {/* Greeting Header with Hamburger Menu & Notifications */}
           <div className="flex items-center justify-between mt-1">
             <div className="flex items-center gap-2.5">
-              <HamburgerButton className="p-1.5 bg-slate-100/90 text-slate-700 hover:text-emerald-700 rounded-xl transition-transform active:scale-95" />
-              <button
-                onClick={() => navigate('/profile')}
-                className="text-left group cursor-pointer"
-                title="View Profile"
-              >
-                <div className="text-[11px] text-slate-500 flex items-center gap-1 group-hover:text-emerald-700 transition-colors">
-                  <span>Good morning, {user?.name?.split(' ')[0] || 'Shani'}</span>
-                  <span className="text-[10px] text-emerald-600 font-bold">›</span>
+              <HamburgerButton className="p-1.5 bg-slate-100/90 text-slate-700 hover:text-emerald-700 rounded-xl" />
+              <div>
+                <div className="text-[11px] text-slate-500">
+                  Good morning, {user?.name?.split(' ')[0] || 'Shani'}
                 </div>
-                <div className="font-heading font-extrabold text-[17px] text-slate-900 -mt-0.5 group-hover:text-emerald-800 transition-colors">
+                <div className="font-heading font-extrabold text-[17px] text-slate-900 -mt-0.5">
                   Drive green today
                 </div>
-              </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => navigate('/charging')}
-                className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition-all active:scale-95 cursor-pointer"
-                title="Scan QR to Charge"
-              >
-                <QrCode className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={() => navigate('/notifications')}
-                className="relative p-2 rounded-xl bg-slate-100 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition-all active:scale-95 cursor-pointer"
-                title="Notifications"
-              >
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              </button>
+            <div className="p-2 rounded-xl bg-slate-100 text-slate-600">
+              <Bell className="w-4 h-4" />
             </div>
           </div>
 
-          {/* Live Charging Price Main Card */}
-          <div
-            onClick={() => setShowWhyPrice(true)}
-            className="app-card cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all active:scale-[0.99] group bg-white border border-green-200"
-            role="button"
-            tabIndex={0}
-          >
+          {/* Live Charging Price Main Display Card */}
+          <div className="app-card bg-white border border-green-200">
             <div className="flex justify-between items-center">
               <div>
                 <div className="text-[10.5px] text-slate-500 flex items-center gap-1">
                   <span>Live charging price</span>
-                  <span className="text-[10px] text-emerald-700 font-bold group-hover:underline flex items-center gap-0.5">
-                    (Why this price?)
+                  <span className="text-[10px] text-emerald-700 font-bold">
+                    (Calibrated SLDC)
                   </span>
                 </div>
                 <div className="font-heading font-extrabold text-[24px] text-emerald-700 leading-tight flex items-baseline">
@@ -118,7 +107,7 @@ export const MobileHomeScreen = () => {
               </div>
 
               <div className="flex flex-col items-end gap-1">
-                <span className="pill-tag green hover:brightness-95 transition-all shadow-xs">
+                <span className="pill-tag green shadow-xs">
                   ● Good time
                 </span>
                 <span className="text-[9px] text-slate-400 font-mono">Gujarat SLDC Live</span>
@@ -138,23 +127,18 @@ export const MobileHomeScreen = () => {
                   <Flame className="w-3 h-3 text-red-400" /> Coal 28%
                 </span>
               </div>
-              <span className="text-emerald-700 font-bold text-[9.5px]">Breakdown ›</span>
+              <span className="text-emerald-700 font-bold text-[9.5px]">72% Green Share</span>
             </div>
           </div>
 
-          {/* Renewable & Green Score Row */}
+          {/* Renewable & Green Score Display Row */}
           <div className="flex gap-2">
-            <div
-              onClick={() => navigate('/price-score')}
-              className="app-card flex-1 text-center py-2.5 cursor-pointer hover:border-emerald-400 hover:shadow-sm transition-all active:scale-[0.98] group bg-white"
-              role="button"
-              tabIndex={0}
-            >
+            <div className="app-card flex-1 text-center py-2.5 bg-white border border-green-100">
               <div className="text-[9.5px] text-slate-500 font-medium flex items-center justify-center gap-1">
                 <Sun className="w-3 h-3 text-amber-500" />
                 <span>Renewable</span>
               </div>
-              <b className="font-heading text-emerald-700 text-base font-bold group-hover:text-emerald-800">
+              <b className="font-heading text-emerald-700 text-base font-bold">
                 72%
               </b>
               <div className="text-[8.5px] text-emerald-600 font-semibold mt-0.5">
@@ -162,17 +146,12 @@ export const MobileHomeScreen = () => {
               </div>
             </div>
 
-            <div
-              onClick={() => navigate('/price-score')}
-              className="app-card flex-1 text-center py-2.5 cursor-pointer hover:border-emerald-400 hover:shadow-sm transition-all active:scale-[0.98] group bg-white"
-              role="button"
-              tabIndex={0}
-            >
+            <div className="app-card flex-1 text-center py-2.5 bg-white border border-green-100">
               <div className="text-[9.5px] text-slate-500 font-medium flex items-center justify-center gap-1">
                 <Leaf className="w-3 h-3 text-emerald-600" />
                 <span>Green Score</span>
               </div>
-              <b className="font-heading text-emerald-700 text-base font-bold group-hover:text-emerald-800">
+              <b className="font-heading text-emerald-700 text-base font-bold">
                 87
               </b>
               <div className="text-[8.5px] text-emerald-600 font-semibold mt-0.5">
@@ -181,11 +160,11 @@ export const MobileHomeScreen = () => {
             </div>
           </div>
 
-          {/* Action Buttons Row */}
+          {/* Action Buttons Row — ONLY ACTIVE CLICKABLE BUTTONS */}
           <div className="flex gap-2">
             <button
               onClick={() => navigate('/map')}
-              className="app-btn outline flex-1 text-[11.5px] py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer"
+              className="app-btn outline flex-1 text-[11.5px] py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer shadow-xs"
             >
               <MapPin className="w-3.5 h-3.5" />
               <span>Find Station</span>
@@ -199,19 +178,14 @@ export const MobileHomeScreen = () => {
             </button>
           </div>
 
-          {/* Live Recommendation Mini Banner */}
-          <div
-            onClick={() => navigate('/smart-charge')}
-            className="p-3 rounded-xl bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 border border-green-200 flex items-center justify-between cursor-pointer text-xs hover:border-green-300 hover:shadow-xs transition-all active:scale-[0.99] group"
-            role="button"
-            tabIndex={0}
-          >
+          {/* Live Recommendation Display Banner */}
+          <div className="p-3 rounded-xl bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 border border-green-200 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
                 <Sparkles className="w-4 h-4 text-amber-600" />
               </div>
               <div>
-                <span className="font-heading font-bold text-emerald-950 text-[11.5px] block group-hover:text-emerald-700 transition-colors">
+                <span className="font-heading font-bold text-emerald-950 text-[11.5px] block">
                   Best window at 2:00 PM (₹6.50/kWh)
                 </span>
                 <span className="text-[10px] text-slate-600 font-medium">
@@ -219,77 +193,91 @@ export const MobileHomeScreen = () => {
                 </span>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-700 transition-transform group-hover:translate-x-0.5" />
-          </div>
-
-          {/* Active Vehicle Quick Snippet */}
-          <div
-            onClick={() => navigate('/charging')}
-            className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-green-300 hover:bg-green-50/40 transition-all active:scale-[0.99] group"
-            role="button"
-            tabIndex={0}
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-green-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0">
-                <BatteryCharging className="w-4 h-4 text-emerald-700" />
-              </div>
-              <div>
-                <div className="font-heading font-bold text-xs text-slate-900 group-hover:text-emerald-800 transition-colors">
-                  {vehicleName} ({batteryPct}%)
-                </div>
-                <div className="text-[10px] text-slate-500">
-                  {rangeKm} km range estimate • Tap to start session
-                </div>
-              </div>
-            </div>
-            <span className="pill-tag sky text-[10px] group-hover:brightness-95 transition-all">
-              Ready
+            <span className="text-[10px] font-bold text-emerald-700 bg-white/80 px-2 py-0.5 rounded-md border border-emerald-200">
+              AI Plan
             </span>
           </div>
 
-          {/* Nearest Verified Station Quick Action */}
-          <div
-            onClick={() => navigate(`/station/${nearestStation.id || 'st_ahmedabad_1'}`)}
-            className="p-2.5 rounded-xl bg-white border border-green-100 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:shadow-xs transition-all active:scale-[0.99] group"
-            role="button"
-            tabIndex={0}
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">
-                <Zap className="w-4 h-4 text-emerald-700" />
+          {/* Car List Section */}
+          <div className="flex flex-col gap-2 mt-1">
+            <div className="flex items-center justify-between px-0.5">
+              <div className="flex items-center gap-1.5">
+                <Car className="w-4 h-4 text-emerald-700" />
+                <h3 className="font-heading font-bold text-xs text-slate-900">
+                  Registered Vehicles ({carList.length})
+                </h3>
               </div>
-              <div>
-                <div className="font-heading font-bold text-xs text-slate-900 flex items-center gap-1 group-hover:text-emerald-700 transition-colors">
-                  <span>{nearestStation.name}</span>
-                  <span className="text-[9px] text-slate-400 font-normal">({nearestStation.distanceKm || '1.8'} km)</span>
-                </div>
-                <div className="text-[10px] text-emerald-700 font-medium">
-                  {nearestStation.availableSlots || 4}/{nearestStation.totalSlots || 6} chargers free • ₹{nearestStation.pricePerKwh?.toFixed(2) || '8.40'}
-                </div>
-              </div>
+              <span className="text-[9.5px] text-slate-400 font-medium">
+                Live Status
+              </span>
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/station/${nearestStation.id || 'st_ahmedabad_1'}`);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-heading font-bold text-[10px] hover:bg-emerald-200 transition-colors flex items-center gap-0.5"
-            >
-              <span>View</span>
-              <ArrowRight className="w-2.5 h-2.5" />
-            </button>
+
+            {/* List of Cars */}
+            <div className="flex flex-col gap-2">
+              {carList.map((vehicle) => {
+                const pct = vehicle.currentBatteryPct || 68;
+                const range = vehicle.currentRangeEstimate || Math.round(((vehicle.standardRange || 453) * pct) / 100);
+                const isPrimary = vehicle.isPrimary;
+
+                return (
+                  <div
+                    key={vehicle.id}
+                    className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col gap-2 transition-all"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0">
+                          <BatteryCharging className="w-4 h-4 text-emerald-700" />
+                        </div>
+                        <div>
+                          <div className="font-heading font-bold text-[12.5px] text-slate-900 leading-tight">
+                            {vehicle.name}
+                          </div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">
+                            {vehicle.nickname ? `"${vehicle.nickname}" • ` : ''}{vehicle.connector || 'CCS2'} • {vehicle.batteryCapacity || 40} kWh
+                          </div>
+                        </div>
+                      </div>
+
+                      {isPrimary ? (
+                        <span className="pill-tag green text-[9px] px-2 py-0.5 flex items-center gap-1">
+                          <CheckCircle2 className="w-2.5 h-2.5" /> Primary
+                        </span>
+                      ) : (
+                        <span className="pill-tag sky text-[9px] px-2 py-0.5">
+                          Ready
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Battery progress and range estimate */}
+                    <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-2 flex-1 mr-3">
+                        <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              pct > 50 ? 'bg-emerald-500' : pct > 20 ? 'bg-amber-500' : 'bg-red-500'
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="font-heading font-bold text-slate-800 text-[11px]">
+                          {pct}%
+                        </span>
+                      </div>
+                      <span className="text-[10.5px] text-slate-600 font-medium shrink-0">
+                        {range} km range
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Why This Price Modal (Screen 06) */}
-      <WhyThisPriceModal
-        isOpen={showWhyPrice}
-        onClose={() => setShowWhyPrice(false)}
-        price={8.40}
-      />
-
-      {/* Bottom Navigation (Screen 03) */}
+      {/* Bottom Navigation */}
       <MobileBottomBar />
     </div>
   );
