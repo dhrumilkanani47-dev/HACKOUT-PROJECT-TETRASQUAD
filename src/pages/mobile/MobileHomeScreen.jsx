@@ -83,9 +83,14 @@ export const MobileHomeScreen = () => {
               </div>
             </div>
 
-            <div className="p-2 rounded-xl bg-slate-100 text-slate-600">
+            <button
+              type="button"
+              onClick={() => navigate('/notifications')}
+              className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:text-emerald-700 transition-colors"
+              aria-label="Open notifications"
+            >
               <Bell className="w-4 h-4" />
-            </div>
+            </button>
           </div>
 
           {/* Live Charging Price Main Display Card */}
