@@ -122,12 +122,12 @@ export const App = () => {
                 <Route path="/charging/:stationId" element={<RequireDriver><MobileChargingSessionScreen /></RequireDriver>} />
 
                 {/* Screen 09: Price & Green Score */}
-                <Route path="/price-score" element={<RequireDriver><MobilePriceGreenScoreScreen /></RequireDriver>} />
+                <Route path="/price-score" element={<RequireAuth><MobilePriceGreenScoreScreen /></RequireAuth>} />
 
                 {/* Screen 10: Charging History */}
-                <Route path="/history/:sessionId" element={<RequireDriver><MobileHistoryDetailsScreen /></RequireDriver>} />
-                <Route path="/history" element={<RequireDriver><MobileHistoryScreen /></RequireDriver>} />
-                <Route path="/activity" element={<RequireDriver><MobileHistoryScreen /></RequireDriver>} />
+                <Route path="/history/:sessionId" element={<RequireAuth><MobileHistoryDetailsScreen /></RequireAuth>} />
+                <Route path="/history" element={<RequireAuth><MobileHistoryScreen /></RequireAuth>} />
+                <Route path="/activity" element={<RequireAuth><MobileHistoryScreen /></RequireAuth>} />
 
                 {/* Screen 11: Notifications & Price Alert */}
                 <Route path="/notifications" element={<RequireAuth><MobileNotificationsScreen /></RequireAuth>} />

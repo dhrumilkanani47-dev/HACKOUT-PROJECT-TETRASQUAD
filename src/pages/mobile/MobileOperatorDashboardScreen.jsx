@@ -149,7 +149,7 @@ export const MobileOperatorDashboardScreen = () => {
             </div>
 
             <div
-              onClick={() => navigate('/operator')}
+              onClick={() => navigate('/map')}
               className="app-card p-3 bg-white hover:border-emerald-400 hover:shadow-xs transition-all active:scale-[0.98] cursor-pointer group"
               role="button"
               tabIndex={0}
@@ -163,7 +163,7 @@ export const MobileOperatorDashboardScreen = () => {
             </div>
 
             <div
-              onClick={() => navigate('/notifications')}
+              onClick={() => navigate('/operator/bookings')}
               className="app-card p-3 bg-white hover:border-amber-400 hover:shadow-xs transition-all active:scale-[0.98] cursor-pointer group"
               role="button"
               tabIndex={0}
