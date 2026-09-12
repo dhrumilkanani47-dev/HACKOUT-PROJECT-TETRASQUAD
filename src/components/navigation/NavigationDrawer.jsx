@@ -4,15 +4,17 @@ import { useDrawer } from '../../context/DrawerContext';
 import { SidebarMenuItem } from './SidebarMenuItem';
 import { Overlay } from './Overlay';
 import { Layers, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export const NavigationDrawer = () => {
   const { isOpen, closeDrawer } = useDrawer();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const screens = [
     { name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' },
-    { name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' },
+    ...(!isAuthenticated ? [{ name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' }] : []),
     { name: 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
     { name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
     { name: 'Station Details', path: '/station/st_01', match: (p) => p.startsWith('/station') },
