@@ -6,13 +6,14 @@
 const API_BASE = 'http://localhost:5000/api';
 
 export const bookingApi = {
-  async getBookings({ company = '', status = '', timeRange = 'today', search = '' } = {}) {
+  async getBookings({ company = '', status = '', timeRange = 'all', search = '', driverEmail = '' } = {}) {
     try {
       const params = new URLSearchParams();
       if (company && company !== 'all') params.append('company', company);
       if (status && status !== 'all') params.append('status', status);
-      if (timeRange) params.append('timeRange', timeRange);
+      if (timeRange && timeRange !== 'all') params.append('timeRange', timeRange);
       if (search) params.append('search', search);
+      if (driverEmail) params.append('driverEmail', driverEmail);
 
       const res = await fetch(`${API_BASE}/bookings?${params.toString()}`);
       if (res.ok) {

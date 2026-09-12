@@ -384,6 +384,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             status = query_params.get('status', [''])[0].strip().lower()
             time_range = query_params.get('timeRange', ['today'])[0].strip().lower()
             search = query_params.get('search', [''])[0].strip().lower()
+            driver_email = query_params.get('driverEmail', [''])[0].strip().lower()
 
             today_str = datetime.now().strftime('%Y-%m-%d')
             yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
@@ -391,6 +392,10 @@ class RequestHandler(BaseHTTPRequestHandler):
 
             query = "SELECT id, driver_name, driver_email, driver_phone, vehicle_model, vehicle_plate, company_name, station_id, station_name, slot_time, slot_date, target_kwh, estimated_price, status, bay_number, operator_notes, created_at, updated_at FROM slot_bookings WHERE 1=1"
             params = []
+
+            if driver_email:
+                query += " AND (LOWER(driver_email) = ? OR LOWER(driver_name) LIKE ?)"
+                params.extend([driver_email, f"%{driver_email}%"])
 
             if company and company.lower() != 'all':
                 query += " AND (LOWER(company_name) = ? OR LOWER(company_name) LIKE ?)"

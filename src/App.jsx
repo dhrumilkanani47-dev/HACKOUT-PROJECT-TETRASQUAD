@@ -22,6 +22,7 @@ import { MobileOperatorDashboardScreen } from './pages/mobile/MobileOperatorDash
 import { MobileGridOperatorDashboardScreen } from './pages/mobile/MobileGridOperatorDashboardScreen';
 import { MobileManageStationsScreen } from './pages/mobile/MobileManageStationsScreen';
 import { MobileOperatorBookingsScreen } from './pages/mobile/MobileOperatorBookingsScreen';
+import { MobileDriverBookingsScreen } from './pages/mobile/MobileDriverBookingsScreen';
 import { MobileProfileScreen } from './pages/mobile/MobileProfileScreen';
 import { MobileVehiclesScreen } from './pages/mobile/MobileVehiclesScreen';
 import { useAuth } from './context/AuthContext';
@@ -110,6 +111,10 @@ export const App = () => {
 
                 {/* Screen 05: Station Details */}
                 <Route path="/station/:id" element={<RequireAuth><MobileStationDetailsScreen /></RequireAuth>} />
+
+                {/* EV Driver Slot Booking & Request Hub */}
+                <Route path="/driver/bookings" element={<RequireDriver><MobileDriverBookingsScreen /></RequireDriver>} />
+                <Route path="/book-slot" element={<RequireDriver><MobileDriverBookingsScreen /></RequireDriver>} />
 
                 {/* Screen 07: Smart Charging */}
                 <Route path="/smart-charge" element={<RequireDriver><MobileSmartChargingScreen /></RequireDriver>} />

@@ -17,7 +17,8 @@ import {
   Flame,
   Car,
   Zap,
-  CheckCircle2
+  CheckCircle2,
+  CalendarCheck
 } from 'lucide-react';
 
 export const MobileHomeScreen = () => {
@@ -194,20 +195,27 @@ export const MobileHomeScreen = () => {
           </div>
 
           {/* Action Buttons Row — ONLY ACTIVE CLICKABLE BUTTONS */}
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
             <button
               onClick={() => navigate('/map')}
-              className="app-btn outline flex-1 text-[11.5px] py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer shadow-xs"
+              className="app-btn outline text-[11px] py-2 px-1 rounded-xl font-bold flex items-center justify-center gap-1 transition-all active:scale-[0.98] cursor-pointer shadow-xs"
             >
               <MapPin className="w-3.5 h-3.5" />
-              <span>Find Station</span>
+              <span>Map</span>
+            </button>
+            <button
+              onClick={() => navigate('/driver/bookings')}
+              className="app-btn text-[11px] py-2 px-1 rounded-xl font-bold shadow-xs flex items-center justify-center gap-1 transition-all active:scale-[0.98] cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white"
+            >
+              <CalendarCheck className="w-3.5 h-3.5" />
+              <span>Book Slot</span>
             </button>
             <button
               onClick={() => navigate('/smart-charge')}
-              className="app-btn flex-1 text-[11.5px] py-2.5 rounded-xl font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer"
+              className="app-btn outline text-[11px] py-2 px-1 rounded-xl font-bold shadow-xs flex items-center justify-center gap-1 transition-all active:scale-[0.98] cursor-pointer border-emerald-300 text-emerald-800"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Smart Charge</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Smart Plan</span>
             </button>
           </div>
 

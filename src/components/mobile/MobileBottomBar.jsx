@@ -12,6 +12,7 @@ export const MobileBottomBar = () => {
 
   const isHome = currentPath === '/' || currentPath === '/dashboard';
   const isMap = currentPath.startsWith('/map');
+  const isBookings = currentPath.startsWith('/driver/bookings') || currentPath.startsWith('/book-slot');
   const isHistory = currentPath.startsWith('/history') || currentPath.startsWith('/activity');
   const isProfile = currentPath.startsWith('/profile') || currentPath.startsWith('/settings');
   const isGridOperator = user?.role === 'grid_operator';
@@ -20,6 +21,7 @@ export const MobileBottomBar = () => {
   const driverTabs = [
     { label: 'Home', path: '/', active: isHome, icon: Home },
     { label: 'Map', path: '/map', active: isMap, icon: MapPin },
+    { label: 'Book Slot', path: '/driver/bookings', active: isBookings, icon: CalendarCheck },
     { label: 'History', path: '/history', active: isHistory, icon: History },
     { label: 'Profile', path: '/profile', active: isProfile, icon: User },
   ];
