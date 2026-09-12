@@ -27,17 +27,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Android build outputs, caches & machine-specific configs
-android/.gradle/
-android/build/
-android/app/build/
-android/local.properties
-android/.idea/
-android/*.iml
-android/app/*.iml
-android/captures/
-android/.cxx/
-android/.externalNativeBuild/
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+
 
 # Editor & OS files
 .vscode/*

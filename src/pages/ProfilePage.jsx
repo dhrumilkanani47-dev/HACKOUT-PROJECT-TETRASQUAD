@@ -44,7 +44,7 @@ export const ProfilePage = () => {
                   {user?.name || 'EV Driver'}
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full bg-forest-100 dark:bg-forest-950 text-forest dark:text-emerald-300 text-[10.5px] font-heading font-semibold uppercase">
-                  {user?.role === 'operator' ? 'Station Operator' : 'EV Driver'}
+                  {user?.role === 'grid_operator' ? 'Grid Operator' : user?.role === 'operator' ? 'Station Operator' : 'EV Driver'}
                 </span>
               </div>
               <p className="text-xs text-ink-soft dark:text-ink-muted mt-0.5">
@@ -67,10 +67,10 @@ export const ProfilePage = () => {
             </div>
             <div>
               <span className="font-heading font-bold text-xs text-ink dark:text-white block">
-                Active Portal: {user?.role === 'operator' ? 'Station Operator Dashboard' : 'Driver Smart Charging'}
+                Active Portal: {user?.role === 'grid_operator' ? 'Regional Grid SLDC Dashboard' : user?.role === 'operator' ? 'Station Operator Dashboard' : 'Driver Smart Charging'}
               </span>
               <span className="text-[11px] text-ink-soft dark:text-ink-muted">
-                Toggle role to access CPO analytics or driver features.
+                Toggle role between EV Driver, Station Operator, and Grid Operator.
               </span>
             </div>
           </div>
@@ -78,7 +78,7 @@ export const ProfilePage = () => {
             onClick={toggleRole}
             className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-forest text-white text-xs font-heading font-semibold hover:bg-forest-600 transition-colors shrink-0 cursor-pointer"
           >
-            Switch to {user?.role === 'operator' ? 'Driver' : 'Operator'}
+            Switch to {user?.role === 'grid_operator' ? 'Driver' : user?.role === 'operator' ? 'Grid' : 'Operator'}
           </button>
         </div>
 

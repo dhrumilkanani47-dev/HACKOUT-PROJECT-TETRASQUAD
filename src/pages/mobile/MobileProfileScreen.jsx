@@ -11,10 +11,19 @@ export const MobileProfileScreen = () => {
   const { user, logout, updateProfile } = useAuth();
 
   const handleToggleRole = () => {
-    const nextRole = user?.role === 'operator' ? 'driver' : 'operator';
+    const roleCycle = {
+      driver: 'operator',
+      operator: 'grid_operator',
+      grid_operator: 'driver'
+    };
+    const nextRole = roleCycle[user?.role] || 'driver';
     updateProfile({ role: nextRole });
     if (nextRole === 'operator') {
       navigate('/operator');
+    } else if (nextRole === 'grid_operator') {
+      navigate('/grid-operator');
+    } else {
+      navigate('/');
     }
   };
 
@@ -50,7 +59,11 @@ export const MobileProfileScreen = () => {
                   {user?.name || 'Shani Kakadiya'}
                 </b>
                 <div className="text-[10px] text-slate-500">
-                  {user?.role === 'operator' ? '⚡ Station Operator' : '🚗 EV Driver'} · Gandhinagar
+                  {user?.role === 'grid_operator'
+                    ? '🌐 Grid Operator (SLDC)'
+                    : user?.role === 'operator'
+                    ? '⚡ Station Operator'
+                    : '🚗 EV Driver'} · Gandhinagar
                 </div>
               </div>
             </div>
@@ -60,7 +73,11 @@ export const MobileProfileScreen = () => {
               onClick={handleToggleRole}
               className="text-[9.5px] font-heading font-bold px-2.5 py-1 rounded-lg bg-green-100 text-emerald-900 border border-green-300 hover:bg-green-200 transition-colors"
             >
-              {user?.role === 'operator' ? 'Switch to Driver' : 'Switch to Operator'}
+              {user?.role === 'grid_operator'
+                ? 'Switch to Driver'
+                : user?.role === 'operator'
+                ? 'Switch to Grid'
+                : 'Switch to Operator'}
             </button>
           </div>
 
