@@ -18,6 +18,20 @@ export const profileApi = {
   },
 
   async getPastSessions() {
+    if (API_BASE) {
+      try {
+        const res = await fetch(`${API_BASE}/sessions`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            localStorage.setItem('egc_sessions', JSON.stringify(data));
+            return data;
+          }
+        }
+      } catch (e) {
+        console.warn('profileApi: using session cache fallback', e);
+      }
+    }
     const saved = localStorage.getItem('egc_sessions');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
@@ -26,12 +40,34 @@ export const profileApi = {
   },
 
   async addSession(session) {
-    const current = await this.getPastSessions();
     const newSession = {
-      id: `ses_${Date.now()}`,
-      date: new Date().toISOString(),
+      id: session.id || `ses_${Date.now()}`,
+      date: session.date || new Date().toISOString(),
       ...session
     };
+
+    if (API_BASE) {
+      try {
+        const res = await fetch(`${API_BASE}/sessions/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newSession)
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.session) {
+            const current = await this.getPastSessions();
+            const updated = [json.session, ...current.filter(s => s.id !== json.session.id)];
+            localStorage.setItem('egc_sessions', JSON.stringify(updated));
+            return json.session;
+          }
+        }
+      } catch (e) {
+        console.warn('profileApi: addSession backend error:', e);
+      }
+    }
+
+    const current = await this.getPastSessions();
     const updated = [newSession, ...current];
     localStorage.setItem('egc_sessions', JSON.stringify(updated));
     return newSession;
@@ -45,3 +81,5 @@ export const profileApi = {
     return OPERATOR_DATA;
   }
 };
+
+export default profileApi;

@@ -119,6 +119,89 @@ def init_db():
     )
     ''')
 
+    # 5. Vehicles Table (Permanent Vehicle Fleet Persistence)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS vehicles (
+        id TEXT PRIMARY KEY,
+        user_id TEXT,
+        name TEXT NOT NULL,
+        brand TEXT NOT NULL,
+        model TEXT,
+        nickname TEXT,
+        type TEXT DEFAULT 'SUV',
+        plate_number TEXT NOT NULL,
+        odometer_km REAL DEFAULT 1200,
+        year INTEGER DEFAULT 2024,
+        vin TEXT,
+        battery_capacity REAL DEFAULT 40.5,
+        current_battery_pct REAL DEFAULT 80,
+        target_battery_pct REAL DEFAULT 85,
+        connector TEXT DEFAULT 'CCS2',
+        max_charging_power REAL DEFAULT 50,
+        standard_range REAL DEFAULT 350,
+        current_range_estimate REAL DEFAULT 280,
+        green_score INTEGER DEFAULT 95,
+        health_score INTEGER DEFAULT 99,
+        efficiency TEXT DEFAULT '135 Wh/km',
+        insurance_expiry TEXT DEFAULT 'Dec 2026',
+        service_due_km REAL DEFAULT 15000,
+        is_primary INTEGER DEFAULT 0,
+        latitude REAL DEFAULT 23.1884,
+        longitude REAL DEFAULT 72.6289,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    # 6. Charging Sessions Table (Permanent Charging History)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS charging_sessions (
+        id TEXT PRIMARY KEY,
+        driver_email TEXT,
+        station_id TEXT,
+        station_name TEXT,
+        vehicle_model TEXT,
+        vehicle_plate TEXT,
+        kwh_delivered REAL,
+        cost REAL,
+        rate_per_kwh REAL,
+        duration_minutes INTEGER,
+        co2_saved_kg REAL,
+        green_score INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    # Seed initial vehicles if table is empty
+    cursor.execute('SELECT COUNT(*) FROM vehicles')
+    if cursor.fetchone()[0] == 0:
+        seed_vehicles = [
+            ('veh_01', 'usr_001', 'Nexon EV Long Range', 'Tata', 'Nexon EV Empowered+', 'Stealth Green', 'SUV', 'GJ 01 EV 4821', 18420, 2024, 'MAT612056NP182934', 40.5, 68, 85, 'CCS2', 50, 453, 308, 94, 98, '132 Wh/km', '15 Nov 2026', 25000, 1, 23.1925, 72.6288),
+            ('veh_02', 'usr_001', 'Ather 450X', 'Ather', '450X Gen 3', 'City Dart', 'Scooter', 'GJ 27 AK 8920', 6210, 2023, 'ATH450X2023K1894', 3.7, 84, 100, 'Type 2', 3.3, 150, 126, 96, 99, '32 Wh/km', '22 Aug 2025', 10000, 0, 23.0125, 72.5088),
+            ('veh_03', 'usr_001', 'MG ZS EV', 'MG', 'ZS EV Exclusive Plus', 'Family Cruiser', 'SUV', 'GJ 06 MG 7311', 24150, 2024, 'MGZSEV2024V98124', 50.3, 32, 80, 'CCS2', 60, 461, 148, 89, 96, '145 Wh/km', '10 Dec 2026', 30000, 0, 23.1884, 72.6289)
+        ]
+        for v in seed_vehicles:
+            cursor.execute('''
+            INSERT OR IGNORE INTO vehicles 
+            (id, user_id, name, brand, model, nickname, type, plate_number, odometer_km, year, vin, battery_capacity, current_battery_pct, target_battery_pct, connector, max_charging_power, standard_range, current_range_estimate, green_score, health_score, efficiency, insurance_expiry, service_due_km, is_primary, latitude, longitude)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', v)
+
+    # Seed initial charging sessions if table is empty
+    cursor.execute('SELECT COUNT(*) FROM charging_sessions')
+    if cursor.fetchone()[0] == 0:
+        seed_sessions = [
+            ('ses_01', 'krushilgadhiya138@gmail.com', 'st_01', 'GreenHub Solar Supercharger', 'Tata Nexon EV Long Range', 'GJ 01 EV 4821', 28.5, 239.40, 8.40, 35, 20.7, 96),
+            ('ses_02', 'shani.kakadiya@daiict.ac.in', 'st_01', 'GreenHub Solar Supercharger', 'Tata Punch.ev Empowered', 'GJ 18 PK 9901', 22.0, 171.60, 7.80, 28, 16.0, 94),
+            ('ses_03', 'krushilgadhiya138@gmail.com', 'st_02', 'Tata Power EZ Charge Hub', 'Tata Nexon EV Long Range', 'GJ 01 EV 4821', 18.0, 163.80, 9.10, 22, 13.1, 91)
+        ]
+        for s in seed_sessions:
+            cursor.execute('''
+            INSERT OR IGNORE INTO charging_sessions
+            (id, driver_email, station_id, station_name, vehicle_model, vehicle_plate, kwh_delivered, cost, rate_per_kwh, duration_minutes, co2_saved_kg, green_score)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', s)
+
     # Seed initial test users if not existing
     seed_users = [
         ('usr_001', 'Shani Kakadiya', 'shani.kakadiya@daiict.ac.in', '+91 98765 43210', hash_password('password123'), 'driver', 'Tata Power', 'Gujarat', 'Gandhinagar'),
@@ -402,8 +485,6 @@ class RequestHandler(BaseHTTPRequestHandler):
             cursor.execute(f"SELECT COUNT(*) {base_query} AND LOWER(status) = 'rejected'", params)
             rejected = cursor.fetchone()[0]
 
-            conn.close()
-
             self._send_json(200, {
                 'total': total,
                 'pending': pending,
@@ -411,6 +492,81 @@ class RequestHandler(BaseHTTPRequestHandler):
                 'rejected': rejected,
                 'timeRange': time_range
             })
+        elif path == '/api/vehicles':
+            conn = sqlite3.connect(DB_FILE)
+            cursor = conn.cursor()
+            cursor.execute('''
+            SELECT id, user_id, name, brand, model, nickname, type, plate_number, odometer_km, year, vin, battery_capacity, current_battery_pct, target_battery_pct, connector, max_charging_power, standard_range, current_range_estimate, green_score, health_score, efficiency, insurance_expiry, service_due_km, is_primary, latitude, longitude, created_at, updated_at
+            FROM vehicles
+            ORDER BY is_primary DESC, created_at ASC
+            ''')
+            rows = cursor.fetchall()
+            conn.close()
+
+            vehicles = [{
+                'id': r[0],
+                'userId': r[1],
+                'name': r[2],
+                'brand': r[3],
+                'model': r[4],
+                'nickname': r[5],
+                'type': r[6],
+                'plateNumber': r[7],
+                'odometerKm': r[8],
+                'year': r[9],
+                'vin': r[10],
+                'batteryCapacity': r[11],
+                'currentBatteryPct': r[12],
+                'targetBatteryPct': r[13],
+                'connector': r[14],
+                'maxChargingPower': r[15],
+                'standardRange': r[16],
+                'currentRangeEstimate': r[17],
+                'greenScore': r[18],
+                'healthScore': r[19],
+                'efficiency': r[20],
+                'insuranceExpiry': r[21],
+                'serviceDueKm': r[22],
+                'isPrimary': bool(r[23]),
+                'latitude': r[24],
+                'longitude': r[25],
+                'createdAt': r[26],
+                'updatedAt': r[27]
+            } for r in rows]
+
+            self._send_json(200, vehicles)
+
+        elif path == '/api/sessions':
+            conn = sqlite3.connect(DB_FILE)
+            cursor = conn.cursor()
+            cursor.execute('''
+            SELECT id, driver_email, station_id, station_name, vehicle_model, vehicle_plate, kwh_delivered, cost, rate_per_kwh, duration_minutes, co2_saved_kg, green_score, created_at
+            FROM charging_sessions
+            ORDER BY created_at DESC
+            ''')
+            rows = cursor.fetchall()
+            conn.close()
+
+            sessions = [{
+                'id': r[0],
+                'driverEmail': r[1],
+                'stationId': r[2],
+                'stationName': r[3],
+                'vehicleModel': r[4],
+                'vehiclePlate': r[5],
+                'kwhDelivered': r[6],
+                'energyDelivered': r[6],
+                'cost': r[7],
+                'totalCost': r[7],
+                'ratePerKwh': r[8],
+                'durationMinutes': r[9],
+                'co2SavedKg': r[10],
+                'greenScore': r[11],
+                'date': r[12],
+                'createdAt': r[12]
+            } for r in rows]
+
+            self._send_json(200, sessions)
         else:
             self._send_json(404, {'error': 'Route not found'})
 
@@ -1052,6 +1208,217 @@ EV GreenCharge Gujarat"""
                     },
                     'message': f"Slot request {new_status} successfully and email dispatched to {driver_email}!"
                 })
+
+            # -------------------------------------------------------------
+            # 10. ADD / CREATE VEHICLE
+            # -------------------------------------------------------------
+            elif self.path in ['/api/vehicles', '/api/vehicles/create']:
+                v_id = body.get('id') or f"veh_{int(datetime.now().timestamp()*1000)}"
+                user_id = body.get('userId') or 'usr_001'
+                name = body.get('name') or 'Electric Vehicle'
+                brand = body.get('brand') or 'Tata'
+                model = body.get('model') or name
+                nickname = body.get('nickname') or 'Green EV'
+                v_type = body.get('type') or 'SUV'
+                plate_number = (body.get('plateNumber') or 'GJ 01 EV 9999').upper()
+                odometer_km = float(body.get('odometerKm') or 1200)
+                year = int(body.get('year') or datetime.now().year)
+                vin = body.get('vin') or f"IND{int(datetime.now().timestamp())}EV"
+                battery_capacity = float(body.get('batteryCapacity') or 40.5)
+                current_battery_pct = float(body.get('currentBatteryPct') or 80)
+                target_battery_pct = float(body.get('targetBatteryPct') or 85)
+                connector = body.get('connector') or 'CCS2'
+                max_charging_power = float(body.get('maxChargingPower') or 50)
+                standard_range = float(body.get('standardRange') or 350)
+                current_range_estimate = float(body.get('currentRangeEstimate') or round((standard_range * current_battery_pct) / 100))
+                green_score = int(body.get('greenScore') or 95)
+                health_score = int(body.get('healthScore') or 99)
+                efficiency = body.get('efficiency') or '135 Wh/km'
+                insurance_expiry = body.get('insuranceExpiry') or 'Dec 2026'
+                service_due_km = float(body.get('serviceDueKm') or (odometer_km + 10000))
+                is_primary = 1 if body.get('isPrimary') else 0
+                lat = float(body.get('latitude') or 23.1884)
+                lng = float(body.get('longitude') or 72.6289)
+
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+
+                if is_primary:
+                    cursor.execute('UPDATE vehicles SET is_primary = 0')
+
+                cursor.execute('''
+                INSERT OR REPLACE INTO vehicles
+                (id, user_id, name, brand, model, nickname, type, plate_number, odometer_km, year, vin, battery_capacity, current_battery_pct, target_battery_pct, connector, max_charging_power, standard_range, current_range_estimate, green_score, health_score, efficiency, insurance_expiry, service_due_km, is_primary, latitude, longitude, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ''', (v_id, user_id, name, brand, model, nickname, v_type, plate_number, odometer_km, year, vin, battery_capacity, current_battery_pct, target_battery_pct, connector, max_charging_power, standard_range, current_range_estimate, green_score, health_score, efficiency, insurance_expiry, service_due_km, is_primary, lat, lng))
+                conn.commit()
+                conn.close()
+
+                created_obj = {
+                    'id': v_id,
+                    'userId': user_id,
+                    'name': name,
+                    'brand': brand,
+                    'model': model,
+                    'nickname': nickname,
+                    'type': v_type,
+                    'plateNumber': plate_number,
+                    'odometerKm': odometer_km,
+                    'year': year,
+                    'vin': vin,
+                    'batteryCapacity': battery_capacity,
+                    'currentBatteryPct': current_battery_pct,
+                    'targetBatteryPct': target_battery_pct,
+                    'connector': connector,
+                    'maxChargingPower': max_charging_power,
+                    'standardRange': standard_range,
+                    'currentRangeEstimate': current_range_estimate,
+                    'greenScore': green_score,
+                    'healthScore': health_score,
+                    'efficiency': efficiency,
+                    'insuranceExpiry': insurance_expiry,
+                    'serviceDueKm': service_due_km,
+                    'isPrimary': bool(is_primary),
+                    'latitude': lat,
+                    'longitude': lng
+                }
+
+                return self._send_json(201, created_obj)
+
+            # -------------------------------------------------------------
+            # 11. UPDATE VEHICLE
+            # -------------------------------------------------------------
+            elif self.path == '/api/vehicles/update':
+                v_id = body.get('id')
+                if not v_id:
+                    return self._send_json(400, {'error': 'Vehicle id is required'})
+
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+
+                # Build dynamic update query
+                fields = []
+                values = []
+                field_map = {
+                    'name': 'name',
+                    'brand': 'brand',
+                    'model': 'model',
+                    'nickname': 'nickname',
+                    'type': 'type',
+                    'plateNumber': 'plate_number',
+                    'odometerKm': 'odometer_km',
+                    'batteryCapacity': 'battery_capacity',
+                    'currentBatteryPct': 'current_battery_pct',
+                    'targetBatteryPct': 'target_battery_pct',
+                    'connector': 'connector',
+                    'maxChargingPower': 'max_charging_power',
+                    'standardRange': 'standard_range',
+                    'currentRangeEstimate': 'current_range_estimate',
+                    'greenScore': 'green_score',
+                    'healthScore': 'health_score',
+                    'efficiency': 'efficiency',
+                    'insuranceExpiry': 'insurance_expiry',
+                    'serviceDueKm': 'service_due_km',
+                    'isPrimary': 'is_primary',
+                    'latitude': 'latitude',
+                    'longitude': 'longitude'
+                }
+
+                for k, col in field_map.items():
+                    if k in body:
+                        fields.append(f"{col} = ?")
+                        val = body[k]
+                        if k == 'isPrimary':
+                            val = 1 if val else 0
+                        values.append(val)
+
+                if fields:
+                    fields.append("updated_at = CURRENT_TIMESTAMP")
+                    values.append(v_id)
+                    query = f"UPDATE vehicles SET {', '.join(fields)} WHERE id = ?"
+                    cursor.execute(query, values)
+                    conn.commit()
+
+                conn.close()
+                return self._send_json(200, {'success': True, 'message': 'Vehicle updated successfully'})
+
+            # -------------------------------------------------------------
+            # 12. SET PRIMARY VEHICLE
+            # -------------------------------------------------------------
+            elif self.path == '/api/vehicles/set-primary':
+                v_id = body.get('id')
+                if not v_id:
+                    return self._send_json(400, {'error': 'Vehicle id is required'})
+
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+                cursor.execute('UPDATE vehicles SET is_primary = 0')
+                cursor.execute('UPDATE vehicles SET is_primary = 1 WHERE id = ?', (v_id,))
+                conn.commit()
+                conn.close()
+
+                return self._send_json(200, {'success': True, 'message': 'Primary vehicle set successfully'})
+
+            # -------------------------------------------------------------
+            # 13. DELETE VEHICLE
+            # -------------------------------------------------------------
+            elif self.path == '/api/vehicles/delete':
+                v_id = body.get('id')
+                if not v_id:
+                    return self._send_json(400, {'error': 'Vehicle id is required'})
+
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+                cursor.execute('DELETE FROM vehicles WHERE id = ?', (v_id,))
+                conn.commit()
+                conn.close()
+
+                return self._send_json(200, {'success': True, 'message': 'Vehicle removed successfully'})
+
+            # -------------------------------------------------------------
+            # 14. CREATE CHARGING SESSION
+            # -------------------------------------------------------------
+            elif self.path == '/api/sessions/create':
+                ses_id = body.get('id') or f"ses_{int(datetime.now().timestamp()*1000)}"
+                driver_email = body.get('driverEmail') or 'krushilgadhiya138@gmail.com'
+                station_id = body.get('stationId') or 'st_01'
+                station_name = body.get('stationName') or 'GreenHub Solar Supercharger'
+                vehicle_model = body.get('vehicleModel') or 'Tata Nexon EV'
+                vehicle_plate = body.get('vehiclePlate') or 'GJ 01 EV 4821'
+                kwh_delivered = float(body.get('kwhDelivered') or body.get('energyDelivered') or 24.5)
+                cost = float(body.get('cost') or body.get('totalCost') or 167.0)
+                rate_per_kwh = float(body.get('ratePerKwh') or 6.80)
+                duration_minutes = int(body.get('durationMinutes') or 30)
+                co2_saved_kg = float(body.get('co2SavedKg') or round(kwh_delivered * 0.72, 1))
+                green_score = int(body.get('greenScore') or 95)
+
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+                cursor.execute('''
+                INSERT INTO charging_sessions
+                (id, driver_email, station_id, station_name, vehicle_model, vehicle_plate, kwh_delivered, cost, rate_per_kwh, duration_minutes, co2_saved_kg, green_score)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (ses_id, driver_email, station_id, station_name, vehicle_model, vehicle_plate, kwh_delivered, cost, rate_per_kwh, duration_minutes, co2_saved_kg, green_score))
+                conn.commit()
+                conn.close()
+
+                session_obj = {
+                    'id': ses_id,
+                    'driverEmail': driver_email,
+                    'stationId': station_id,
+                    'stationName': station_name,
+                    'vehicleModel': vehicle_model,
+                    'vehiclePlate': vehicle_plate,
+                    'kwhDelivered': kwh_delivered,
+                    'cost': cost,
+                    'ratePerKwh': rate_per_kwh,
+                    'durationMinutes': duration_minutes,
+                    'co2SavedKg': co2_saved_kg,
+                    'greenScore': green_score,
+                    'createdAt': datetime.now().isoformat()
+                }
+
+                return self._send_json(201, {'success': True, 'session': session_obj})
 
             else:
                 self._send_json(404, {'error': 'Endpoint not found'})
