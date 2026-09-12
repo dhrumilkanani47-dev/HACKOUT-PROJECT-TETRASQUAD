@@ -17,7 +17,6 @@ export const NavigationDrawer = () => {
     ...(!isAuthenticated ? [{ name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' }] : []),
     ...(!isAuthenticated ? [{ name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' }] : []),
     { name: isOperator ? 'Operator Dashboard' : 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
-    { name: 'Manage Stations', path: '/manage-stations', match: (p) => p.startsWith('/manage-stations') },
     { name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
     ...(!isOperator ? [
       { name: 'Station Details', path: '/station/st_01', match: (p) => p.startsWith('/station') },
@@ -26,7 +25,10 @@ export const NavigationDrawer = () => {
       { name: 'Price & Green Score', path: '/price-score', match: (p) => p.startsWith('/price-score') },
       { name: 'Charging History', path: '/history', match: (p) => p.startsWith('/history') || p.startsWith('/activity') },
     ] : []),
-    ...(isOperator ? [{ name: 'Operator Controls', path: '/operator', match: (p) => p.startsWith('/operator') }] : []),
+    ...(isOperator ? [
+      { name: 'Manage Stations', path: '/manage-stations', match: (p) => p.startsWith('/manage-stations') },
+      { name: 'Operator Controls', path: '/operator', match: (p) => p.startsWith('/operator') },
+    ] : []),
     { name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') },
     { name: 'Profile & Settings', path: '/profile', match: (p) => p.startsWith('/profile') || p.startsWith('/settings') },
   ];

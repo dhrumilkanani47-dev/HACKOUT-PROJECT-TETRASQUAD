@@ -37,6 +37,7 @@ export const MobileProfileScreen = () => {
 
   // Form & Settings Local States
   const [editName, setEditName] = useState(user?.name || 'Shani Kakadiya');
+  const [editCompany, setEditCompany] = useState(user?.companyName || 'Tata Power');
   const [editCity, setEditCity] = useState(user?.city || 'Gandhinagar');
   const [editPhone, setEditPhone] = useState(user?.phone || '+91 98765 43210');
   const [selectedVehicle, setSelectedVehicle] = useState('Tata Nexon EV');
@@ -71,13 +72,8 @@ export const MobileProfileScreen = () => {
       name: editName,
       city: editCity,
       phone: editPhone,
+      companyName: user?.role === 'operator' ? editCompany : user?.companyName,
     });
-    showSuccessFeedback();
-  };
-
-  const handleToggleRole = async () => {
-    const nextRole = user?.role === 'operator' ? 'driver' : 'operator';
-    await updateProfile({ role: nextRole });
     showSuccessFeedback();
   };
 
@@ -110,7 +106,7 @@ export const MobileProfileScreen = () => {
         {/* Content Container */}
         <div className="px-4 pt-2 pb-5 flex flex-col gap-3">
           {/* User Profile Info Card with Edit Profile Button */}
-          <div className="p-3 rounded-2xl bg-gradient-to-br from-slate-50 to-green-50/40 border border-green-200 flex flex-col gap-2.5">
+          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-50 to-green-50/40 border border-green-200 flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <ProfilePhotoUploader />
@@ -120,8 +116,12 @@ export const MobileProfileScreen = () => {
                       {user?.name || editName}
                     </b>
                   </div>
-                  <div className="text-[10px] text-slate-500">
-                    {user?.role === 'operator' ? '⚡ Station Operator' : '🚗 EV Driver'} · {user?.city || editCity}
+                  <div className="text-[10px] text-slate-600 font-medium">
+                    {user?.role === 'operator' ? (
+                      <span className="text-emerald-900 font-semibold">⚡ Station Operator · 🏢 {user?.companyName || editCompany}</span>
+                    ) : (
+                      <span>🚗 EV Driver</span>
+                    )} · {user?.city || editCity}
                   </div>
                   <div className="text-[9.5px] text-slate-400 font-mono">
                     {user?.email || 'shani.kakadiya@daiict.ac.in'}
@@ -135,19 +135,6 @@ export const MobileProfileScreen = () => {
                 title="Edit Profile"
               >
                 <Edit2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Quick Role Toggle Bar */}
-            <div className="flex items-center justify-between pt-2 border-t border-green-100/80 text-[10.5px]">
-              <span className="text-slate-600 font-medium">
-                Active Mode: <b className="text-emerald-900 font-heading">{user?.role === 'operator' ? 'Station Operator' : 'EV Driver'}</b>
-              </span>
-              <button
-                onClick={handleToggleRole}
-                className="font-heading font-bold text-[10px] px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 border border-emerald-300 hover:bg-emerald-200 active:scale-95 transition-all"
-              >
-                {user?.role === 'operator' ? 'Switch to Driver' : 'Switch to Operator'}
               </button>
             </div>
           </div>
@@ -225,6 +212,22 @@ export const MobileProfileScreen = () => {
                   required
                 />
               </div>
+
+              {user?.role === 'operator' && (
+                <div>
+                  <label className="text-[10px] font-semibold text-emerald-950 block mb-1 font-heading">
+                    Operator Company Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editCompany}
+                    onChange={(e) => setEditCompany(e.target.value)}
+                    placeholder="e.g. Tata Power, Jio-bp, Ather Energy"
+                    className="app-field w-full text-xs border-emerald-300 bg-emerald-50/40 font-medium"
+                    required
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="text-[10px] font-semibold text-slate-700 block mb-1">City / Region</label>

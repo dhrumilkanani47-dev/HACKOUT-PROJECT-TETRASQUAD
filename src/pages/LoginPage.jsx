@@ -10,11 +10,17 @@ export const LoginPage = () => {
   const [email, setEmail] = useState('shani.kakadiya@daiict.ac.in');
   const [password, setPassword] = useState('password123');
   const [role, setRole] = useState('driver'); // 'driver' | 'operator'
+  const [companyName, setCompanyName] = useState('Tata Power');
   const [rememberMe, setRememberMe] = useState(true);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await login({ email, password, role });
+    await login({
+      email,
+      password,
+      role,
+      companyName: role === 'operator' ? (companyName || 'Tata Power') : undefined
+    });
     navigate('/dashboard');
   };
 
@@ -63,6 +69,22 @@ export const LoginPage = () => {
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {role === 'operator' && (
+            <div>
+              <label className="block text-xs font-heading font-semibold text-ink-soft dark:text-ink-muted mb-1">
+                Operator Company Name
+              </label>
+              <input
+                type="text"
+                required
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className="w-full min-h-[44px] px-4 rounded-xl bg-paper-card dark:bg-paper-surface border border-forest/15 dark:border-white/10 text-xs sm:text-sm font-medium focus:outline-none focus:border-forest"
+                placeholder="e.g. Tata Power, Jio-bp, Ather Energy"
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-heading font-semibold text-ink-soft dark:text-ink-muted mb-1">
               Email Address

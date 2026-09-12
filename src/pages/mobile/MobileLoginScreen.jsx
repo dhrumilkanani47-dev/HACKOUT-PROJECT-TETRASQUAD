@@ -8,16 +8,20 @@ export const MobileLoginScreen = () => {
   const { login, updateProfile } = useAuth();
 
   const [role, setRole] = useState('driver'); // 'driver' | 'operator'
+  const [companyName, setCompanyName] = useState('Tata Power');
   const [email, setEmail] = useState('shani.kakadiya@daiict.ac.in');
   const [password, setPassword] = useState('password123');
   const [isLoading, setIsLoading] = useState(false);
+
+  const COMPANY_PRESETS = ['Tata Power', 'Jio-bp', 'Ather Energy', 'Delta EV', 'Custom'];
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
     setIsLoading(true);
     try {
-      await login({ email, password });
-      await updateProfile({ role });
+      const selectedCompany = role === 'operator' ? (companyName.trim() || 'Tata Power') : undefined;
+      await login({ email, password, role, companyName: selectedCompany });
+      await updateProfile({ role, companyName: selectedCompany });
       if (role === 'operator') {
         navigate('/operator');
       } else {
@@ -31,7 +35,8 @@ export const MobileLoginScreen = () => {
   const handleRoleChange = (newRole) => {
     setRole(newRole);
     if (newRole === 'operator') {
-      setEmail('operator.greenhub@evcharge.in');
+      setEmail('operator.tatapower@evcharge.in');
+      if (!companyName) setCompanyName('Tata Power');
     } else {
       setEmail('shani.kakadiya@daiict.ac.in');
     }
@@ -84,6 +89,39 @@ export const MobileLoginScreen = () => {
 
           {/* Form Fields matching attachment */}
           <form onSubmit={handleLogin} className="flex flex-col gap-2.5 mt-1">
+            {role === 'operator' && (
+              <div className="p-2.5 bg-emerald-50/60 border border-emerald-200 rounded-xl animate-fade-in">
+                <label className="text-[10px] text-emerald-950 font-heading font-bold mb-1 flex items-center justify-between">
+                  <span>🏢 Operator Company Name</span>
+                  <span className="text-[9px] text-emerald-700 font-normal">Displayed in Manage Stations</span>
+                </label>
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="e.g. Tata Power, Jio-bp, Ather Energy"
+                  className="app-field w-full text-xs bg-white font-medium mb-1.5"
+                  required={role === 'operator'}
+                />
+                <div className="flex flex-wrap gap-1">
+                  {['Tata Power', 'Jio-bp', 'Ather Energy', 'Delta EV'].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setCompanyName(preset)}
+                      className={`text-[9.5px] px-2 py-0.5 rounded-md font-heading font-semibold transition-all ${
+                        companyName === preset
+                          ? 'bg-emerald-600 text-white shadow-2xs'
+                          : 'bg-white text-slate-600 border border-emerald-200 hover:bg-emerald-100'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="text-[10px] text-slate-700 font-semibold mb-1 block">
                 Email Address

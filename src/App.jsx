@@ -95,7 +95,7 @@ export const App = () => {
                 <Route path="/map" element={<RequireAuth><MobileMapScreen /></RequireAuth>} />
 
                 {/* Manage Stations (Company Selector & Dynamic Tariffs) */}
-                <Route path="/manage-stations" element={<RequireAuth><MobileManageStationsScreen /></RequireAuth>} />
+                <Route path="/manage-stations" element={<RequireOperator><MobileManageStationsScreen /></RequireOperator>} />
 
                 {/* Screen 05: Station Details */}
                 <Route path="/station/:id" element={<RequireAuth><MobileStationDetailsScreen /></RequireAuth>} />

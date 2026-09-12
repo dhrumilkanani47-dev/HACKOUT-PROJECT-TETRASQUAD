@@ -59,29 +59,6 @@ export const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Role Toggle Switch Banner */}
-        <div className="p-4 rounded-2xl bg-forest-50 dark:bg-forest-950/40 border border-forest/15 dark:border-white/10 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-forest text-white">
-              <Shield className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-heading font-bold text-xs text-ink dark:text-white block">
-                Active Portal: {user?.role === 'operator' ? 'Station Operator Dashboard' : 'Driver Smart Charging'}
-              </span>
-              <span className="text-[11px] text-ink-soft dark:text-ink-muted">
-                Toggle role to access CPO analytics or driver features.
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={toggleRole}
-            className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-forest text-white text-xs font-heading font-semibold hover:bg-forest-600 transition-colors shrink-0 cursor-pointer"
-          >
-            Switch to {user?.role === 'operator' ? 'Driver' : 'Operator'}
-          </button>
-        </div>
-
         {/* Menu Navigation Links (Screen 13) */}
         <div className="bg-white dark:bg-paper-cardDark border border-forest/15 dark:border-white/10 rounded-3xl p-3 shadow-soft divide-y divide-forest/10 dark:divide-white/5">
           <Link

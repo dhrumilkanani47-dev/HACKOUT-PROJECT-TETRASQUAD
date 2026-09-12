@@ -9,6 +9,7 @@ export const INITIAL_USER = {
   longitude: 72.6289,
   locationSource: 'GPS Auto-detected',
   role: 'driver', // 'driver' | 'operator'
+  companyName: 'Tata Power',
   savedStations: ['st_01', 'st_03', 'st_07'],
   priceAlertThreshold: 7.00,
   greenGoal: 85,

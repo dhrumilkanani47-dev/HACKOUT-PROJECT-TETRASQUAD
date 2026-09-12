@@ -22,7 +22,9 @@ export const authApi = {
       token: 'demo_jwt_token_12345',
       user: {
         ...INITIAL_USER,
-        email: credentials.email || INITIAL_USER.email
+        email: credentials.email || INITIAL_USER.email,
+        ...(credentials.role ? { role: credentials.role } : {}),
+        ...(credentials.companyName ? { companyName: credentials.companyName } : {})
       }
     };
   },
