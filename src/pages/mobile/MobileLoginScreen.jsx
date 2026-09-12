@@ -16,6 +16,7 @@ export const MobileLoginScreen = () => {
     if (e) e.preventDefault();
     setIsLoading(true);
     try {
+      await login({ email, password });
       await updateProfile({ role });
       if (role === 'operator') {
         navigate('/operator');

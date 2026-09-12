@@ -1,28 +1,30 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Layers, ChevronRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export const MobileAppShell = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     document.documentElement.classList.remove('dark');
   }, []);
 
   const screens = [
-    { num: '01', name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' },
-    { num: '02', name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' },
-    { num: '03', name: 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
-    { num: '04', name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
-    { num: '05', name: 'Station Details', path: '/station/st_01', match: (p) => p.startsWith('/station') },
-    { num: '07', name: 'Smart Charging AI', path: '/smart-charge', match: (p) => p.startsWith('/smart-charge') },
-    { num: '08', name: 'Live Charging Session', path: '/charging', match: (p) => p.startsWith('/charging') },
-    { num: '09', name: 'Price & Green Score', path: '/price-score', match: (p) => p.startsWith('/price-score') },
-    { num: '10', name: 'Charging History', path: '/history', match: (p) => p.startsWith('/history') || p.startsWith('/activity') },
-    { num: '11', name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') },
-    { num: '12', name: 'Operator Dashboard', path: '/operator', match: (p) => p.startsWith('/operator') },
-    { num: '13', name: 'Profile & Settings', path: '/profile', match: (p) => p.startsWith('/profile') || p.startsWith('/settings') },
+    { name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' },
+    ...(!isAuthenticated ? [{ name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' }] : []),
+    { name: 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
+    { name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
+    { name: 'Station Details', path: '/station/st_01', match: (p) => p.startsWith('/station') },
+    { name: 'Smart Charging AI', path: '/smart-charge', match: (p) => p.startsWith('/smart-charge') },
+    { name: 'Live Charging Session', path: '/charging', match: (p) => p.startsWith('/charging') },
+    { name: 'Price & Green Score', path: '/price-score', match: (p) => p.startsWith('/price-score') },
+    { name: 'Charging History', path: '/history', match: (p) => p.startsWith('/history') || p.startsWith('/activity') },
+    { name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') },
+    ...(isAuthenticated && user?.role === 'operator' ? [{ name: 'Operator Dashboard', path: '/operator', match: (p) => p.startsWith('/operator') }] : []),
+    { name: 'Profile & Settings', path: '/profile', match: (p) => p.startsWith('/profile') || p.startsWith('/settings') },
   ];
 
   return (
@@ -50,15 +52,6 @@ export const MobileAppShell = ({ children }) => {
                 }`}
               >
                 <div className="flex items-center gap-3 truncate">
-                  <span
-                    className={`text-[11px] font-mono px-2 py-0.5 rounded-md font-semibold ${
-                      isActive
-                        ? 'bg-emerald-600/30 text-slate-950'
-                        : 'bg-slate-800/90 text-slate-400'
-                    }`}
-                  >
-                    {screen.num}
-                  </span>
                   <span className="text-[13px] truncate">{screen.name}</span>
                 </div>
                 <ChevronRight
