@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Sparkles,
   Zap,
-  Bookmark
+  Bookmark,
+  Info
 } from 'lucide-react';
 import { GreenScoreBadge } from '../components/common/GreenScoreBadge';
 
@@ -170,6 +171,22 @@ export const ProfilePage = () => {
           <LogOut className="w-4 h-4" />
           <span>Log Out</span>
         </button>
+
+        {/* About Us Card below Log Out */}
+        <div className="mt-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 flex items-center justify-center shrink-0">
+              <Info className="w-4 h-4" />
+            </div>
+            <div>
+              <b className="font-heading text-slate-900 dark:text-white block">About EV GreenCharge</b>
+              <span className="text-slate-500 text-[11px]">TetraSquad for HackOut 2026 · Gujarat Clean Energy Grid</span>
+            </div>
+          </div>
+          <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
+            v2.4.0
+          </span>
+        </div>
       </div>
     </div>
   );

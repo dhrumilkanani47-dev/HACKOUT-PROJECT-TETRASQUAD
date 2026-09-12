@@ -29,7 +29,12 @@ import {
   Sparkles,
   KeyRound,
   Lock,
-  AlertCircle
+  AlertCircle,
+  Info,
+  Globe,
+  Heart,
+  Shield,
+  Award
 } from 'lucide-react';
 
 export const MobileProfileScreen = () => {
@@ -195,10 +200,44 @@ export const MobileProfileScreen = () => {
           {/* Log Out Action Button */}
           <button
             onClick={handleLogout}
-            className="app-btn outline w-full text-xs font-bold border-red-400 text-red-600 hover:bg-red-50 mt-1 py-2.5 shadow-2xs"
+            className="app-btn outline w-full text-xs font-bold border-red-400 text-red-600 hover:bg-red-50 mt-1 py-2.5 shadow-2xs cursor-pointer"
           >
             Log Out
           </button>
+
+          {/* ========================================================= */}
+          {/* ABOUT US BUTTON BELOW LOG OUT                             */}
+          {/* ========================================================= */}
+          <button
+            type="button"
+            onClick={() => setActiveModal('about_us')}
+            className="w-full mt-2 py-2.5 px-3.5 rounded-2xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-300 text-slate-700 font-heading font-semibold text-xs flex items-center justify-between transition-all cursor-pointer shadow-2xs group active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 group-hover:bg-emerald-200 transition-colors">
+                <Info className="w-4 h-4 text-emerald-700" />
+              </div>
+              <div className="text-left">
+                <span className="font-heading font-extrabold text-slate-900 block text-[12.5px] group-hover:text-emerald-800 transition-colors">
+                  About Us &amp; Platform Info
+                </span>
+                <span className="text-[10px] text-slate-500">
+                  Team TetraSquad · HackOut 2026 · Gujarat Grid
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] font-mono text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded font-bold">
+                v2.4
+              </span>
+              <span className="text-xs text-slate-400 font-mono font-bold">›</span>
+            </div>
+          </button>
+
+          {/* Version Footer */}
+          <div className="text-center text-[10px] text-slate-400 mt-2 mb-1">
+            EV GreenCharge Gujarat • Build 2026.09.12
+          </div>
         </div>
       </div>
 
@@ -993,6 +1032,112 @@ export const MobileProfileScreen = () => {
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 9. ABOUT US & PLATFORM INFO MODAL                         */}
+      {/* ========================================================= */}
+      {activeModal === 'about_us' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl border border-emerald-200 animate-slide-up max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center pb-2.5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                  ⚡
+                </div>
+                <div>
+                  <h4 className="font-heading font-extrabold text-sm text-slate-900 leading-tight">
+                    About EV GreenCharge
+                  </h4>
+                  <span className="text-[10px] text-slate-500">
+                    Gujarat Smart Clean-Energy Grid
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Mission & Overview */}
+            <div className="my-3 p-3 rounded-2xl bg-gradient-to-br from-emerald-900 to-teal-950 text-white shadow-sm">
+              <span className="text-[9.5px] font-mono font-bold text-emerald-400 uppercase tracking-wider block">
+                Mission &amp; Innovation
+              </span>
+              <p className="text-xs text-slate-200 mt-1 leading-relaxed font-sans">
+                EV GreenCharge is an AI-powered smart EV charging assistant built for India. We synchronize EV charging windows with Gujarat SLDC real-time renewable solar &amp; wind availability, cutting energy costs by up to <b>40%</b> and eliminating grid carbon spikes.
+              </p>
+            </div>
+
+            {/* Key Innovations */}
+            <div className="space-y-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <b className="font-heading text-slate-900 block text-[11.5px]">Dynamic Solar Sync</b>
+                  <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
+                    AI pricing curves that dynamically match your vehicle battery charge with afternoon solar peak production windows (₹6.50/kWh).
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <Radio className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <b className="font-heading text-slate-900 block text-[11.5px]">Live Telematics &amp; GPS Tracking</b>
+                  <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
+                    Real-time OBD-II vehicle connectivity, accurate battery SoC monitoring, and live station turn-by-turn routing.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <ShieldCheck className="w-4 h-4 text-sky-600" />
+                </div>
+                <div>
+                  <b className="font-heading text-slate-900 block text-[11.5px]">Anti-Spam Orbital Verification</b>
+                  <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
+                    Real-time 4-digit orbital security with direct inbox delivery standards and zero spam delays.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Hackathon & Team Credits */}
+            <div className="mt-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs">
+              <div className="flex items-center gap-1.5 font-heading font-extrabold text-emerald-950 text-[11.5px]">
+                <Award className="w-4 h-4 text-emerald-700" />
+                <span>Developed by Team TetraSquad</span>
+              </div>
+              <p className="text-[10.5px] text-emerald-800 mt-1">
+                Created for <b>HackOut 2026</b>. Empowering clean-energy smart mobility across Gujarat, India.
+              </p>
+              <div className="mt-2 pt-2 border-t border-emerald-200/60 flex items-center justify-between text-[10px] text-emerald-900 font-mono">
+                <span>Version: v2.4.0 (Prod)</span>
+                <span>Made in Gujarat 🇮🇳</span>
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setActiveModal(null)}
+              className="app-btn w-full mt-3 py-2.5 text-xs font-bold shadow-sm cursor-pointer"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
