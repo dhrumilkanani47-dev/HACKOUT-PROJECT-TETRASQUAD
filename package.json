@@ -9,7 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:backend": "npm --prefix backend test",
-    "seed:backend": "npm --prefix backend run prisma:seed"
+    "seed:backend": "npm --prefix backend run prisma:seed",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
