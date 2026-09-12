@@ -51,7 +51,7 @@ export const MapPage = () => {
       list = list.filter((s) => s.availableChargers > 0);
     } else if (activeFilterTab === 'low_cost') {
       list = list.filter((s) => s.pricePerKwh <= 7.80);
-    } else if (activeFilterTab === 'green') {
+    } else    if (activeFilterTab === 'green') {
       list = list.filter((s) => s.renewablePct >= 80);
     } else if (activeFilterTab === 'near_hospitals') {
       list = list.filter((s) => s.isHospitalNearby);
@@ -59,6 +59,20 @@ export const MapPage = () => {
 
     return list;
   }, [stations, searchQuery, selectedNetwork, activeFilterTab]);
+
+  // Calculate top recommended station based on price and distance
+  const topRecommended = useMemo(() => {
+    if (!stations.length) return null;
+    return [...stations].sort((a, b) => {
+      const distA = a.distanceKm || 2.5;
+      const distB = b.distanceKm || 2.5;
+      const priceA = a.pricePerKwh || 8.4;
+      const priceB = b.pricePerKwh || 8.4;
+      const scoreA = (40 - distA * 4) + ((12 - priceA) / 6) * 40 + (a.availableChargers > 0 ? 15 : 0);
+      const scoreB = (40 - distB * 4) + ((12 - priceB) / 6) * 40 + (b.availableChargers > 0 ? 15 : 0);
+      return scoreB - scoreA;
+    })[0];
+  }, [stations]);
 
   return (
     <div className="min-h-screen bg-paper text-ink dark:bg-paper-dark dark:text-white pb-24 md:pb-12">
@@ -127,6 +141,7 @@ export const MapPage = () => {
               stations={filteredStations}
               hospitals={hospitals}
               selectedStation={selectedStation}
+              recommendedStationId={topRecommended?.id}
               onSelectStation={(st) => setSelectedStation(st)}
               userLocation={{
                 lat: user?.latitude || 23.1884,

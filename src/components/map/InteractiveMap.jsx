@@ -58,6 +58,7 @@ export const InteractiveMap = ({
   stations = [],
   hospitals = [],
   selectedStation,
+  recommendedStationId,
   onSelectStation,
   userLocation: propUserLocation,
   height = '420px',
@@ -231,6 +232,7 @@ export const InteractiveMap = ({
     // Render Station Markers
     stations.forEach((st) => {
       const isSelected = selectedStation?.id === st.id;
+      const isRecommended = recommendedStationId && recommendedStationId === st.id;
       const lat = st.lat || st.latitude || 23.1884;
       const lng = st.lng || st.longitude || 72.6289;
       const price = st.pricePerKwh ? `₹${st.pricePerKwh.toFixed(2)}` : (st.price || '₹8.40');
@@ -238,29 +240,46 @@ export const InteractiveMap = ({
 
       const markerHtml = `
         <div class="relative cursor-pointer transition-transform duration-200 ${
-          isSelected ? 'scale-115 z-50' : 'hover:scale-108'
+          isSelected ? 'scale-115 z-50' : isRecommended ? 'scale-110 z-40' : 'hover:scale-108'
         }">
+          ${
+            isRecommended
+              ? '<div class="absolute -inset-1 rounded-full bg-amber-400/40 animate-ping pointer-events-none"></div>'
+              : ''
+          }
           <div class="flex items-center gap-1 px-2 py-1 rounded-full shadow-lg border-2 ${
             isSelected
               ? 'bg-emerald-600 text-white border-white ring-2 ring-emerald-400'
+              : isRecommended
+              ? 'bg-amber-500 text-slate-950 border-amber-300 ring-2 ring-amber-400/60 font-bold'
               : 'bg-white text-slate-900 border-emerald-500 hover:border-emerald-600'
           }">
             <div class="w-3.5 h-3.5 rounded-full ${
-              isSelected ? 'bg-white text-emerald-700' : 'bg-emerald-500 text-white'
+              isSelected
+                ? 'bg-white text-emerald-700'
+                : isRecommended
+                ? 'bg-amber-950 text-amber-300'
+                : 'bg-emerald-500 text-white'
             } flex items-center justify-center font-bold text-[9px]">
-              ⚡
+              ${isRecommended ? '👑' : '⚡'}
             </div>
             <span class="font-heading font-extrabold text-[11px] whitespace-nowrap leading-none">
               ${price}
             </span>
             ${
-              isFast
+              isRecommended
+                ? '<span class="text-[8.5px] px-1 py-0.2 rounded bg-amber-900 text-amber-100 font-bold">Best</span>'
+                : isFast
                 ? '<span class="text-[9px] px-1 py-0.2 rounded bg-amber-400 text-slate-950 font-bold font-mono">DC</span>'
                 : ''
             }
           </div>
           <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] ${
-            isSelected ? 'border-t-emerald-600' : 'border-t-emerald-500'
+            isSelected
+              ? 'border-t-emerald-600'
+              : isRecommended
+              ? 'border-t-amber-500'
+              : 'border-t-emerald-500'
           } mx-auto -mt-0.5"></div>
         </div>
       `;
@@ -283,7 +302,7 @@ export const InteractiveMap = ({
 
       markersGroup.addLayer(marker);
     });
-  }, [stations, hospitals, selectedStation, onSelectStation]);
+  }, [stations, hospitals, selectedStation, recommendedStationId, onSelectStation]);
 
   // Route Polyline when station is selected
   useEffect(() => {
