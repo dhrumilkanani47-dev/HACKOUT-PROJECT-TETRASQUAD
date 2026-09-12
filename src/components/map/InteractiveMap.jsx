@@ -1,160 +1,497 @@
-import React, { useState } from 'react';
-import { Zap, Navigation, Plus, Sun, ShieldCheck, Search, Crosshair, Layers } from 'lucide-react';
-import { PriceBadge } from '../common/PriceBadge';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import L from 'leaflet';
+import {
+  Zap,
+  Navigation,
+  Plus,
+  Minus,
+  Crosshair,
+  Layers,
+  MapPin,
+  ExternalLink,
+  ShieldCheck,
+  Building2,
+  Clock,
+  Compass,
+  Sparkles,
+} from 'lucide-react';
+
+// Tile provider URLs
+const MAP_LAYERS = {
+  streets: {
+    name: 'Standard Streets',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19,
+  },
+  satellite: {
+    name: 'Satellite View',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; Esri &copy; OpenStreetMap contributors',
+    maxZoom: 19,
+  },
+  dark: {
+    name: 'Dark Night Mode',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    maxZoom: 19,
+  },
+};
+
+// Haversine distance calculator in km
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return (R * c).toFixed(1);
+}
 
 export const InteractiveMap = ({
   stations = [],
   hospitals = [],
   selectedStation,
   onSelectStation,
-  userLocation = { lat: 23.1884, lng: 72.6289, label: 'Gandhinagar (You)' }
+  userLocation: propUserLocation,
+  height = '420px',
+  showRoute = true,
+  className = '',
 }) => {
-  const [activeLayer, setActiveLayer] = useState('all'); // 'all' | 'stations' | 'hospitals'
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const tileLayerRef = useRef(null);
+  const markersGroupRef = useRef(null);
+  const userMarkerRef = useRef(null);
+  const routePolylineRef = useRef(null);
+
+  const [activeLayerKey, setActiveLayerKey] = useState('streets');
+  const [showLayerMenu, setShowLayerMenu] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [userLivePos, setUserLivePos] = useState(
+    propUserLocation || { lat: 23.1884, lng: 72.6289, label: 'Gandhinagar' }
+  );
+
+  // Initialize Leaflet Map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    if (mapInstanceRef.current) return;
+
+    const initialLat = userLivePos?.lat || 23.1884;
+    const initialLng = userLivePos?.lng || 72.6289;
+
+    const map = L.map(mapContainerRef.current, {
+      center: [initialLat, initialLng],
+      zoom: 13,
+      zoomControl: false, // We render custom Google Maps-like zoom controls
+      attributionControl: false,
+    });
+
+    // Add base tile layer
+    const currentLayerCfg = MAP_LAYERS[activeLayerKey];
+    const tileLayer = L.tileLayer(currentLayerCfg.url, {
+      maxZoom: currentLayerCfg.maxZoom,
+      subdomains: 'abcd',
+    }).addTo(map);
+
+    tileLayerRef.current = tileLayer;
+
+    // Feature group for markers
+    const markersGroup = L.featureGroup().addTo(map);
+    markersGroupRef.current = markersGroup;
+
+    mapInstanceRef.current = map;
+
+    // Trigger map resize after slight delay to ensure container dimensions
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []);
+
+  // Update Tile Layer when layer key changes
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const currentCfg = MAP_LAYERS[activeLayerKey];
+    if (tileLayerRef.current) {
+      mapInstanceRef.current.removeLayer(tileLayerRef.current);
+    }
+    const newTileLayer = L.tileLayer(currentCfg.url, {
+      maxZoom: currentCfg.maxZoom,
+      subdomains: 'abcd',
+    }).addTo(mapInstanceRef.current);
+    tileLayerRef.current = newTileLayer;
+  }, [activeLayerKey]);
+
+  // Live Location Watcher
+  useEffect(() => {
+    if (!('geolocation' in navigator)) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        setUserLivePos({ lat: latitude, lng: longitude, accuracy, label: 'Your Live Location' });
+      },
+      (err) => {
+        console.warn('Live location permission or GPS error:', err?.message);
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, []);
+
+  // Render User Location Pulse Marker
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !userLivePos?.lat || !userLivePos?.lng) return;
+
+    if (userMarkerRef.current) {
+      map.removeLayer(userMarkerRef.current);
+    }
+
+    const userHtml = `
+      <div class="relative flex items-center justify-center -translate-x-1/2 -translate-y-1/2 select-none pointer-events-none">
+        <div class="absolute w-9 h-9 rounded-full bg-blue-500/25 animate-ping"></div>
+        <div class="relative w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-lg flex items-center justify-center">
+          <div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+        </div>
+      </div>
+    `;
+
+    const userIcon = L.divIcon({
+      className: 'custom-user-pin',
+      html: userHtml,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+    });
+
+    const marker = L.marker([userLivePos.lat, userLivePos.lng], {
+      icon: userIcon,
+      zIndexOffset: 1000,
+    }).addTo(map);
+
+    marker.bindTooltip('📍 You are here', {
+      direction: 'top',
+      offset: [0, -12],
+      className: 'bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow',
+    });
+
+    userMarkerRef.current = marker;
+  }, [userLivePos]);
+
+  // Render Station Markers & Hospital Markers
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const markersGroup = markersGroupRef.current;
+    if (!map || !markersGroup) return;
+
+    markersGroup.clearLayers();
+
+    // Render Hospital Markers if any
+    hospitals.forEach((hosp) => {
+      const lat = hosp.lat || hosp.latitude || (userLivePos?.lat ? userLivePos.lat + 0.015 : 23.195);
+      const lng = hosp.lng || hosp.longitude || (userLivePos?.lng ? userLivePos.lng + 0.012 : 72.635);
+
+      const hospHtml = `
+        <div class="flex items-center justify-center w-6 h-6 rounded-full bg-rose-500 text-white font-bold text-xs shadow-md border-2 border-white hover:scale-125 transition-transform cursor-pointer">
+          ✚
+        </div>
+      `;
+
+      const hospIcon = L.divIcon({
+        className: 'custom-hosp-pin',
+        html: hospHtml,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      });
+
+      const m = L.marker([lat, lng], { icon: hospIcon });
+      m.bindPopup(`
+        <div class="text-xs p-1 font-sans">
+          <b class="text-slate-900 block">${hosp.name || 'Emergency Medical Hub'}</b>
+          <span class="text-slate-500 text-[10px]">Hospital & Emergency Charger Corridor</span>
+        </div>
+      `);
+      markersGroup.addLayer(m);
+    });
+
+    // Render Station Markers
+    stations.forEach((st) => {
+      const isSelected = selectedStation?.id === st.id;
+      const lat = st.lat || st.latitude || 23.1884;
+      const lng = st.lng || st.longitude || 72.6289;
+      const price = st.pricePerKwh ? `₹${st.pricePerKwh.toFixed(2)}` : (st.price || '₹8.40');
+      const isFast = st.isFast || (st.powerKw && st.powerKw >= 50);
+
+      const markerHtml = `
+        <div class="relative cursor-pointer transition-transform duration-200 ${
+          isSelected ? 'scale-115 z-50' : 'hover:scale-108'
+        }">
+          <div class="flex items-center gap-1 px-2 py-1 rounded-full shadow-lg border-2 ${
+            isSelected
+              ? 'bg-emerald-600 text-white border-white ring-2 ring-emerald-400'
+              : 'bg-white text-slate-900 border-emerald-500 hover:border-emerald-600'
+          }">
+            <div class="w-3.5 h-3.5 rounded-full ${
+              isSelected ? 'bg-white text-emerald-700' : 'bg-emerald-500 text-white'
+            } flex items-center justify-center font-bold text-[9px]">
+              ⚡
+            </div>
+            <span class="font-heading font-extrabold text-[11px] whitespace-nowrap leading-none">
+              ${price}
+            </span>
+            ${
+              isFast
+                ? '<span class="text-[9px] px-1 py-0.2 rounded bg-amber-400 text-slate-950 font-bold font-mono">DC</span>'
+                : ''
+            }
+          </div>
+          <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] ${
+            isSelected ? 'border-t-emerald-600' : 'border-t-emerald-500'
+          } mx-auto -mt-0.5"></div>
+        </div>
+      `;
+
+      const icon = L.divIcon({
+        className: 'custom-station-pin',
+        html: markerHtml,
+        iconSize: [60, 30],
+        iconAnchor: [30, 28],
+      });
+
+      const marker = L.marker([lat, lng], { icon });
+
+      marker.on('click', () => {
+        if (onSelectStation) {
+          onSelectStation(st);
+        }
+        map.flyTo([lat, lng], Math.max(map.getZoom(), 14), { duration: 0.8 });
+      });
+
+      markersGroup.addLayer(marker);
+    });
+  }, [stations, hospitals, selectedStation, onSelectStation]);
+
+  // Route Polyline when station is selected
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (routePolylineRef.current) {
+      map.removeLayer(routePolylineRef.current);
+      routePolylineRef.current = null;
+    }
+
+    if (showRoute && selectedStation && userLivePos?.lat && userLivePos?.lng) {
+      const stLat = selectedStation.lat || selectedStation.latitude;
+      const stLng = selectedStation.lng || selectedStation.longitude;
+
+      if (stLat && stLng) {
+        const polyline = L.polyline(
+          [
+            [userLivePos.lat, userLivePos.lng],
+            [stLat, stLng],
+          ],
+          {
+            color: '#10B981',
+            weight: 4,
+            dashArray: '8, 8',
+            opacity: 0.85,
+          }
+        ).addTo(map);
+
+        routePolylineRef.current = polyline;
+      }
+    }
+  }, [selectedStation, userLivePos, showRoute]);
+
+  // Controls: Zoom In
+  const handleZoomIn = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.zoomIn();
+    }
+  };
+
+  // Controls: Zoom Out
+  const handleZoomOut = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.zoomOut();
+    }
+  };
+
+  // Controls: My Location
+  const handleLocateMe = () => {
+    setIsLocating(true);
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setIsLocating(false);
+          const { latitude, longitude, accuracy } = pos.coords;
+          setUserLivePos({ lat: latitude, lng: longitude, accuracy, label: 'Your Location' });
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.flyTo([latitude, longitude], 15, { duration: 1 });
+          }
+        },
+        (err) => {
+          setIsLocating(false);
+          // Default to Gandhinagar
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.flyTo([23.1884, 72.6289], 14, { duration: 1 });
+          }
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      setIsLocating(false);
+    }
+  };
+
+  // Turn-by-Turn Navigation via Google Maps
+  const handleOpenGoogleMaps = (st) => {
+    const destinationLat = st.lat || st.latitude || 23.1884;
+    const destinationLng = st.lng || st.longitude || 72.6289;
+    const originParam = userLivePos?.lat && userLivePos?.lng ? `&origin=${userLivePos.lat},${userLivePos.lng}` : '';
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1${originParam}&destination=${destinationLat},${destinationLng}&travelmode=driving`;
+    window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const calculatedDist = useMemo(() => {
+    if (!selectedStation || !userLivePos?.lat || !userLivePos?.lng) return null;
+    const stLat = selectedStation.lat || selectedStation.latitude;
+    const stLng = selectedStation.lng || selectedStation.longitude;
+    return calculateDistance(userLivePos.lat, userLivePos.lng, stLat, stLng);
+  }, [selectedStation, userLivePos]);
 
   return (
-    <div className="relative w-full h-[380px] sm:h-[480px] rounded-3xl overflow-hidden border border-forest/15 dark:border-white/10 shadow-soft bg-[#EEF2EC] dark:bg-[#0F1714]">
-      {/* Visual Vector Grid & Map Backdrop */}
-      <div className="absolute inset-0 opacity-70 pointer-events-none">
-        {/* Sabarmati River / Water curve */}
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M 120 -50 Q 180 200 320 300 T 550 600"
-            fill="none"
-            stroke="#D0E3F0"
-            strokeWidth="38"
-            className="dark:stroke-[#18313D]"
-          />
-          {/* Main Highway 1 (SG Highway / Gandhinagar corridor) */}
-          <path
-            d="M 50 400 L 480 80"
-            fill="none"
-            stroke="#FFFFFF"
-            strokeWidth="12"
-            className="dark:stroke-[#25362E]"
-          />
-          {/* Main Highway 2 (Infocity / GIFT City Ring Road) */}
-          <path
-            d="M 10 160 Q 300 180 580 420"
-            fill="none"
-            stroke="#FFFFFF"
-            strokeWidth="8"
-            className="dark:stroke-[#25362E]"
-          />
-          {/* Local Sector Grids */}
-          <line x1="80" y1="20" x2="80" y2="460" stroke="#E2ECE5" strokeWidth="2" className="dark:stroke-[#1C2923]" />
-          <line x1="220" y1="20" x2="220" y2="460" stroke="#E2ECE5" strokeWidth="2" className="dark:stroke-[#1C2923]" />
-          <line x1="380" y1="20" x2="380" y2="460" stroke="#E2ECE5" strokeWidth="2" className="dark:stroke-[#1C2923]" />
-          <line x1="20" y1="120" x2="600" y2="120" stroke="#E2ECE5" strokeWidth="2" className="dark:stroke-[#1C2923]" />
-          <line x1="20" y1="280" x2="600" y2="280" stroke="#E2ECE5" strokeWidth="2" className="dark:stroke-[#1C2923]" />
-          <line x1="20" y1="400" x2="600" y2="400" stroke="#E2ECE5" strokeWidth="2" className="dark:stroke-[#1C2923]" />
-          {/* Park Zones */}
-          <rect x="230" y="130" width="80" height="70" rx="16" fill="#D8EBDC" className="dark:fill-[#142A1F]" opacity="0.8" />
-          <rect x="90" y="290" width="110" height="90" rx="16" fill="#D8EBDC" className="dark:fill-[#142A1F]" opacity="0.8" />
-        </svg>
-      </div>
+    <div className={`relative w-full rounded-2xl overflow-hidden border border-green-200 shadow-sm bg-slate-100 select-none ${className}`} style={{ height }}>
+      {/* Real Leaflet Map DOM Node */}
+      <div ref={mapContainerRef} className="w-full h-full z-0" />
 
-      {/* Top Map Layer Controls */}
-      <div className="absolute top-3 right-3 z-20 flex gap-1.5">
+      {/* Floating Google Maps-like Control Bar (Top Right) */}
+      <div className="absolute top-3 right-3 z-30 flex flex-col gap-1.5">
+        {/* Layer Selector Button */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowLayerMenu((p) => !p)}
+            className="w-9 h-9 rounded-xl bg-white/95 text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center hover:bg-green-50 hover:text-emerald-700 active:scale-95 transition-all"
+            title="Map Layers (Satellite / Street / Dark)"
+          >
+            <Layers className="w-4 h-4" />
+          </button>
+
+          {showLayerMenu && (
+            <div className="absolute right-0 top-11 w-44 bg-white rounded-2xl shadow-xl border border-green-200 p-1.5 z-40 text-xs animate-slide-up">
+              <div className="px-2 py-1 text-[10px] font-heading font-bold text-slate-400 uppercase">
+                Map Types
+              </div>
+              {Object.entries(MAP_LAYERS).map(([key, cfg]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setActiveLayerKey(key);
+                    setShowLayerMenu(false);
+                  }}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-xl font-heading font-semibold text-xs flex items-center justify-between transition-colors ${
+                    activeLayerKey === key
+                      ? 'bg-emerald-500 text-white shadow-2xs'
+                      : 'text-slate-700 hover:bg-green-50'
+                  }`}
+                >
+                  <span>{cfg.name}</span>
+                  {activeLayerKey === key && <span className="text-[10px]">✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Locate Me (GPS Track) Button */}
         <button
-          onClick={() => setActiveLayer(activeLayer === 'all' ? 'stations' : 'all')}
-          className="p-2 rounded-xl bg-white/90 dark:bg-paper-cardDark/90 backdrop-blur-md border border-forest/15 dark:border-white/10 text-xs font-heading font-semibold text-forest dark:text-emerald-400 shadow-sm flex items-center gap-1 cursor-pointer"
+          type="button"
+          onClick={handleLocateMe}
+          className={`w-9 h-9 rounded-xl bg-white/95 shadow-md border border-slate-200/80 flex items-center justify-center active:scale-95 transition-all ${
+            isLocating ? 'text-blue-600 bg-blue-50 ring-2 ring-blue-400 animate-pulse' : 'text-slate-700 hover:text-emerald-700 hover:bg-green-50'
+          }`}
+          title="Track Live GPS Location"
         >
-          <Layers className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Layers</span>
+          <Crosshair className="w-4 h-4" />
+        </button>
+
+        {/* Zoom In Button */}
+        <button
+          type="button"
+          onClick={handleZoomIn}
+          className="w-9 h-9 rounded-xl bg-white/95 text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center hover:bg-green-50 hover:text-emerald-700 active:scale-95 transition-all"
+          title="Zoom In"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+
+        {/* Zoom Out Button */}
+        <button
+          type="button"
+          onClick={handleZoomOut}
+          className="w-9 h-9 rounded-xl bg-white/95 text-slate-700 shadow-md border border-slate-200/80 flex items-center justify-center hover:bg-green-50 hover:text-emerald-700 active:scale-95 transition-all"
+          title="Zoom Out"
+        >
+          <Minus className="w-4 h-4" />
         </button>
       </div>
 
-      {/* User Location Marker (Pulse Blue) */}
-      <div
-        className="absolute z-20 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-        style={{ left: '46%', top: '50%' }}
-      >
-        <div className="relative flex items-center justify-center">
-          <span className="absolute w-8 h-8 rounded-full bg-sky/30 animate-ping" />
-          <span className="w-4 h-4 rounded-full bg-sky border-2 border-white shadow-md flex items-center justify-center">
-            <span className="w-1.5 h-1.5 rounded-full bg-white" />
-          </span>
-        </div>
-        <div className="mt-1 -ml-6 px-2 py-0.5 rounded-md bg-sky text-white text-[9px] font-heading font-bold shadow-sm whitespace-nowrap">
-          You are here
-        </div>
+      {/* Floating GPS Accuracy & Live Status Pill (Bottom Left) */}
+      <div className="absolute bottom-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/90 backdrop-blur-md border border-green-200/80 text-[10px] text-slate-700 font-medium shadow-sm">
+        <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+        <span className="font-heading font-semibold text-slate-900">Live GPS</span>
+        <span className="text-slate-400">•</span>
+        <span className="text-slate-500 font-mono">{stations.length} Chargers</span>
       </div>
 
-      {/* Hospital Markers (✚) */}
-      {hospitals.map((hosp) => (
-        <div
-          key={hosp.id}
-          className="absolute z-10 -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
-          style={{ left: `${hosp.coordinates?.x || 50}%`, top: `${hosp.coordinates?.y || 50}%` }}
-        >
-          <div className="w-6 h-6 rounded-full bg-sky text-white flex items-center justify-center shadow-md font-bold text-xs border border-white hover:scale-125 transition-transform">
-            ✚
-          </div>
-          <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded-lg bg-ink text-white text-[10px] font-medium whitespace-nowrap shadow-lg z-30">
-            {hosp.name}
-          </div>
-        </div>
-      ))}
-
-      {/* EV Station Markers (⚡ with dynamic ₹/kWh price badge) */}
-      {stations.map((st) => {
-        const isSelected = selectedStation?.id === st.id;
-        const x = st.coordinates?.x || 50;
-        const y = st.coordinates?.y || 50;
-
-        return (
-          <div
-            key={st.id}
-            onClick={() => onSelectStation && onSelectStation(st)}
-            className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer group"
-            style={{ left: `${x}%`, top: `${y}%` }}
-          >
-            <div
-              className={`flex items-center gap-1 px-2 py-1 rounded-xl shadow-elevated border transition-all duration-200 ${
-                isSelected
-                  ? 'bg-forest text-white border-white scale-110 ring-2 ring-emerald-400'
-                  : 'bg-white dark:bg-paper-cardDark text-ink dark:text-white border-forest/20 hover:scale-105'
-              }`}
-            >
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${isSelected ? 'bg-white text-forest' : 'bg-forest text-white'}`}>
-                <Zap className="w-2.5 h-2.5 fill-current" />
-              </div>
-              <span className="font-heading font-bold text-[11px]">
-                ₹{st.pricePerKwh.toFixed(2)}
+      {/* Selected Station Quick Navigation Overlay Pill on Map */}
+      {selectedStation && (
+        <div className="absolute top-3 left-3 z-30 max-w-[210px] sm:max-w-[260px] animate-fade-in">
+          <div className="bg-slate-950/85 text-white p-2.5 rounded-2xl shadow-xl backdrop-blur-md border border-white/20 flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/30 text-emerald-300 font-bold">
+                Selected
               </span>
-              {st.renewablePct >= 85 && (
-                <span className="text-[9px] text-amber">☀</span>
-              )}
+              <span className="text-[10px] text-emerald-400 font-bold font-heading">
+                {selectedStation.pricePerKwh ? `₹${selectedStation.pricePerKwh.toFixed(2)}/kWh` : '₹8.40'}
+              </span>
+            </div>
+            <div className="font-heading font-bold text-xs truncate">
+              {selectedStation.name}
+            </div>
+            <div className="text-[9.5px] text-slate-300 truncate">
+              {calculatedDist ? `${calculatedDist} km away` : (selectedStation.distance || selectedStation.distanceKm ? `${selectedStation.distance || selectedStation.distanceKm + ' km'}` : 'Nearby')}
             </div>
 
-            {/* Hover Tooltip Preview */}
-            <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 p-2 rounded-xl bg-forest text-white text-[11px] whitespace-nowrap shadow-xl z-30 pointer-events-none">
-              <div className="font-heading font-bold">{st.name}</div>
-              <div className="text-[10px] text-emerald-200 flex items-center gap-1.5 mt-0.5">
-                <span>{st.powerKw} kW DC</span>
-                <span>• {st.availableChargers}/{st.totalChargers} free</span>
-                <span>• {st.renewablePct}% clean</span>
-              </div>
-            </div>
+            <button
+              onClick={() => handleOpenGoogleMaps(selectedStation)}
+              className="mt-0.5 w-full py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading font-bold text-[10.5px] flex items-center justify-center gap-1 shadow-xs transition-colors"
+            >
+              <Navigation className="w-3 h-3 fill-current" />
+              <span>Navigate in Google Maps</span>
+              <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+            </button>
           </div>
-        );
-      })}
-
-      {/* Map Legend Overlay at bottom left */}
-      <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 p-1.5 rounded-xl bg-white/90 dark:bg-paper-cardDark/90 backdrop-blur-md border border-forest/10 dark:border-white/10 shadow-sm text-[10px] font-heading font-medium">
-        <span className="flex items-center gap-1 text-forest dark:text-emerald-400">
-          <span className="w-3 h-3 rounded-full bg-forest text-white flex items-center justify-center text-[8px]">⚡</span>
-          EV Station
-        </span>
-        <span className="flex items-center gap-1 text-sky">
-          <span className="w-3 h-3 rounded-full bg-sky text-white flex items-center justify-center text-[8px]">✚</span>
-          Hospital
-        </span>
-        <span className="flex items-center gap-1 text-sky">
-          <span className="w-2.5 h-2.5 rounded-full bg-sky" />
-          You
-        </span>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export default InteractiveMap;

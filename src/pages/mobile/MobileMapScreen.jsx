@@ -1,73 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
-import { Search, ChevronRight, Zap } from 'lucide-react';
+import { InteractiveMap } from '../../components/map/InteractiveMap';
+import { useStations } from '../../context/StationContext';
+import { useAuth } from '../../context/AuthContext';
+import {
+  Search,
+  ChevronRight,
+  Zap,
+  Navigation,
+  ExternalLink,
+  MapPin,
+  Clock,
+  ShieldCheck,
+  Star,
+  CheckCircle2,
+  Sliders,
+  Layers,
+  Sparkles,
+  X,
+} from 'lucide-react';
 
 export const MobileMapScreen = () => {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState('nearby');
-  const [selectedStationId, setSelectedStationId] = useState('st_01');
+  const { stations, hospitals, selectedStation, setSelectedStation } = useStations();
+  const { user } = useAuth();
+
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'nearby' | 'available' | 'fast' | 'green'
   const [searchQuery, setSearchQuery] = useState('');
 
-  const stationsOnMap = [
-    {
-      id: 'st_01',
-      name: 'GreenHub Station',
-      city: 'Ahmedabad, Gujarat',
-      distance: '1.8 km',
-      price: '₹8.40',
-      available: '4 / 6',
-      speed: 'Fast DC',
-      renewable: '90%',
-      left: '20%',
-      top: '24%',
-      isAlt: false,
-    },
-    {
-      id: 'st_02',
-      name: 'Adani Total Power Station',
-      city: 'SG Highway, Ahmedabad',
-      distance: '3.4 km',
-      price: '₹10.10',
-      available: '2 / 4',
-      speed: 'Ultra Fast DC',
-      renewable: '65%',
-      left: '60%',
-      top: '20%',
-      isAlt: true,
-    },
-    {
-      id: 'st_03',
-      name: 'GIFT City Clean Charge',
-      city: 'GIFT City, Gandhinagar',
-      distance: '4.2 km',
-      price: '₹8.80',
-      available: '5 / 6',
-      speed: 'Hyper Fast DC',
-      renewable: '92%',
-      left: '66%',
-      top: '60%',
-      isAlt: false,
-    },
-    {
-      id: 'st_04',
-      name: 'Prahlad Nagar Urban Bay',
-      city: 'Prahlad Nagar, Ahmedabad',
-      distance: '2.5 km',
-      price: '₹9.20',
-      available: '3 / 4',
-      speed: 'Fast DC',
-      renewable: '75%',
-      left: '30%',
-      top: '72%',
-      isAlt: true,
-    },
-  ];
+  // Fallback initial station if none selected
+  const activeStation = selectedStation || stations[0];
 
-  const selectedStation =
-    stationsOnMap.find((s) => s.id === selectedStationId) || stationsOnMap[0];
+  // Filtering stations based on search query and active filter pill
+  const filteredStations = useMemo(() => {
+    let list = [...stations];
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (s) =>
+          s.name?.toLowerCase().includes(q) ||
+          s.network?.toLowerCase().includes(q) ||
+          s.address?.toLowerCase().includes(q) ||
+          s.city?.toLowerCase().includes(q)
+      );
+    }
+
+    if (activeFilter === 'available') {
+      list = list.filter((s) => s.availableChargers > 0);
+    } else if (activeFilter === 'fast') {
+      list = list.filter((s) => s.isFast || (s.powerKw && s.powerKw >= 50));
+    } else if (activeFilter === 'green') {
+      list = list.filter((s) => s.renewablePct >= 80);
+    } else if (activeFilter === 'nearby') {
+      list = list.filter((s) => (s.distanceKm || s.distance) <= 5);
+    }
+
+    return list;
+  }, [stations, searchQuery, activeFilter]);
+
+  // Turn-by-Turn Navigation via Google Maps
+  const handleStartNavigation = (station) => {
+    if (!station) return;
+    const destLat = station.lat || station.latitude || 23.1884;
+    const destLng = station.lng || station.longitude || 72.6289;
+    const userLat = user?.latitude;
+    const userLng = user?.longitude;
+    const originParam = userLat && userLng ? `&origin=${userLat},${userLng}` : '';
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1${originParam}&destination=${destLat},${destLng}&travelmode=driving`;
+    window.open(mapsUrl, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
@@ -76,123 +81,151 @@ export const MobileMapScreen = () => {
         <MobileTopNav title="Find Charging Stations" onBack={() => navigate('/')} />
 
         {/* Content Container */}
-        <div className="px-4 pt-2 pb-2 flex flex-col flex-1 gap-2 overflow-hidden">
-          {/* Search location field matching attachment */}
+        <div className="px-3.5 pt-1.5 pb-2 flex flex-col flex-1 gap-2 overflow-hidden">
+          {/* Search location field */}
           <div className="relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search location"
-              className="app-field w-full text-xs pl-8 pr-3 py-2 bg-slate-50 border border-green-200 text-slate-800 focus:bg-white"
+              placeholder="Search station, network (e.g. Tata, Jio-bp), area..."
+              className="app-field w-full text-xs pl-8 pr-7 py-2 bg-slate-50 border border-green-200 text-slate-800 focus:bg-white"
             />
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-
-          {/* Filter pills row matching attachment */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveFilter('nearby')}
-              className={`pill-tag sky transition-all cursor-pointer ${
-                activeFilter === 'nearby' ? 'ring-2 ring-blue-400 font-bold' : 'opacity-80'
-              }`}
-            >
-              Nearby
-            </button>
-            <button
-              onClick={() => setActiveFilter('available')}
-              className={`pill-tag green transition-all cursor-pointer ${
-                activeFilter === 'available' ? 'ring-2 ring-emerald-500 font-bold' : 'opacity-80'
-              }`}
-            >
-              Available
-            </button>
-            <button
-              onClick={() => setActiveFilter('fast')}
-              className={`pill-tag amber transition-all cursor-pointer ${
-                activeFilter === 'fast' ? 'ring-2 ring-amber-400 font-bold' : 'opacity-80'
-              }`}
-            >
-              Fast DC
-            </button>
-          </div>
-
-          {/* Simulated Mobile Map matching attachment styling */}
-          <div
-            className="relative flex-1 rounded-2xl overflow-hidden border border-green-200 min-h-[220px]"
-            style={{
-              background: `
-                radial-gradient(circle at 25% 30%, #DCEBDF 0, transparent 40%),
-                radial-gradient(circle at 75% 70%, #DCE6EF 0, transparent 45%),
-                #F4F6EE
-              `,
-            }}
-          >
-            {/* Roads vector drawing */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-80" xmlns="http://www.w3.org/2000/svg">
-              <line x1="0" y1="80" x2="320" y2="120" stroke="#FFFFFF" strokeWidth="9" />
-              <line x1="140" y1="0" x2="160" y2="300" stroke="#FFFFFF" strokeWidth="8" />
-              <path d="M 40 240 Q 150 160 280 220" fill="none" stroke="#FFFFFF" strokeWidth="7" />
-              <path d="M 200 40 Q 240 140 300 240" fill="none" stroke="#D3E4ED" strokeWidth="16" />
-            </svg>
-
-            {/* User Location Pin (.pin.me at 46%, 52%) */}
-            <span
-              className="app-pin me animate-pulse"
-              style={{ left: '46%', top: '52%' }}
-              title="You are here"
-            />
-
-            {/* Station Pins matching attachment positions */}
-            {stationsOnMap.map((station) => (
+            {searchQuery && (
               <button
-                key={station.id}
-                onClick={() => setSelectedStationId(station.id)}
-                className={`app-pin ${station.isAlt ? 'alt' : ''} ${
-                  selectedStationId === station.id ? 'ring-2 ring-white scale-110 z-20' : ''
-                }`}
-                style={{ left: station.left, top: station.top }}
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
               >
-                {station.price}
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Filter pills row */}
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+            {[
+              { id: 'all', label: 'All', color: 'emerald' },
+              { id: 'nearby', label: 'Nearby (<5km)', color: 'sky' },
+              { id: 'available', label: 'Available Now', color: 'green' },
+              { id: 'fast', label: 'Fast DC (≥50 kW)', color: 'amber' },
+              { id: 'green', label: 'Clean Solar (≥80%)', color: 'emerald' },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setActiveFilter(f.id)}
+                className={`text-[10.5px] font-heading font-bold px-2.5 py-1 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+                  activeFilter === f.id
+                    ? 'bg-emerald-600 text-white shadow-2xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-green-50 hover:text-emerald-800 border border-slate-200'
+                }`}
+              >
+                {f.label}
               </button>
             ))}
           </div>
 
-          {/* Active Station Preview Card with Link to Station Details (Screen 05) */}
-          <div
-            onClick={() => navigate(`/station/${selectedStation.id}`)}
-            className="app-card py-2.5 px-3 flex items-center justify-between cursor-pointer hover:border-emerald-400 transition-all border border-green-200 bg-white shadow-xs"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-green-100 text-emerald-800 flex items-center justify-center font-bold">
-                <Zap className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="font-heading font-extrabold text-xs text-slate-900">
-                  {selectedStation.name}
-                </div>
-                <div className="text-[10px] text-slate-500">
-                  {selectedStation.city} · {selectedStation.distance} · {selectedStation.available} bays
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-right">
-              <div>
-                <div className="font-heading font-extrabold text-xs text-emerald-700">
-                  {selectedStation.price}
-                </div>
-                <div className="text-[9.5px] text-emerald-700 font-semibold">
-                  {selectedStation.renewable} green
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </div>
+          {/* Real Leaflet Map with Google Maps style controls */}
+          <div className="relative flex-1 rounded-2xl overflow-hidden border border-green-200 min-h-[220px]">
+            <InteractiveMap
+              stations={filteredStations}
+              hospitals={hospitals}
+              selectedStation={activeStation}
+              onSelectStation={(st) => setSelectedStation(st)}
+              userLocation={{
+                lat: user?.latitude || 23.1884,
+                lng: user?.longitude || 72.6289,
+                label: `${user?.city || 'Gandhinagar'} (You)`,
+              }}
+              height="100%"
+              showRoute={true}
+            />
           </div>
+
+          {/* Active Station Preview & Navigation Bottom Sheet */}
+          {activeStation && (
+            <div className="app-card p-3 bg-white border border-green-200 shadow-sm flex flex-col gap-2 animate-slide-up">
+              {/* Top Row: Title, Company, Status, Live Price */}
+              <div className="flex justify-between items-start">
+                <div className="flex-1 pr-2 truncate">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-900 font-mono font-bold border border-emerald-200">
+                      {activeStation.network || 'Tata Power'}
+                    </span>
+                    <span className="pill-tag green text-[9px] py-0.5 px-1.5">
+                      ● {activeStation.availableChargers || 4}/{activeStation.totalChargers || 6} Free
+                    </span>
+                  </div>
+                  <h4 className="font-heading font-extrabold text-xs text-slate-900 mt-1 truncate">
+                    {activeStation.name}
+                  </h4>
+                  <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5 truncate">
+                    <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                    <span className="truncate">{activeStation.address || activeStation.city}</span>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <div className="text-[9px] text-slate-400">Live Rate</div>
+                  <b className="font-heading text-emerald-700 text-sm font-extrabold block">
+                    ₹{(activeStation.pricePerKwh || 8.4).toFixed(2)}
+                    <span className="text-[9px] font-normal text-slate-500">/kWh</span>
+                  </b>
+                  <span className="text-[9px] text-emerald-700 font-semibold font-mono">
+                    {activeStation.renewablePct || 90}% Green
+                  </span>
+                </div>
+              </div>
+
+              {/* Specs Snippet Bar */}
+              <div className="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-dashed border-green-100 text-center text-xs">
+                <div className="bg-slate-50 p-1 rounded-lg">
+                  <div className="text-[8px] text-slate-400">Speed</div>
+                  <b className="font-heading text-[10px] text-slate-800 truncate block">
+                    {activeStation.powerKw || 60} kW DC
+                  </b>
+                </div>
+                <div className="bg-slate-50 p-1 rounded-lg">
+                  <div className="text-[8px] text-slate-400">Connectors</div>
+                  <b className="font-heading text-[10px] text-slate-800 truncate block">
+                    {activeStation.connectors ? activeStation.connectors[0] : 'CCS2'}
+                  </b>
+                </div>
+                <div className="bg-emerald-50/60 p-1 rounded-lg border border-emerald-200/50">
+                  <div className="text-[8px] text-emerald-800">Hours</div>
+                  <b className="font-heading text-[10px] text-emerald-900 truncate block">
+                    {activeStation.openingStatus || 'Open 24/7'}
+                  </b>
+                </div>
+              </div>
+
+              {/* Primary Action Buttons: Navigate in Google Maps + Station Details */}
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleStartNavigation(activeStation)}
+                  className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-heading font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                >
+                  <Navigation className="w-3.5 h-3.5 fill-current" />
+                  <span>Start Navigation</span>
+                  <ExternalLink className="w-3 h-3 opacity-80" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate(`/station/${activeStation.id}`)}
+                  className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-green-50 text-emerald-900 font-heading font-bold text-xs flex items-center justify-center gap-1 border border-slate-200 active:scale-95 transition-all"
+                >
+                  <span>Details</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Bottom Navigation (Screen 04: Map active) */}
+      {/* Bottom Navigation */}
       <MobileBottomBar />
     </div>
   );
