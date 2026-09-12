@@ -8,15 +8,7 @@ import { Car, CreditCard, Bell, Sliders, ShieldCheck, UserCheck, ChevronRight } 
 
 export const MobileProfileScreen = () => {
   const navigate = useNavigate();
-  const { user, logout, updateProfile } = useAuth();
-
-  const handleToggleRole = () => {
-    const nextRole = user?.role === 'operator' ? 'driver' : 'operator';
-    updateProfile({ role: nextRole });
-    if (nextRole === 'operator') {
-      navigate('/operator');
-    }
-  };
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -55,13 +47,6 @@ export const MobileProfileScreen = () => {
               </div>
             </div>
 
-            {/* Quick Role Switcher Button */}
-            <button
-              onClick={handleToggleRole}
-              className="text-[9.5px] font-heading font-bold px-2.5 py-1 rounded-lg bg-green-100 text-emerald-900 border border-green-300 hover:bg-green-200 transition-colors"
-            >
-              {user?.role === 'operator' ? 'Switch to Driver' : 'Switch to Operator'}
-            </button>
           </div>
 
           {/* List Rows matching attachment */}
