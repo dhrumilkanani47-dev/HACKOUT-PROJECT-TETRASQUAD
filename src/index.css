@@ -42,7 +42,13 @@
     touch-action: manipulation;
   }
 
-  h1, h2, h3, h4, h5, h6, .font-heading {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-heading {
     font-family: 'Space Grotesk', sans-serif;
   }
 }
@@ -54,6 +60,7 @@
   border-radius: 16px;
   padding: 12px 13px;
 }
+
 .dark .app-card {
   background: #15201A;
   border-color: rgba(255, 255, 255, 0.08);
@@ -69,15 +76,46 @@
   font-weight: 600;
   font-family: 'Space Grotesk', sans-serif;
 }
-.pill-tag.green { background: #E4F3E9; color: var(--forest-2); }
-.pill-tag.amber { background: #FBEFDB; color: #9C6716; }
-.pill-tag.sky { background: #E4EEF7; color: var(--sky); }
-.pill-tag.coal { background: #F7E7E2; color: var(--coal); }
 
-.dark .pill-tag.green { background: rgba(63, 166, 107, 0.2); color: #4ade80; }
-.dark .pill-tag.amber { background: rgba(232, 163, 61, 0.2); color: #fcd34d; }
-.dark .pill-tag.sky { background: rgba(46, 123, 182, 0.2); color: #60a5fa; }
-.dark .pill-tag.coal { background: rgba(176, 71, 47, 0.2); color: #f87171; }
+.pill-tag.green {
+  background: #E4F3E9;
+  color: var(--forest-2);
+}
+
+.pill-tag.amber {
+  background: #FBEFDB;
+  color: #9C6716;
+}
+
+.pill-tag.sky {
+  background: #E4EEF7;
+  color: var(--sky);
+}
+
+.pill-tag.coal {
+  background: #F7E7E2;
+  color: var(--coal);
+}
+
+.dark .pill-tag.green {
+  background: rgba(63, 166, 107, 0.2);
+  color: #4ade80;
+}
+
+.dark .pill-tag.amber {
+  background: rgba(232, 163, 61, 0.2);
+  color: #fcd34d;
+}
+
+.dark .pill-tag.sky {
+  background: rgba(46, 123, 182, 0.2);
+  color: #60a5fa;
+}
+
+.dark .pill-tag.coal {
+  background: rgba(176, 71, 47, 0.2);
+  color: #f87171;
+}
 
 .app-btn {
   display: flex;
@@ -94,9 +132,11 @@
   transition: all 0.15s ease;
   cursor: pointer;
 }
+
 .app-btn:hover {
   filter: brightness(1.08);
 }
+
 .app-btn:active {
   transform: scale(0.98);
 }
@@ -106,6 +146,7 @@
   border: 1.4px solid var(--forest);
   color: var(--forest);
 }
+
 .dark .app-btn.outline {
   border-color: #4ade80;
   color: #4ade80;
@@ -115,6 +156,7 @@
   background: #F1EFE6;
   color: var(--ink);
 }
+
 .dark .app-btn.ghost {
   background: #202D26;
   color: #F0F4F2;
@@ -130,9 +172,11 @@
   outline: none;
   transition: border-color 0.2s;
 }
+
 .app-field:focus {
   border-color: var(--forest-2);
 }
+
 .dark .app-field {
   background: #16221C;
   border-color: rgba(255, 255, 255, 0.1);
@@ -147,13 +191,16 @@
   padding: 8px 0;
   border-bottom: 1px dashed var(--line);
 }
+
 .app-list-row:last-child {
   border-bottom: none;
 }
+
 .app-list-row b {
   font-family: 'Space Grotesk', sans-serif;
   color: var(--ink);
 }
+
 .dark .app-list-row b {
   color: #F0F4F2;
 }
@@ -170,9 +217,11 @@
   background: conic-gradient(var(--forest) calc(var(--pct)*1%), #E7E4D8 0);
   transition: all 0.5s ease-out;
 }
+
 .dark .app-ring {
   background: conic-gradient(#3FA66B calc(var(--pct)*1%), #23332A 0);
 }
+
 .app-ring .hole {
   width: 74px;
   height: 74px;
@@ -183,14 +232,17 @@
   align-items: center;
   justify-content: center;
 }
+
 .app-ring .hole b {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 19px;
   color: var(--forest);
 }
+
 .dark .app-ring .hole b {
   color: #4ade80;
 }
+
 .app-ring .hole span {
   font-size: 9px;
   color: var(--ink-soft);
@@ -206,18 +258,21 @@
   color: #fff;
   padding: 3px 7px;
   border-radius: 8px 8px 8px 2px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
   cursor: pointer;
   transition: transform 0.15s ease;
   z-index: 10;
 }
+
 .app-pin:hover {
   transform: scale(1.1);
 }
+
 .app-pin.alt {
   background: var(--amber);
   color: #4a3103;
 }
+
 .app-pin.me {
   background: var(--sky);
   border-radius: 50%;
@@ -232,13 +287,16 @@
   width: 4px;
   height: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(15, 61, 46, 0.2);
   border-radius: 999px;
 }
+
 .dark ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
 }
@@ -247,7 +305,7 @@
 .safe-pb {
   padding-bottom: env(safe-area-inset-bottom, 16px);
 }
+
 .safe-pt {
   padding-top: env(safe-area-inset-top, 16px);
 }
-
