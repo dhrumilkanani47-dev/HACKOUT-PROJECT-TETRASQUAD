@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
-import { Leaf, ChevronRight, Download } from 'lucide-react';
+import { Leaf, ChevronRight, Download, Fuel } from 'lucide-react';
 
 export const MobileHistoryScreen = () => {
   const navigate = useNavigate();
@@ -15,8 +15,9 @@ export const MobileHistoryScreen = () => {
       station: 'GreenHub Station',
       date: '12 Sep',
       kwh: '24.5 kWh',
-      cost: '₹441',
-      renewable: '92% renewable',
+      pricePerKwh: '₹18.00/kWh',
+      totalCost: '₹441.00',
+      renewablePct: 92,
       score: 94,
     },
     {
@@ -24,8 +25,9 @@ export const MobileHistoryScreen = () => {
       station: 'SunCharge Station',
       date: '5 Sep',
       kwh: '18.2 kWh',
-      cost: '₹328',
-      renewable: '78% renewable',
+      pricePerKwh: '₹18.02/kWh',
+      totalCost: '₹328.00',
+      renewablePct: 78,
       score: 88,
     },
     {
@@ -33,8 +35,9 @@ export const MobileHistoryScreen = () => {
       station: 'EcoVolt Station',
       date: '28 Aug',
       kwh: '32.0 kWh',
-      cost: '₹576',
-      renewable: '65% renewable',
+      pricePerKwh: '₹18.00/kWh',
+      totalCost: '₹576.00',
+      renewablePct: 65,
       score: 79,
     },
     {
@@ -42,8 +45,9 @@ export const MobileHistoryScreen = () => {
       station: 'Jio-bp pulse Express',
       date: '19 Aug',
       kwh: '21.0 kWh',
-      cost: '₹378',
-      renewable: '84% renewable',
+      pricePerKwh: '₹18.00/kWh',
+      totalCost: '₹378.00',
+      renewablePct: 84,
       score: 90,
     },
   ];
@@ -99,13 +103,22 @@ export const MobileHistoryScreen = () => {
                 </span>
               </div>
               <div className="text-[10.5px] text-slate-500 mt-1 flex items-center justify-between">
-                <span>
-                  {session.kwh} · {session.cost} ·{' '}
-                  <span className="text-emerald-700 font-bold">
-                    {session.renewable}
-                  </span>
-                </span>
+                <span>{session.kwh} · {session.pricePerKwh}</span>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 mt-2 pt-2 border-t border-green-100 text-center">
+                <div className="rounded-lg bg-slate-50 py-1.5">
+                  <div className="text-[8px] text-slate-400 uppercase">Total cost</div>
+                  <b className="text-[10px] text-slate-800">{session.totalCost}</b>
+                </div>
+                <div className="rounded-lg bg-emerald-50 py-1.5">
+                  <div className="text-[8px] text-emerald-700 uppercase flex items-center justify-center gap-0.5"><Leaf className="w-2.5 h-2.5" /> Renewable</div>
+                  <b className="text-[10px] text-emerald-800">{session.renewablePct}%</b>
+                </div>
+                <div className="rounded-lg bg-slate-100 py-1.5">
+                  <div className="text-[8px] text-slate-500 uppercase flex items-center justify-center gap-0.5"><Fuel className="w-2.5 h-2.5" /> Fossil</div>
+                  <b className="text-[10px] text-slate-700">{100 - session.renewablePct}%</b>
+                </div>
               </div>
             </div>
           ))}
