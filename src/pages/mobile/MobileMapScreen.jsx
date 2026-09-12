@@ -24,6 +24,7 @@ import {
   ArrowUpDown,
   Crown,
   X,
+  Car,
 } from 'lucide-react';
 
 // Haversine distance calculator in km
@@ -314,7 +315,7 @@ export const MobileMapScreen = () => {
               recommendedStationId={topRecommended?.id}
               onSelectStation={(st) => setSelectedStation(st)}
               vehicles={vehicles}
-              onSelectVehicle={(vehicle) => setSelectedVehicle(vehicle)}
+              onSelectVehicle={(vehicle) => setSelectedVehicle((current) => current?.id === vehicle.id ? null : vehicle)}
               userLocation={{
                 lat: userLat,
                 lng: userLng,
@@ -326,19 +327,32 @@ export const MobileMapScreen = () => {
           </div>
 
           {selectedVehicle && (
-            <div className="app-card p-3 bg-slate-950 text-white border border-emerald-400 shadow-sm animate-slide-up">
+            <div className="app-card p-3 bg-white border border-green-200 shadow-sm animate-slide-up">
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <span className="text-[9px] text-emerald-300 font-bold uppercase">Selected vehicle</span>
-                  <h4 className="font-heading font-extrabold text-sm mt-0.5">{selectedVehicle.nickname || selectedVehicle.name}</h4>
-                  <p className="text-[10px] text-slate-300 mt-0.5">{selectedVehicle.brand} {selectedVehicle.model || selectedVehicle.name}</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-green-50 border border-green-200 flex items-center justify-center text-emerald-700">
+                    <Car className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-emerald-700 font-bold uppercase">Selected vehicle</span>
+                    <h4 className="font-heading font-extrabold text-sm text-slate-900 mt-0.5">{selectedVehicle.nickname || selectedVehicle.name}</h4>
+                    <p className="text-[10px] text-slate-500 mt-0.5">{selectedVehicle.brand} {selectedVehicle.model || selectedVehicle.name}</p>
+                  </div>
                 </div>
-                <span className="text-lg">{selectedVehicle.type === 'Scooter' ? '🛵' : '🚗'}</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedVehicle(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                  aria-label="Close vehicle details"
+                  title="Close vehicle details"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
               <div className="grid grid-cols-3 gap-1.5 mt-2 text-center">
-                <div className="rounded-lg bg-white/10 py-1.5"><span className="block text-[8px] text-slate-300">Battery</span><b className="text-[10px]">{selectedVehicle.currentBatteryPct || 0}%</b></div>
-                <div className="rounded-lg bg-white/10 py-1.5"><span className="block text-[8px] text-slate-300">Range</span><b className="text-[10px]">{selectedVehicle.currentRangeEstimate || 0} km</b></div>
-                <div className="rounded-lg bg-white/10 py-1.5"><span className="block text-[8px] text-slate-300">Connector</span><b className="text-[10px]">{selectedVehicle.connector || 'CCS2'}</b></div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 py-1.5"><span className="block text-[8px] text-slate-400">Battery</span><b className="text-[10px] text-slate-800">{selectedVehicle.currentBatteryPct || 0}%</b></div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 py-1.5"><span className="block text-[8px] text-slate-400">Range</span><b className="text-[10px] text-slate-800">{selectedVehicle.currentRangeEstimate || 0} km</b></div>
+                <div className="rounded-lg bg-slate-50 border border-slate-100 py-1.5"><span className="block text-[8px] text-slate-400">Connector</span><b className="text-[10px] text-slate-800">{selectedVehicle.connector || 'CCS2'}</b></div>
               </div>
             </div>
           )}
