@@ -16,6 +16,7 @@ from email.mime.multipart import MIMEMultipart
 from email.utils import formatdate, make_msgid
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timedelta
+from urllib.parse import urlparse, parse_qs
 
 PORT = 5000
 DB_FILE = os.path.join(os.path.dirname(__file__), 'database.sqlite')
@@ -86,6 +87,30 @@ def init_db():
     )
     ''')
 
+    # 4. Slot Bookings Table (Real-Time Driver & Operator Sync)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS slot_bookings (
+        id TEXT PRIMARY KEY,
+        driver_name TEXT NOT NULL,
+        driver_email TEXT NOT NULL,
+        driver_phone TEXT,
+        vehicle_model TEXT,
+        vehicle_plate TEXT,
+        company_name TEXT NOT NULL,
+        station_id TEXT NOT NULL,
+        station_name TEXT NOT NULL,
+        slot_time TEXT NOT NULL,
+        slot_date TEXT NOT NULL,
+        target_kwh REAL DEFAULT 25.0,
+        estimated_price REAL DEFAULT 8.40,
+        status TEXT DEFAULT 'pending',
+        bay_number TEXT DEFAULT 'Bay 02',
+        operator_notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
     # Seed initial test users if not existing
     seed_users = [
         ('usr_001', 'Shani Kakadiya', 'shani.kakadiya@daiict.ac.in', '+91 98765 43210', hash_password('password123'), 'driver', 'Tata Power', 'Gujarat', 'Gandhinagar'),
@@ -99,6 +124,36 @@ def init_db():
         INSERT OR IGNORE INTO users (id, name, email, phone, password_hash, role, company_name, state, city)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', u)
+
+    # Seed realistic slot booking requests across companies (today's active queue + past archived history)
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    past_str = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')
+
+    seed_bookings = [
+        # Tata Power - Today's Live Active Requests
+        ('bk_tp_001', 'Krushil Gadhiya', 'krushilgadhiya138@gmail.com', '+91 98250 12345', 'Tata Nexon EV Long Range', 'GJ 01 EV 4821', 'Tata Power', 'st_01', 'GreenHub Solar Supercharger', '11:00 AM', today_str, 28.5, 8.40, 'pending', 'Bay 02', 'Waiting for operator slot confirmation'),
+        ('bk_tp_002', 'Shani Kakadiya', 'shani.kakadiya@daiict.ac.in', '+91 98765 43210', 'Tata Punch.ev Empowered', 'GJ 18 PK 9901', 'Tata Power', 'st_01', 'GreenHub Solar Supercharger', '01:00 PM', today_str, 22.0, 7.80, 'accepted', 'Bay 01', 'Fast CCS2 Bay Reserved · 90% Solar Mix Active'),
+        ('bk_tp_003', 'Rohan Mehta', 'rohan.mehta@gmail.com', '+91 98980 44556', 'Tata Tiago EV', 'GJ 01 AB 3412', 'Tata Power', 'st_02', 'Tata Power EZ Charge Hub', '03:30 PM', today_str, 18.0, 9.10, 'pending', 'Bay 03', 'Driver requested high-speed DC charging'),
+        ('bk_tp_004', 'Deep Patel', 'deep.patel@gmail.com', '+91 97240 88991', 'Tata Tigor EV', 'GJ 27 ER 1029', 'Tata Power', 'st_02', 'Tata Power EZ Charge Hub', '09:00 AM', today_str, 15.0, 9.10, 'rejected', 'Bay 04', 'Grid peak shaving protocol in effect. Recommended off-peak window.'),
+        # Tata Power - Yesterday / Past History (Cleared from 1-day active queue, preserved in DB)
+        ('bk_tp_005', 'Amit Shah', 'amit.shah@gujarat.in', '+91 98240 55112', 'Tata Nexon EV Max', 'GJ 01 NK 8820', 'Tata Power', 'st_01', 'GreenHub Solar Supercharger', '02:00 PM', yesterday_str, 35.0, 8.40, 'accepted', 'Bay 02', 'Completed successfully. 35 kWh delivered.'),
+        ('bk_tp_006', 'Jigar Vora', 'jigar.vora@yahoo.com', '+91 98981 22334', 'Tata Curvv.ev 55', 'GJ 06 TR 5500', 'Tata Power', 'st_01', 'GreenHub Solar Supercharger', '11:30 AM', past_str, 42.0, 8.40, 'accepted', 'Bay 01', 'Solar peak window charging completed.'),
+        
+        # Jio-bp Bookings (Competitor isolation test)
+        ('bk_jio_001', 'Karan Joshi', 'karan.joshi@gmail.com', '+91 98111 22334', 'MG ZS EV Exclusive', 'GJ 06 MG 7311', 'Jio-bp', 'st_03', 'Jio-bp pulse Express Bay', '12:00 PM', today_str, 32.0, 7.80, 'pending', 'Bay 01', 'Jio-bp driver queue'),
+        ('bk_jio_002', 'Nirav Dave', 'nirav.dave@gmail.com', '+91 98222 33445', 'Hyundai Ioniq 5', 'GJ 01 HY 9900', 'Jio-bp', 'st_04', 'Jio-bp Highway Super Station', '04:00 PM', today_str, 45.0, 8.20, 'accepted', 'Bay 03', 'Jio-bp confirmed bay'),
+        
+        # Ather Energy Bookings
+        ('bk_ath_001', 'Vikas Sharma', 'vikas.sharma@gmail.com', '+91 98333 44556', 'Ather 450X Gen 3', 'GJ 27 AK 8920', 'Ather Energy', 'st_05', 'Ather Grid Fast Pod 01', '10:30 AM', today_str, 3.5, 6.90, 'pending', 'Pod 01', 'Two-wheeler express slot')
+    ]
+
+    for b in seed_bookings:
+        cursor.execute('''
+        INSERT OR IGNORE INTO slot_bookings 
+        (id, driver_name, driver_email, driver_phone, vehicle_model, vehicle_plate, company_name, station_id, station_name, slot_time, slot_date, target_kwh, estimated_price, status, bay_number, operator_notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', b)
 
     conn.commit()
     conn.close()
@@ -205,9 +260,13 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path == '/api/health':
+        parsed_url = urlparse(self.path)
+        path = parsed_url.path
+        query_params = parse_qs(parsed_url.query)
+
+        if path == '/api/health':
             self._send_json(200, {'status': 'ok', 'timestamp': datetime.now().isoformat()})
-        elif self.path == '/api/users':
+        elif path == '/api/users':
             conn = sqlite3.connect(DB_FILE)
             cursor = conn.cursor()
             cursor.execute('SELECT id, name, email, phone, role, company_name, created_at FROM users')
@@ -215,7 +274,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             users = [{'id': r[0], 'name': r[1], 'email': r[2], 'phone': r[3], 'role': r[4], 'companyName': r[5], 'createdAt': r[6]} for r in rows]
             conn.close()
             self._send_json(200, {'users': users})
-        elif self.path == '/api/email-logs':
+        elif path == '/api/email-logs':
             conn = sqlite3.connect(DB_FILE)
             cursor = conn.cursor()
             cursor.execute('SELECT id, recipient_email, subject, body, status, sent_at FROM email_logs ORDER BY id DESC LIMIT 50')
@@ -223,6 +282,111 @@ class RequestHandler(BaseHTTPRequestHandler):
             logs = [{'id': r[0], 'recipient': r[1], 'subject': r[2], 'body': r[3], 'status': r[4], 'sentAt': r[5]} for r in rows]
             conn.close()
             self._send_json(200, {'logs': logs})
+        elif path == '/api/bookings':
+            # Parameters: company, status, timeRange (today | yesterday | past7days | all), search
+            company = query_params.get('company', [''])[0].strip()
+            status = query_params.get('status', [''])[0].strip().lower()
+            time_range = query_params.get('timeRange', [''])[0].strip().lower()
+            search = query_params.get('search', [''])[0].strip().lower()
+
+            today_str = datetime.now().strftime('%Y-%m-%d')
+            yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            seven_days_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+
+            query = "SELECT id, driver_name, driver_email, driver_phone, vehicle_model, vehicle_plate, company_name, station_id, station_name, slot_time, slot_date, target_kwh, estimated_price, status, bay_number, operator_notes, created_at, updated_at FROM slot_bookings WHERE 1=1"
+            params = []
+
+            if company and company.lower() != 'all':
+                query += " AND (LOWER(company_name) = ? OR LOWER(company_name) LIKE ?)"
+                params.extend([company.lower(), f"%{company.lower()}%"])
+
+            if status and status != 'all':
+                query += " AND LOWER(status) = ?"
+                params.append(status)
+
+            if time_range == 'today':
+                query += " AND slot_date = ?"
+                params.append(today_str)
+            elif time_range == 'yesterday':
+                query += " AND slot_date = ?"
+                params.append(yesterday_str)
+            elif time_range == 'past7days':
+                query += " AND slot_date >= ?"
+                params.append(seven_days_ago)
+
+            if search:
+                query += " AND (LOWER(driver_name) LIKE ? OR LOWER(vehicle_plate) LIKE ? OR LOWER(station_name) LIKE ?)"
+                search_term = f"%{search}%"
+                params.extend([search_term, search_term, search_term])
+
+            query += " ORDER BY CASE WHEN status = 'pending' THEN 0 WHEN status = 'accepted' THEN 1 ELSE 2 END, created_at DESC"
+
+            conn = sqlite3.connect(DB_FILE)
+            cursor = conn.cursor()
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+            conn.close()
+
+            bookings = [{
+                'id': r[0],
+                'driverName': r[1],
+                'driverEmail': r[2],
+                'driverPhone': r[3],
+                'vehicleModel': r[4],
+                'vehiclePlate': r[5],
+                'companyName': r[6],
+                'stationId': r[7],
+                'stationName': r[8],
+                'slotTime': r[9],
+                'slotDate': r[10],
+                'targetKwh': r[11],
+                'estimatedPrice': r[12],
+                'status': r[13],
+                'bayNumber': r[14],
+                'operatorNotes': r[15],
+                'createdAt': r[16],
+                'updatedAt': r[17],
+                'isToday': r[10] == today_str
+            } for r in rows]
+
+            self._send_json(200, {'bookings': bookings, 'count': len(bookings)})
+
+        elif path == '/api/bookings/stats':
+            company = query_params.get('company', [''])[0].strip()
+            today_str = datetime.now().strftime('%Y-%m-%d')
+
+            base_query = "FROM slot_bookings WHERE 1=1"
+            params = []
+            if company and company.lower() != 'all':
+                base_query += " AND (LOWER(company_name) = ? OR LOWER(company_name) LIKE ?)"
+                params.extend([company.lower(), f"%{company.lower()}%"])
+
+            conn = sqlite3.connect(DB_FILE)
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT COUNT(*) {base_query}", params)
+            total = cursor.fetchone()[0]
+
+            cursor.execute(f"SELECT COUNT(*) {base_query} AND LOWER(status) = 'pending'", params)
+            pending = cursor.fetchone()[0]
+
+            cursor.execute(f"SELECT COUNT(*) {base_query} AND LOWER(status) = 'accepted'", params)
+            accepted = cursor.fetchone()[0]
+
+            cursor.execute(f"SELECT COUNT(*) {base_query} AND LOWER(status) = 'rejected'", params)
+            rejected = cursor.fetchone()[0]
+
+            cursor.execute(f"SELECT COUNT(*) {base_query} AND slot_date = ?", params + [today_str])
+            today_active = cursor.fetchone()[0]
+
+            conn.close()
+
+            self._send_json(200, {
+                'total': total,
+                'pending': pending,
+                'accepted': accepted,
+                'rejected': rejected,
+                'todayActive': today_active
+            })
         else:
             self._send_json(404, {'error': 'Route not found'})
 
@@ -590,6 +754,272 @@ EV GreenCharge Team
                 conn.close()
 
                 return self._send_json(200, {'success': True, 'message': 'Password updated successfully!'})
+
+            # -------------------------------------------------------------
+            # 8. CREATE SLOT BOOKING (REAL-TIME DRIVER REQUEST)
+            # -------------------------------------------------------------
+            elif self.path == '/api/bookings/create':
+                driver_name = body.get('driverName', 'EV Driver')
+                driver_email = (body.get('driverEmail') or TARGET_ADMIN_EMAIL).strip().lower()
+                driver_phone = body.get('driverPhone', '+91 98250 12345')
+                vehicle_model = body.get('vehicleModel', 'Tata Nexon EV')
+                vehicle_plate = body.get('vehiclePlate', 'GJ 01 EV 4821')
+                company_name = body.get('companyName', 'Tata Power')
+                station_id = body.get('stationId', 'st_01')
+                station_name = body.get('stationName', 'GreenHub Solar Supercharger')
+                slot_time = body.get('slotTime', '11:00 AM')
+                slot_date = body.get('slotDate') or datetime.now().strftime('%Y-%m-%d')
+                target_kwh = float(body.get('targetKwh', 25.0))
+                estimated_price = float(body.get('estimatedPrice', 8.40))
+                bay_number = body.get('bayNumber', 'Bay 02')
+
+                booking_id = f"bk_{int(datetime.now().timestamp()*1000)}"
+
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+                cursor.execute('''
+                INSERT INTO slot_bookings 
+                (id, driver_name, driver_email, driver_phone, vehicle_model, vehicle_plate, company_name, station_id, station_name, slot_time, slot_date, target_kwh, estimated_price, status, bay_number, operator_notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 'Pending review by station operator')
+                ''', (booking_id, driver_name, driver_email, driver_phone, vehicle_model, vehicle_plate, company_name, station_id, station_name, slot_time, slot_date, target_kwh, estimated_price, bay_number))
+                conn.commit()
+                conn.close()
+
+                # Dispatch instant request received email
+                req_subject = f"Slot Booking Request Received · {station_name}"
+                plain_text = f"""Hello {driver_name},
+
+Your charging slot request has been sent to the {company_name} Station Operator.
+
+Booking ID: {booking_id}
+Station: {station_name}
+Date & Time: {slot_date} at {slot_time}
+Vehicle: {vehicle_model} ({vehicle_plate})
+Estimated Tariff: ₹{estimated_price:.2f}/kWh
+
+Status: Pending Operator Confirmation. You will receive an instant notification once accepted.
+
+Best regards,
+EV GreenCharge Team"""
+
+                html_body = f"""<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f8fafc; padding:20px; color:#1e293b;">
+  <div style="max-width:520px; margin:0 auto; background:#ffffff; border-radius:16px; padding:28px; border:1px solid #e2e8f0; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+    <div style="display:inline-block; background:#fef3c7; color:#92400e; font-size:12px; font-weight:bold; padding:4px 10px; border-radius:8px;">
+      ⏳ Request Pending Operator Confirmation
+    </div>
+    <h2 style="color:#0f172a; margin:16px 0 6px 0; font-size:20px;">Slot Request Submitted</h2>
+    <p style="color:#64748b; font-size:14px; margin:0 0 20px 0;">Hello <b>{driver_name}</b>, your slot request for <b>{company_name}</b> has been queued in real-time.</p>
+    
+    <div style="background:#f1f5f9; border-radius:12px; padding:16px; font-size:13px; line-height:1.6; color:#334155;">
+      <div><b>Station:</b> {station_name}</div>
+      <div><b>Scheduled Time:</b> {slot_date} at {slot_time}</div>
+      <div><b>Vehicle:</b> {vehicle_model} ({vehicle_plate})</div>
+      <div><b>Tariff Estimate:</b> ₹{estimated_price:.2f} / kWh</div>
+      <div><b>Ref ID:</b> <span style="font-family:monospace;">{booking_id}</span></div>
+    </div>
+  </div>
+</body>
+</html>"""
+                send_inbox_optimized_email(driver_email, req_subject, plain_text, html_body)
+
+                booking_obj = {
+                    'id': booking_id,
+                    'driverName': driver_name,
+                    'driverEmail': driver_email,
+                    'driverPhone': driver_phone,
+                    'vehicleModel': vehicle_model,
+                    'vehiclePlate': vehicle_plate,
+                    'companyName': company_name,
+                    'stationId': station_id,
+                    'stationName': station_name,
+                    'slotTime': slot_time,
+                    'slotDate': slot_date,
+                    'targetKwh': target_kwh,
+                    'estimatedPrice': estimated_price,
+                    'status': 'pending',
+                    'bayNumber': bay_number,
+                    'operatorNotes': 'Pending review by station operator',
+                    'createdAt': datetime.now().isoformat(),
+                    'isToday': True
+                }
+
+                return self._send_json(201, {
+                    'success': True,
+                    'booking': booking_obj,
+                    'message': 'Slot booking request submitted and routed to operator in real-time!'
+                })
+
+            # -------------------------------------------------------------
+            # 9. OPERATOR ACCEPT / REJECT SLOT BOOKING & EMAIL DRIVER
+            # -------------------------------------------------------------
+            elif self.path == '/api/bookings/update-status':
+                booking_id = body.get('bookingId')
+                new_status = (body.get('status') or '').strip().lower() # 'accepted' | 'rejected'
+                bay_number = body.get('bayNumber', 'Bay 02')
+                operator_notes = body.get('operatorNotes', '').strip()
+                operator_name = body.get('operatorName', 'Station Manager')
+
+                if not booking_id or new_status not in ['accepted', 'rejected']:
+                    return self._send_json(400, {'error': 'Valid bookingId and status (accepted/rejected) required'})
+
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+                cursor.execute('SELECT id, driver_name, driver_email, driver_phone, vehicle_model, vehicle_plate, company_name, station_id, station_name, slot_time, slot_date, target_kwh, estimated_price FROM slot_bookings WHERE id = ?', (booking_id,))
+                row = cursor.fetchone()
+
+                if not row:
+                    conn.close()
+                    return self._send_json(404, {'error': 'Booking not found'})
+
+                if not operator_notes:
+                    if new_status == 'accepted':
+                        operator_notes = f"Allocated to {bay_number} · Fast DC Ready · Verified Green Solar Mix"
+                    else:
+                        operator_notes = "Slot unavailable due to scheduled grid peak demand management. Please pick another window."
+
+                cursor.execute('''
+                UPDATE slot_bookings
+                SET status = ?, bay_number = ?, operator_notes = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                ''', (new_status, bay_number, operator_notes, booking_id))
+                conn.commit()
+                conn.close()
+
+                driver_name = row[1]
+                driver_email = row[2]
+                vehicle_model = row[4]
+                vehicle_plate = row[5]
+                company_name = row[6]
+                station_name = row[8]
+                slot_time = row[9]
+                slot_date = row[10]
+                estimated_price = row[12]
+
+                # Draft and send real-time email notification directly to Driver & Admin
+                if new_status == 'accepted':
+                    email_subject = f"✅ Confirmed: Charging Slot at {station_name} ({bay_number})"
+                    plain_text = f"""Hello {driver_name},
+
+Great news! Your EV charging slot booking request has been ACCEPTED and confirmed by {company_name}.
+
+Booking Reference: {booking_id}
+Station: {station_name}
+Allocated Bay: {bay_number}
+Scheduled Time: {slot_date} at {slot_time}
+Vehicle: {vehicle_model} ({vehicle_plate})
+Clean Renewable Mix: 90% Verified Solar
+Dynamic Tariff: ₹{estimated_price:.2f}/kWh
+
+Operator Notes:
+{operator_notes}
+
+Please arrive 5 minutes prior to your slot time. Our automated smart charger will initiate seamless DC fast charging.
+
+Thank you for charging green,
+{company_name} Station Operations Team
+EV GreenCharge Platform"""
+
+                    html_body = f"""<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f0fdf4; padding:24px; color:#0f172a;">
+  <div style="max-width:540px; margin:0 auto; background:#ffffff; border-radius:18px; padding:32px; border:1px solid #bbf7d0; box-shadow:0 10px 25px rgba(16,185,129,0.08);">
+    <div style="display:inline-flex; align-items:center; gap:6px; background:#dcfce7; color:#14532d; font-size:12px; font-weight:800; padding:6px 12px; border-radius:10px; border:1px solid #86efac;">
+      ✅ SLOT BOOKING CONFIRMED
+    </div>
+    <h2 style="color:#064e3b; margin:16px 0 6px 0; font-size:22px; font-weight:800;">Charging Bay Reserved!</h2>
+    <p style="color:#475569; font-size:14px; margin:0 0 24px 0;">Hello <b>{driver_name}</b>, your charging request has been approved by <b>{company_name}</b>.</p>
+    
+    <div style="background:#f8fafc; border-radius:14px; padding:20px; border:1px solid #e2e8f0; font-size:13.5px; line-height:1.7; color:#1e293b;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #cbd5e1; padding-bottom:8px;">
+        <span style="color:#64748b;">Station Hub:</span>
+        <b style="color:#0f172a;">{station_name}</b>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #cbd5e1; padding-bottom:8px;">
+        <span style="color:#64748b;">Allocated Bay:</span>
+        <b style="color:#047857; font-size:15px;">⚡ {bay_number}</b>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #cbd5e1; padding-bottom:8px;">
+        <span style="color:#64748b;">Reserved Slot:</span>
+        <b>{slot_date} · {slot_time}</b>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #cbd5e1; padding-bottom:8px;">
+        <span style="color:#64748b;">Vehicle:</span>
+        <b>{vehicle_model} ({vehicle_plate})</b>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span style="color:#64748b;">Dynamic Green Tariff:</span>
+        <b style="color:#047857;">₹{estimated_price:.2f} / kWh (90% Solar)</b>
+      </div>
+    </div>
+
+    <div style="margin-top:20px; padding:12px 16px; background:#ecfdf5; border-radius:10px; border-left:4px solid #10b981; font-size:12.5px; color:#065f46;">
+      <b>Operator Note:</b> {operator_notes}
+    </div>
+
+    <div style="margin-top:24px; text-align:center; font-size:11.5px; color:#94a3b8;">
+      Reference ID: {booking_id} · EV GreenCharge Smart Grid
+    </div>
+  </div>
+</body>
+</html>"""
+                else:
+                    email_subject = f"⚠️ Slot Booking Update · {station_name}"
+                    plain_text = f"""Hello {driver_name},
+
+Your charging slot request for {slot_date} at {slot_time} at {station_name} could not be confirmed at this time.
+
+Reason from Station Operator:
+{operator_notes}
+
+Suggested Next Step:
+Please open EV GreenCharge app to select an alternate green charging window or check nearby available charging hubs with instant slot availability.
+
+Best regards,
+{company_name} Station Operations Desk
+EV GreenCharge Gujarat"""
+
+                    html_body = f"""<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#fff7ed; padding:24px; color:#0f172a;">
+  <div style="max-width:540px; margin:0 auto; background:#ffffff; border-radius:18px; padding:32px; border:1px solid #fed7aa; box-shadow:0 10px 25px rgba(234,88,12,0.06);">
+    <div style="display:inline-flex; align-items:center; gap:6px; background:#ffedd5; color:#9a3412; font-size:12px; font-weight:800; padding:6px 12px; border-radius:10px; border:1px solid #fdba74;">
+      ⚠️ SLOT REQUEST NOT ACCEPTED
+    </div>
+    <h2 style="color:#9a3412; margin:16px 0 6px 0; font-size:22px; font-weight:800;">Slot Request Update</h2>
+    <p style="color:#475569; font-size:14px; margin:0 0 20px 0;">Hello <b>{driver_name}</b>, your slot request for <b>{station_name}</b> could not be accommodated for this specific window.</p>
+    
+    <div style="margin-top:12px; padding:14px 16px; background:#fff1f2; border-radius:12px; border-left:4px solid #f43f5e; font-size:13px; color:#9f1239;">
+      <b>Operator Reason:</b><br/>{operator_notes}
+    </div>
+
+    <div style="margin-top:20px; font-size:13px; color:#475569; line-height:1.6;">
+      💡 <b>Alternative Available:</b> You can choose another upcoming solar slot window or navigate to nearby partner hubs in the app.
+    </div>
+
+    <div style="margin-top:24px; text-align:center; font-size:11.5px; color:#94a3b8;">
+      Reference ID: {booking_id} · EV GreenCharge
+    </div>
+  </div>
+</body>
+</html>"""
+
+                send_inbox_optimized_email(driver_email, email_subject, plain_text, html_body)
+
+                return self._send_json(200, {
+                    'success': True,
+                    'bookingId': booking_id,
+                    'status': new_status,
+                    'bayNumber': bay_number,
+                    'operatorNotes': operator_notes,
+                    'emailSentTo': driver_email,
+                    'emailDraft': {
+                        'subject': email_subject,
+                        'body': plain_text
+                    },
+                    'message': f"Slot request {new_status} successfully and email dispatched to {driver_email}!"
+                })
 
             else:
                 self._send_json(404, {'error': 'Endpoint not found'})

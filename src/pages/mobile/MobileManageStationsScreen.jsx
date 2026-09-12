@@ -153,17 +153,15 @@ export const MobileManageStationsScreen = () => {
     },
   ]);
 
-  // Determine standard company key or custom
-  const getInitialCompanyKey = () => {
-    const lower = registeredCompany.toLowerCase();
-    if (lower.includes('tata')) return 'tata';
-    if (lower.includes('jio')) return 'jio_bp';
-    if (lower.includes('ather')) return 'ather';
-    if (lower.includes('delta')) return 'delta';
-    return registeredCompanyKey;
-  };
+  // Strictly filter stations to the operator's registered company only
+  const filteredStations = stationsList.filter(
+    (s) =>
+      s.company === registeredCompanyKey ||
+      s.companyName?.toLowerCase() === registeredCompany.toLowerCase() ||
+      s.companyName?.toLowerCase().includes(registeredCompany.toLowerCase()) ||
+      registeredCompany.toLowerCase().includes(s.companyName?.toLowerCase())
+  );
 
-  const [selectedCompany, setSelectedCompany] = useState(getInitialCompanyKey());
   const [tariffUpdates, setTariffUpdates] = useState({});
   const [toastMsg, setToastMsg] = useState('');
   const [isAddStationOpen, setIsAddStationOpen] = useState(false);
@@ -174,31 +172,6 @@ export const MobileManageStationsScreen = () => {
   const [newStationAddress, setNewStationAddress] = useState('');
   const [newStationSpeed, setNewStationSpeed] = useState('150 kW Fast DC');
   const [newStationPrice, setNewStationPrice] = useState(8.50);
-
-  // Built-in company list with dynamic operator company inclusion
-  const defaultCompanies = [
-    { id: 'all', name: 'All Networks', badge: 'All Fleet' },
-    { id: 'tata', name: 'Tata Power', badge: '18 Stations' },
-    { id: 'jio_bp', name: 'Jio-bp', badge: '14 Stations' },
-    { id: 'ather', name: 'Ather Energy', badge: '10 Stations' },
-    { id: 'delta', name: 'Delta EV', badge: '8 Stations' },
-  ];
-
-  const hasCustomCompany = !['tata', 'jio_bp', 'ather', 'delta'].includes(getInitialCompanyKey());
-  const companies = hasCustomCompany
-    ? [
-        { id: 'all', name: 'All Networks', badge: 'Fleet' },
-        { id: registeredCompanyKey, name: registeredCompany, badge: 'Your Company' },
-        { id: 'tata', name: 'Tata Power', badge: '18 Stations' },
-        { id: 'jio_bp', name: 'Jio-bp', badge: '14 Stations' },
-        { id: 'ather', name: 'Ather Energy', badge: '10 Stations' },
-        { id: 'delta', name: 'Delta EV', badge: '8 Stations' },
-      ]
-    : defaultCompanies;
-
-  const filteredStations = selectedCompany === 'all'
-    ? stationsList
-    : stationsList.filter((s) => s.company === selectedCompany || s.companyName?.toLowerCase() === selectedCompany.toLowerCase());
 
   const handleAdjustTariff = (stationId, delta) => {
     setTariffUpdates((prev) => {
@@ -231,7 +204,6 @@ export const MobileManageStationsScreen = () => {
     };
 
     setStationsList([newSt, ...stationsList]);
-    setSelectedCompany(registeredCompanyKey);
     setIsAddStationOpen(false);
     setNewStationName('');
     setNewStationAddress('');
@@ -243,7 +215,7 @@ export const MobileManageStationsScreen = () => {
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
       <div className="flex-1 flex flex-col overflow-y-auto">
         <MobileStatusBar />
-        <MobileTopNav title="Manage Stations" onBack={() => navigate('/')} />
+        <MobileTopNav title="Manage Stations" onBack={() => navigate('/operator')} />
 
         {/* Content Container */}
         <div className="px-4 pt-2 pb-5 flex flex-col gap-3">
@@ -264,7 +236,7 @@ export const MobileManageStationsScreen = () => {
                   <span>{registeredCompany}</span>
                 </h3>
                 <p className="text-[10px] text-emerald-100 mt-0.5">
-                  Managing charging stations &amp; dynamic green tariffs for <b>{registeredCompany}</b>
+                  Showing isolated branches &amp; dynamic green tariffs for <b>{registeredCompany}</b>
                 </p>
               </div>
               <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
@@ -275,7 +247,7 @@ export const MobileManageStationsScreen = () => {
             {/* Quick Action to Add Station */}
             <div className="mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between">
               <span className="text-[10px] text-emerald-100">
-                Active Fleet: <b>{stationsList.filter((s) => s.company === registeredCompanyKey || s.companyName?.toLowerCase() === registeredCompany.toLowerCase()).length || stationsList.length} Hubs</b>
+                Active Fleet: <b>{filteredStations.length} Hubs Registered</b>
               </span>
               <button
                 onClick={() => setIsAddStationOpen(true)}
@@ -287,6 +259,36 @@ export const MobileManageStationsScreen = () => {
             </div>
           </div>
 
+          {/* Dedicated Slot Booking Requests Hub Banner */}
+          <div
+            onClick={() => navigate('/operator/bookings')}
+            className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-teal-500/10 border border-amber-300/80 hover:border-amber-400 transition-all cursor-pointer group shadow-2xs active:scale-[0.99]"
+            role="button"
+            tabIndex={0}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-heading font-extrabold text-[12.5px] text-slate-900 group-hover:text-emerald-800">
+                      Slot Booking Requests
+                    </h4>
+                    <span className="text-[8.5px] bg-amber-500 text-white font-bold px-1.5 py-0.2 rounded-md animate-pulse">
+                      Live Queue
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-600 mt-0.5">
+                    Real-time driver slot requests, instant accept/deny &amp; email dispatches
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-emerald-700 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
           {/* Toast Notification */}
           {toastMsg && (
             <div className="p-2 bg-emerald-100 text-emerald-900 rounded-xl text-center text-xs font-heading font-bold border border-emerald-300 animate-fade-in flex items-center justify-center gap-1.5 shadow-xs">
@@ -294,43 +296,17 @@ export const MobileManageStationsScreen = () => {
             </div>
           )}
 
-          {/* Company Selector Tab Section */}
-          <div>
-            <div className="flex justify-between items-center mb-1.5 px-0.5">
-              <label className="text-[11px] font-heading font-bold text-slate-800 flex items-center gap-1">
-                <span>Filter by Network / Company:</span>
-              </label>
-              <span className="text-[10px] text-emerald-700 font-semibold font-mono">
-                {filteredStations.length} Stations
-              </span>
-            </div>
-
-            {/* Horizontal Scrollable Company Selector Pills */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-              {companies.map((co) => {
-                const isSelected = selectedCompany === co.id;
-                const isUserCo = co.name.toLowerCase() === registeredCompany.toLowerCase() || co.id === registeredCompanyKey;
-                return (
-                  <button
-                    key={co.id}
-                    onClick={() => setSelectedCompany(co.id)}
-                    className={`px-3 py-1.5 rounded-xl font-heading text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 active:scale-95 ${
-                      isSelected
-                        ? 'bg-emerald-500 text-slate-950 shadow-sm border border-emerald-600 ring-2 ring-emerald-400/30'
-                        : isUserCo
-                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
-                        : 'bg-slate-100 text-slate-600 hover:bg-green-50 hover:text-emerald-800 border border-slate-200'
-                    }`}
-                  >
-                    <span>{co.name}</span>
-                    {isUserCo && <span className="text-[9px] px-1 rounded bg-emerald-700 text-white font-mono">Yours</span>}
-                  </button>
-                );
-              })}
-            </div>
+          {/* Network Header */}
+          <div className="flex justify-between items-center px-0.5">
+            <span className="text-[11px] font-heading font-bold text-slate-800 flex items-center gap-1">
+              <span>{registeredCompany} Branch Network</span>
+            </span>
+            <span className="text-[10px] text-emerald-700 font-semibold font-mono bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              {filteredStations.length} Branches Online
+            </span>
           </div>
 
-          {/* Stations List for Selected Company */}
+          {/* Stations List for Isolated Company */}
           <div className="flex flex-col gap-2.5">
             {filteredStations.length === 0 ? (
               <div className="p-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-300">
@@ -416,6 +392,20 @@ export const MobileManageStationsScreen = () => {
                           + ₹0.20
                         </button>
                       </div>
+                    </div>
+
+                    {/* Quick Link to Slot Requests */}
+                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[9.5px] text-slate-500">
+                        ⚡ Real-Time Booking Sync Active
+                      </span>
+                      <button
+                        onClick={() => navigate('/operator/bookings')}
+                        className="text-[10px] text-emerald-800 font-heading font-extrabold flex items-center gap-1 hover:underline"
+                      >
+                        <span>Slot Requests</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 );

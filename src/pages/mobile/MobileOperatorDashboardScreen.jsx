@@ -1,15 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
-import { Sliders, Zap, TrendingUp, Radio, Leaf, Activity, Clock3, ChevronRight, Settings } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { bookingApi } from '../../api/bookingApi';
+import {
+  Sliders,
+  Zap,
+  TrendingUp,
+  Radio,
+  Leaf,
+  Activity,
+  Clock3,
+  ChevronRight,
+  Settings,
+  CalendarCheck,
+  Sparkles,
+  Building2,
+  Mail,
+  AlertCircle
+} from 'lucide-react';
 
 export const MobileOperatorDashboardScreen = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const operatorCompany = user?.companyName?.trim() || 'Tata Power';
+
   const [stationTariff, setStationTariff] = useState(8.40);
   const [activeChargers] = useState(23);
   const [toastMsg, setToastMsg] = useState('');
+  const [bookingStats, setBookingStats] = useState({ total: 4, pending: 2, accepted: 1, rejected: 1, todayActive: 4 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const data = await bookingApi.getStats({ company: operatorCompany });
+      setBookingStats(data);
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
+  }, [operatorCompany]);
 
   const triggerToast = (msg) => {
     setToastMsg(msg);
@@ -31,6 +62,75 @@ export const MobileOperatorDashboardScreen = () => {
 
         {/* Content Container */}
         <div className="px-4 pt-2 pb-5 flex flex-col gap-2.5">
+          {/* Operator Company Header Banner */}
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-800 to-slate-900 text-white shadow-xs border border-emerald-600/30 flex items-center justify-between">
+            <div>
+              <div className="text-[9px] uppercase tracking-wider font-mono text-emerald-300 font-bold">
+                Station Operator Portal
+              </div>
+              <h3 className="font-heading font-extrabold text-[14.5px] mt-0.5 flex items-center gap-1.5">
+                <Building2 className="w-4 h-4 text-emerald-300" />
+                <span>{operatorCompany}</span>
+              </h3>
+            </div>
+            <button
+              onClick={() => navigate('/manage-stations')}
+              className="px-2.5 py-1 rounded-xl bg-emerald-400 text-emerald-950 text-[10px] font-heading font-extrabold hover:bg-emerald-300 transition-colors"
+            >
+              Manage Fleet ›
+            </button>
+          </div>
+
+          {/* Dedicated Slot Booking Requests Real-Time Card */}
+          <div
+            onClick={() => navigate('/operator/bookings')}
+            className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-emerald-500/10 to-teal-500/15 border-2 border-amber-400/80 hover:border-amber-500 transition-all cursor-pointer group shadow-xs active:scale-[0.99] relative overflow-hidden"
+            role="button"
+            tabIndex={0}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md">
+                  <CalendarCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-heading font-extrabold text-[13.5px] text-slate-900 group-hover:text-emerald-800">
+                      Slot Booking Requests
+                    </h4>
+                    {bookingStats.pending > 0 && (
+                      <span className="text-[9px] bg-amber-500 text-white font-extrabold px-2 py-0.5 rounded-full animate-bounce">
+                        {bookingStats.pending} Pending
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10.5px] text-slate-600 mt-0.5">
+                    Accept/Deny driver requests &amp; auto-send booking emails
+                  </p>
+                </div>
+              </div>
+              <div className="w-7 h-7 rounded-xl bg-amber-100 flex items-center justify-center text-amber-900 group-hover:translate-x-0.5 transition-transform">
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </div>
+
+            {/* Micro Stats Bar */}
+            <div className="mt-2.5 pt-2 border-t border-amber-300/40 grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="bg-white/80 rounded-lg py-1 px-2 border border-slate-200">
+                <span className="text-[8.5px] text-slate-500 block">Today's Queue</span>
+                <b className="font-heading text-[11.5px] text-slate-900">{bookingStats.todayActive} Req</b>
+              </div>
+              <div className="bg-emerald-50 rounded-lg py-1 px-2 border border-emerald-200">
+                <span className="text-[8.5px] text-emerald-800 block">Accepted</span>
+                <b className="font-heading text-[11.5px] text-emerald-800">{bookingStats.accepted} Confirmed</b>
+              </div>
+              <div className="bg-amber-50 rounded-lg py-1 px-2 border border-amber-200">
+                <span className="text-[8.5px] text-amber-800 block">Need Action</span>
+                <b className="font-heading text-[11.5px] text-amber-800">{bookingStats.pending} Pending</b>
+              </div>
+            </div>
+          </div>
+
           {/* Top 4 Metrics Cards */}
           <div className="grid grid-cols-2 gap-2">
             <div

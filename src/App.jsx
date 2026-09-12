@@ -21,6 +21,7 @@ import { MobileNotificationsScreen } from './pages/mobile/MobileNotificationsScr
 import { MobileOperatorDashboardScreen } from './pages/mobile/MobileOperatorDashboardScreen';
 import { MobileGridOperatorDashboardScreen } from './pages/mobile/MobileGridOperatorDashboardScreen';
 import { MobileManageStationsScreen } from './pages/mobile/MobileManageStationsScreen';
+import { MobileOperatorBookingsScreen } from './pages/mobile/MobileOperatorBookingsScreen';
 import { MobileProfileScreen } from './pages/mobile/MobileProfileScreen';
 import { MobileVehiclesScreen } from './pages/mobile/MobileVehiclesScreen';
 import { useAuth } from './context/AuthContext';
@@ -131,8 +132,9 @@ export const App = () => {
                 {/* Screen 11: Notifications & Price Alert */}
                 <Route path="/notifications" element={<RequireAuth><MobileNotificationsScreen /></RequireAuth>} />
 
-                {/* Screen 12: Operator Dashboard */}
+                {/* Screen 12: Operator Dashboard & Slot Bookings */}
                 <Route path="/operator" element={<RequireOperator><MobileOperatorDashboardScreen /></RequireOperator>} />
+                <Route path="/operator/bookings" element={<RequireOperator><MobileOperatorBookingsScreen /></RequireOperator>} />
                 <Route path="/grid-operator" element={<RequireGridOperator><MobileGridOperatorDashboardScreen /></RequireGridOperator>} />
 
                 {/* Screen 13: Profile & Settings */}

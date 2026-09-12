@@ -3,16 +3,20 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { WhyThisPriceModal } from '../../components/mobile/WhyThisPriceModal';
-import { Zap, MapPin, ShieldCheck, Clock, HelpCircle, Trash2, CheckCircle2 } from 'lucide-react';
+import { Zap, MapPin, ShieldCheck, Clock, HelpCircle, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useStations } from '../../context/StationContext';
+import { useAuth } from '../../context/AuthContext';
+import { bookingApi } from '../../api/bookingApi';
 
 export const MobileStationDetailsScreen = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { stations } = useStations();
+  const { user } = useAuth();
   const [showWhyPrice, setShowWhyPrice] = useState(false);
   const [selectedTime, setSelectedTime] = useState('11:00 AM');
   const [reservedTime, setReservedTime] = useState(() => localStorage.getItem(`egc_booking_${id}`));
+  const [bookingToast, setBookingToast] = useState('');
   const station = stations.find((item) => item.id === id) || stations[0];
   const price = station?.pricePerKwh || 8.4;
   const availableChargers = station?.availableChargers ?? 4;
@@ -28,11 +32,33 @@ export const MobileStationDetailsScreen = () => {
   const handleCancelBooking = () => {
     localStorage.removeItem(`egc_booking_${id}`);
     setReservedTime(null);
+    setBookingToast('Slot reservation cancelled');
+    setTimeout(() => setBookingToast(''), 2000);
   };
 
-  const handleBookSlot = () => {
+  const handleBookSlot = async () => {
     localStorage.setItem(`egc_booking_${id}`, selectedTime);
     setReservedTime(selectedTime);
+    setBookingToast('⚡ Slot request sent to Station Operator in real-time!');
+    setTimeout(() => setBookingToast(''), 3000);
+
+    // Sync to backend SQLite database in real-time
+    const companyName = station?.network || station?.companyName || 'Tata Power';
+    await bookingApi.createBooking({
+      driverName: user?.name || 'EV Driver',
+      driverEmail: user?.email || 'krushilgadhiya138@gmail.com',
+      driverPhone: user?.phone || '+91 98250 12345',
+      vehicleModel: 'Tata Nexon EV Long Range',
+      vehiclePlate: 'GJ 01 EV 4821',
+      companyName: companyName,
+      stationId: station?.id || id,
+      stationName: station?.name || 'GreenHub Supercharger',
+      slotTime: selectedTime,
+      slotDate: new Date().toISOString().split('T')[0],
+      targetKwh: 25.0,
+      estimatedPrice: price,
+      bayNumber: 'Bay 02'
+    });
   };
 
   return (
@@ -40,6 +66,14 @@ export const MobileStationDetailsScreen = () => {
       <div className="flex-1 flex flex-col overflow-y-auto">
         <MobileStatusBar />
         <MobileTopNav title="Station Details" onBack={() => navigate('/map')} />
+
+        {/* Real-time booking toast notification */}
+        {bookingToast && (
+          <div className="mx-4 mt-2 p-2.5 rounded-xl bg-emerald-600 text-white text-xs font-heading font-bold shadow-md flex items-center justify-center gap-1.5 animate-fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+            <span>{bookingToast}</span>
+          </div>
+        )}
 
         {/* Content Container matching Screen 05 */}
         <div className="px-4 pt-2 pb-5 flex flex-col gap-3">

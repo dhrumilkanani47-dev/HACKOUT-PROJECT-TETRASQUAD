@@ -25,6 +25,7 @@ import {
   Crown,
   X,
   Car,
+  Building2,
 } from 'lucide-react';
 
 // Haversine distance calculator in km
@@ -57,11 +58,30 @@ export const MobileMapScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showTopPickBanner, setShowTopPickBanner] = useState(true);
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const isOperator = user?.role === 'operator';
+  const operatorCompany = user?.companyName?.trim() || 'Tata Power';
+
+  // 0. Filter stations if user is Station Operator (Only see own company branches)
+  const scopedStations = useMemo(() => {
+    if (!isOperator) return stations;
+    const opComp = operatorCompany.toLowerCase();
+    const matched = stations.filter((st) => {
+      const net = (st.network || st.networkId || st.companyName || st.company || '').toLowerCase();
+      return (
+        net.includes(opComp) ||
+        opComp.includes(net) ||
+        (opComp.includes('tata') && (net.includes('tata') || net.includes('greenhub'))) ||
+        (opComp.includes('jio') && net.includes('jio')) ||
+        (opComp.includes('ather') && net.includes('ather')) ||
+        (opComp.includes('delta') && net.includes('delta'))
+      );
+    });
+    return matched.length > 0 ? matched : stations.filter((s) => (s.network || '').toLowerCase().includes('tata'));
+  }, [stations, isOperator, operatorCompany]);
 
   // 1. Enrich stations with dynamic distances and AI Recommendation Scores
   const scoredStations = useMemo(() => {
-    return stations.map((st) => {
+    return scopedStations.map((st) => {
       const stLat = st.lat || st.latitude || 23.1884;
       const stLng = st.lng || st.longitude || 72.6289;
       const dist = calculateDistance(userLat, userLng, stLat, stLng);
@@ -89,7 +109,7 @@ export const MobileMapScreen = () => {
         recommendationScore: totalRecommendationScore,
       };
     });
-  }, [stations, userLat, userLng]);
+  }, [scopedStations, userLat, userLng]);
 
   // 2. Identify Top Recommended Station (Highest Score)
   const topRecommended = useMemo(() => {
@@ -220,6 +240,22 @@ export const MobileMapScreen = () => {
               )}
             </div>
           </div>
+
+          {/* Operator Exclusive Map Banner */}
+          {isOperator && (
+            <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex items-center justify-between text-[10px] shadow-2xs">
+              <span className="flex items-center gap-1.5 font-heading font-extrabold">
+                <Building2 className="w-3.5 h-3.5 text-emerald-700" />
+                <span>{operatorCompany} Map · Showing Your Branches Only ({filteredStations.length})</span>
+              </span>
+              <button
+                onClick={() => navigate('/operator/bookings')}
+                className="text-emerald-800 font-extrabold underline hover:text-emerald-950 transition-colors"
+              >
+                Slot Requests ›
+              </button>
+            </div>
+          )}
 
           {/* AI Best Recommendation Banner (Smart Distance + Price Callout) */}
           {showTopPickBanner && topRecommended && activeFilter === 'recommended' && (
