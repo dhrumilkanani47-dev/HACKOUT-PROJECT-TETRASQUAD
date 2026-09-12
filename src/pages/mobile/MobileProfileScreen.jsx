@@ -88,7 +88,6 @@ export const MobileProfileScreen = () => {
 
   const menuRows = user?.role === 'operator'
     ? [
-      { id: 'stations', title: 'Manage Stations', sub: '50 stations in network (98.4% uptime)', icon: Radio, action: () => navigate('/operator') },
       { id: 'pricing', title: 'Pricing & Green Incentives', sub: `Dynamic Rate: ₹${operatorTariff.toFixed(2)}/kWh`, icon: Sliders, action: () => setActiveModal('operator_pricing') },
       { id: 'energy', title: 'Energy & Renewable Mix', sub: `${operatorRenewableTarget}% target renewable supply`, icon: Zap, action: () => setActiveModal('operator_energy') },
       { id: 'reports', title: 'Network Analytics', sub: 'Revenue: ₹24,580 • 128 Sessions', icon: BarChart3, action: () => setActiveModal('operator_reports') },

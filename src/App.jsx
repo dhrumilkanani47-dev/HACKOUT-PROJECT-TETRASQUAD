@@ -18,6 +18,7 @@ import { MobilePriceGreenScoreScreen } from './pages/mobile/MobilePriceGreenScor
 import { MobileHistoryScreen } from './pages/mobile/MobileHistoryScreen';
 import { MobileNotificationsScreen } from './pages/mobile/MobileNotificationsScreen';
 import { MobileOperatorDashboardScreen } from './pages/mobile/MobileOperatorDashboardScreen';
+import { MobileManageStationsScreen } from './pages/mobile/MobileManageStationsScreen';
 import { MobileProfileScreen } from './pages/mobile/MobileProfileScreen';
 import { useAuth } from './context/AuthContext';
 
@@ -92,6 +93,9 @@ export const App = () => {
 
                 {/* Screen 04: Map & Charging Stations */}
                 <Route path="/map" element={<RequireAuth><MobileMapScreen /></RequireAuth>} />
+
+                {/* Manage Stations (Company Selector & Dynamic Tariffs) */}
+                <Route path="/manage-stations" element={<RequireAuth><MobileManageStationsScreen /></RequireAuth>} />
 
                 {/* Screen 05: Station Details */}
                 <Route path="/station/:id" element={<RequireAuth><MobileStationDetailsScreen /></RequireAuth>} />
