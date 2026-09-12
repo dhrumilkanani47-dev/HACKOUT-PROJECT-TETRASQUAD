@@ -318,6 +318,17 @@
   to { transform: translateY(0); }
 }
 
+@keyframes orbit-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
@@ -325,3 +336,12 @@
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
+
+.animate-orbit-spin {
+  animation: orbit-spin 0.85s cubic-bezier(0.25, 1, 0.5, 1) 1;
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out 1;
+}
+

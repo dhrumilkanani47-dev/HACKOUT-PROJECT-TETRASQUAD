@@ -916,7 +916,6 @@ export const MobileProfileScreen = () => {
               <div className="p-2 bg-[#0A101D] rounded-2xl border border-slate-800 animate-fade-in">
                 <OtpVerificationOrbital
                   targetContact={user?.email || 'krushilgadhiya138@gmail.com'}
-                  expectedOtp={securityOtp}
                   onVerify={async (code) => {
                     const res = await authApi.verifyOtp(user?.email, code, 'forgot_password');
                     if (res.valid) {

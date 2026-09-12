@@ -73,7 +73,7 @@ export const authApi = {
     return { exists: Boolean(found), user: found || null };
   },
 
-  // 2. Send OTP
+  // 2. Send Real-Time OTP
   async sendOtp(email, purpose = 'verification') {
     const cleanEmail = (email || '').trim().toLowerCase();
     if (API_BASE) {
@@ -85,18 +85,23 @@ export const authApi = {
         });
         if (res.ok) return await res.json();
       } catch (err) {
-        console.warn('Backend unavailable, using fallback OTP', err);
+        console.warn('Backend server error on send-otp:', err);
       }
     }
-    // Fallback simulated OTP
+    // Local dynamic 4-digit OTP fallback if backend network is offline
+    const randomOtp = String(Math.floor(1000 + Math.random() * 9000));
+    sessionStorage.setItem(`egc_otp_${cleanEmail}`, JSON.stringify({
+      code: randomOtp,
+      expiresAt: Date.now() + 10 * 60 * 1000
+    }));
     return {
       success: true,
-      otp: '4719',
+      otp: randomOtp,
       message: `OTP sent to ${cleanEmail}`
     };
   },
 
-  // 3. Verify OTP
+  // 3. Verify Real-Time OTP
   async verifyOtp(email, otp, purpose = 'verification') {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanOtp = (otp || '').trim();
@@ -109,16 +114,29 @@ export const authApi = {
         });
         const data = await res.json();
         if (res.ok && data.valid) return data;
-        throw new Error(data.error || 'Invalid OTP');
+        throw new Error(data.error || 'Invalid OTP code. Please check your inbox.');
       } catch (err) {
-        if (err.message?.includes('Invalid OTP')) throw err;
-        console.warn('Backend unavailable, validating fallback OTP', err);
+        if (err.message) throw err;
       }
     }
-    if (cleanOtp === '4719' || cleanOtp.length === 4) {
-      return { valid: true, message: 'OTP verified successfully!' };
+
+    // Local dynamic verification fallback
+    const savedOtpData = sessionStorage.getItem(`egc_otp_${cleanEmail}`);
+    if (savedOtpData) {
+      try {
+        const parsed = JSON.parse(savedOtpData);
+        if (Date.now() > parsed.expiresAt) {
+          throw new Error('OTP has expired. Please request a new code.');
+        }
+        if (parsed.code === cleanOtp) {
+          sessionStorage.removeItem(`egc_otp_${cleanEmail}`);
+          return { valid: true, message: 'OTP verified successfully!' };
+        }
+      } catch (e) {
+        if (e.message) throw e;
+      }
     }
-    throw new Error('Invalid OTP code. Please try 4719.');
+    throw new Error('Invalid OTP code. Please check your inbox and try again.');
   },
 
   // 4. Login

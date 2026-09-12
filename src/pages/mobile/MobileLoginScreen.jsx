@@ -247,9 +247,13 @@ export const MobileLoginScreen = () => {
             <div className="p-4 bg-[#0A101D] rounded-3xl border border-slate-800 shadow-2xl animate-fade-in">
               <OtpVerificationOrbital
                 targetContact={email}
-                expectedOtp={currentOtp}
+                liveOtp={currentOtp}
                 onVerify={handleVerifySignupOtp}
-                onResend={() => authApi.sendOtp(email, 'signup')}
+                onResend={async () => {
+                  const res = await authApi.sendOtp(email, 'signup');
+                  if (res?.otp) setCurrentOtp(res.otp);
+                  return res;
+                }}
                 onBack={() => setViewState('auth')}
               />
             </div>
@@ -329,9 +333,13 @@ export const MobileLoginScreen = () => {
                 <div className="p-4 bg-[#0A101D] rounded-3xl border border-slate-800 shadow-2xl animate-fade-in">
                   <OtpVerificationOrbital
                     targetContact={forgotEmail}
-                    expectedOtp={currentOtp}
+                    liveOtp={currentOtp}
                     onVerify={handleVerifyForgotOtp}
-                    onResend={() => authApi.sendOtp(forgotEmail, 'forgot_password')}
+                    onResend={async () => {
+                      const res = await authApi.sendOtp(forgotEmail, 'forgot_password');
+                      if (res?.otp) setCurrentOtp(res.otp);
+                      return res;
+                    }}
                     onBack={() => setForgotStep('email')}
                   />
                 </div>
