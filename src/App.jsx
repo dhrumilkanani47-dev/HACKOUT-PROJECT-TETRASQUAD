@@ -21,6 +21,11 @@ import { MobileOperatorDashboardScreen } from './pages/mobile/MobileOperatorDash
 import { MobileProfileScreen } from './pages/mobile/MobileProfileScreen';
 import { useAuth } from './context/AuthContext';
 
+const RoleHome = () => {
+  const { user } = useAuth();
+  return user?.role === 'operator' ? <MobileOperatorDashboardScreen /> : <MobileHomeScreen />;
+};
+
 const RequireAuth = ({ children }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -30,6 +35,12 @@ const RequireOperator = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return user?.role === 'operator' ? children : <Navigate to="/" replace />;
+};
+
+const RequireDriver = ({ children }) => {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return user?.role === 'driver' ? children : <Navigate to="/operator" replace />;
 };
 
 const PublicOnly = ({ children }) => {
@@ -76,8 +87,8 @@ export const App = () => {
                 <Route path="/signup" element={<PublicOnly><MobileLoginScreen /></PublicOnly>} />
 
                 {/* Screen 03: Home / Dashboard */}
-                <Route path="/" element={<RequireAuth><MobileHomeScreen /></RequireAuth>} />
-                <Route path="/dashboard" element={<RequireAuth><MobileHomeScreen /></RequireAuth>} />
+                <Route path="/" element={<RequireAuth><RoleHome /></RequireAuth>} />
+                <Route path="/dashboard" element={<RequireAuth><RoleHome /></RequireAuth>} />
 
                 {/* Screen 04: Map & Charging Stations */}
                 <Route path="/map" element={<RequireAuth><MobileMapScreen /></RequireAuth>} />
@@ -86,18 +97,18 @@ export const App = () => {
                 <Route path="/station/:id" element={<RequireAuth><MobileStationDetailsScreen /></RequireAuth>} />
 
                 {/* Screen 07: Smart Charging */}
-                <Route path="/smart-charge" element={<RequireAuth><MobileSmartChargingScreen /></RequireAuth>} />
+                <Route path="/smart-charge" element={<RequireDriver><MobileSmartChargingScreen /></RequireDriver>} />
 
                 {/* Screen 08: Charging Session Progress */}
-                <Route path="/charging" element={<RequireAuth><MobileChargingSessionScreen /></RequireAuth>} />
-                <Route path="/charging/:stationId" element={<RequireAuth><MobileChargingSessionScreen /></RequireAuth>} />
+                <Route path="/charging" element={<RequireDriver><MobileChargingSessionScreen /></RequireDriver>} />
+                <Route path="/charging/:stationId" element={<RequireDriver><MobileChargingSessionScreen /></RequireDriver>} />
 
                 {/* Screen 09: Price & Green Score */}
-                <Route path="/price-score" element={<RequireAuth><MobilePriceGreenScoreScreen /></RequireAuth>} />
+                <Route path="/price-score" element={<RequireDriver><MobilePriceGreenScoreScreen /></RequireDriver>} />
 
                 {/* Screen 10: Charging History */}
-                <Route path="/history" element={<RequireAuth><MobileHistoryScreen /></RequireAuth>} />
-                <Route path="/activity" element={<RequireAuth><MobileHistoryScreen /></RequireAuth>} />
+                <Route path="/history" element={<RequireDriver><MobileHistoryScreen /></RequireDriver>} />
+                <Route path="/activity" element={<RequireDriver><MobileHistoryScreen /></RequireDriver>} />
 
                 {/* Screen 11: Notifications & Price Alert */}
                 <Route path="/notifications" element={<RequireAuth><MobileNotificationsScreen /></RequireAuth>} />

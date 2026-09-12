@@ -4,7 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
-import { Car, CreditCard, Bell, Sliders, ShieldCheck, UserCheck, ChevronRight } from 'lucide-react';
+import { Car, CreditCard, Bell, Sliders, ShieldCheck, Radio, Zap, BarChart3 } from 'lucide-react';
+import { ProfilePhotoUploader } from '../../components/common/ProfilePhotoUploader';
 
 export const MobileProfileScreen = () => {
   const navigate = useNavigate();
@@ -15,13 +16,21 @@ export const MobileProfileScreen = () => {
     navigate('/login');
   };
 
-  const menuRows = [
-    { id: 'vehicle', title: 'My Vehicle', sub: 'Tata Nexon EV (68%)', icon: Car, action: () => navigate('/charging') },
-    { id: 'payment', title: 'Payment Methods', sub: 'UPI, Cards & GreenWallet', icon: CreditCard, action: () => alert('Payment methods: UPI auto-pay connected.') },
-    { id: 'price_target', title: 'Price Alert Target', sub: '₹7.00/kWh', icon: Sliders, action: () => navigate('/notifications') },
-    { id: 'preferences', title: 'Charging Preferences', sub: 'Prefer Solar & High-speed', icon: ShieldCheck, action: () => navigate('/smart-charge') },
-    { id: 'notifications', title: 'Notifications', sub: 'Push alerts enabled', icon: Bell, action: () => navigate('/notifications') },
-  ];
+  const menuRows = user?.role === 'operator'
+    ? [
+      { id: 'stations', title: 'Manage Stations', sub: '50 stations in your network', icon: Radio, action: () => navigate('/operator') },
+      { id: 'pricing', title: 'Pricing & Green Incentives', sub: 'Demand-based rates enabled', icon: Sliders, action: () => navigate('/operator') },
+      { id: 'energy', title: 'Energy & Renewable Mix', sub: '72% renewable target', icon: Zap, action: () => navigate('/operator') },
+      { id: 'reports', title: 'Network Reports', sub: 'Cost, load and green score analytics', icon: BarChart3, action: () => navigate('/operator') },
+      { id: 'notifications', title: 'Operator Alerts', sub: 'Peak load alerts enabled', icon: Bell, action: () => navigate('/notifications') },
+    ]
+    : [
+      { id: 'vehicle', title: 'My Vehicle', sub: 'Tata Nexon EV (68%)', icon: Car, action: () => navigate('/charging') },
+      { id: 'payment', title: 'Payment Methods', sub: 'UPI, Cards & GreenWallet', icon: CreditCard, action: () => alert('Payment methods: UPI auto-pay connected.') },
+      { id: 'price_target', title: 'Price Alert Target', sub: '₹7.00/kWh', icon: Sliders, action: () => navigate('/notifications') },
+      { id: 'preferences', title: 'Charging Preferences', sub: 'Prefer Solar & High-speed', icon: ShieldCheck, action: () => navigate('/smart-charge') },
+      { id: 'notifications', title: 'Notifications', sub: 'Push alerts enabled', icon: Bell, action: () => navigate('/notifications') },
+    ];
 
   return (
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
@@ -34,9 +43,7 @@ export const MobileProfileScreen = () => {
           {/* User Profile Info Card matching attachment */}
           <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-green-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-green-400 to-emerald-500 text-white flex items-center justify-center font-heading font-bold text-base shadow-sm">
-                SK
-              </div>
+              <ProfilePhotoUploader />
               <div>
                 <b className="font-heading text-[14px] text-slate-900 block font-bold">
                   {user?.name || 'Shani Kakadiya'}

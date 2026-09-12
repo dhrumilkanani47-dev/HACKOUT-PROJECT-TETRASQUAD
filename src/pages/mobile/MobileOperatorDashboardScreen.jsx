@@ -2,39 +2,47 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
-import { useAuth } from '../../context/AuthContext';
-import { Sliders, RefreshCw, Zap, TrendingUp } from 'lucide-react';
+import { Sliders, Zap, TrendingUp, Radio, Leaf, Activity, Clock3 } from 'lucide-react';
+import { ProfilePhotoUploader } from '../../components/common/ProfilePhotoUploader';
 
 export const MobileOperatorDashboardScreen = () => {
   const navigate = useNavigate();
-  const { updateProfile } = useAuth();
   const [stationTariff, setStationTariff] = useState(8.40);
-  const [activeChargers, setActiveChargers] = useState(4);
-
-  const handleSwitchToDriver = () => {
-    updateProfile({ role: 'driver' });
-    navigate('/');
-  };
+  const [activeChargers] = useState(23);
 
   return (
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
       <div className="flex-1 flex flex-col overflow-y-auto">
         <MobileStatusBar />
-        <MobileTopNav
-          title="Operator Dashboard"
-          onBack={() => navigate('/')}
-          rightAction={
-            <button
-              onClick={handleSwitchToDriver}
-              className="text-[10px] font-heading font-bold text-emerald-900 bg-green-100 border border-green-200 px-2 py-0.5 rounded-md hover:bg-green-200 transition-colors"
-            >
-              Driver Mode
-            </button>
-          }
-        />
+        <MobileTopNav title="Operator Dashboard" onBack={() => navigate('/')} />
 
         {/* Content Container matching Screen 12 */}
         <div className="px-4 pt-2 pb-5 flex flex-col gap-2.5">
+          <div className="flex items-center gap-3 rounded-2xl bg-slate-50 border border-green-200 p-3">
+            <ProfilePhotoUploader />
+            <div>
+              <b className="block text-sm font-heading text-slate-900">Network Operations</b>
+              <span className="text-[10px] text-slate-500">GreenHub Supercharger Network</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="app-card p-3 bg-white"><Radio className="w-4 h-4 text-emerald-600" /><span className="block text-[9px] text-slate-500 mt-1">Charging Stations</span><b className="font-heading text-lg text-slate-900">50</b></div>
+            <div className="app-card p-3 bg-white"><Activity className="w-4 h-4 text-emerald-600" /><span className="block text-[9px] text-slate-500 mt-1">Active Charging</span><b className="font-heading text-lg text-slate-900">23</b></div>
+            <div className="app-card p-3 bg-white"><Clock3 className="w-4 h-4 text-amber-600" /><span className="block text-[9px] text-slate-500 mt-1">Scheduled Sessions</span><b className="font-heading text-lg text-slate-900">41</b></div>
+            <div className="app-card p-3 bg-white"><Leaf className="w-4 h-4 text-emerald-600" /><span className="block text-[9px] text-slate-500 mt-1">Renewable Energy</span><b className="font-heading text-lg text-emerald-700">72%</b></div>
+          </div>
+
+          <div className="app-card p-3 bg-emerald-50 border border-emerald-200">
+            <div className="flex justify-between items-center"><span className="text-[10px] text-emerald-900 font-semibold">Average Green Score</span><b className="text-emerald-800 font-heading text-lg">86</b></div>
+            <div className="h-1.5 bg-emerald-100 rounded-full mt-2"><div className="h-full w-[86%] bg-emerald-500 rounded-full" /></div>
+            <p className="text-[9px] text-emerald-800 mt-2">Renewable availability is highest from 11 AM to 3 PM.</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="app-card p-3 bg-white"><span className="text-[9px] text-slate-500">Today's Energy Cost</span><b className="block font-heading text-base text-slate-900 mt-1">₹18,450</b></div>
+            <div className="app-card p-3 bg-white"><span className="text-[9px] text-slate-500">Peak Load</span><b className="block font-heading text-base text-slate-900 mt-1">420 kW</b></div>
+          </div>
           {/* Station Name Subtitle */}
           <div className="flex justify-between items-center">
             <span className="text-[11px] text-slate-500 font-medium">

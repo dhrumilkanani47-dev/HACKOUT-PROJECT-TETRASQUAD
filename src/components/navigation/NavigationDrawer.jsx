@@ -10,20 +10,23 @@ export const NavigationDrawer = () => {
   const { isOpen, closeDrawer } = useDrawer();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isOperator = user?.role === 'operator';
 
   const screens = [
     ...(!isAuthenticated ? [{ name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' }] : []),
     ...(!isAuthenticated ? [{ name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' }] : []),
-    { name: 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
+    { name: isOperator ? 'Operator Dashboard' : 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
     { name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
-    { name: 'Station Details', path: '/station/st_01', match: (p) => p.startsWith('/station') },
-    { name: 'Smart Charging AI', path: '/smart-charge', match: (p) => p.startsWith('/smart-charge') },
-    { name: 'Live Charging Session', path: '/charging', match: (p) => p.startsWith('/charging') },
-    { name: 'Price & Green Score', path: '/price-score', match: (p) => p.startsWith('/price-score') },
-    { name: 'Charging History', path: '/history', match: (p) => p.startsWith('/history') || p.startsWith('/activity') },
+    ...(!isOperator ? [
+      { name: 'Station Details', path: '/station/st_01', match: (p) => p.startsWith('/station') },
+      { name: 'Smart Charging AI', path: '/smart-charge', match: (p) => p.startsWith('/smart-charge') },
+      { name: 'Live Charging Session', path: '/charging', match: (p) => p.startsWith('/charging') },
+      { name: 'Price & Green Score', path: '/price-score', match: (p) => p.startsWith('/price-score') },
+      { name: 'Charging History', path: '/history', match: (p) => p.startsWith('/history') || p.startsWith('/activity') },
+    ] : []),
+    ...(isOperator ? [{ name: 'Operator Controls', path: '/operator', match: (p) => p.startsWith('/operator') }] : []),
     { name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') },
-    { name: 'Operator Dashboard', path: '/operator', match: (p) => p.startsWith('/operator') },
     { name: 'Profile & Settings', path: '/profile', match: (p) => p.startsWith('/profile') || p.startsWith('/settings') },
   ];
 
