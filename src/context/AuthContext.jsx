@@ -71,6 +71,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('egc_auth_token');
     localStorage.removeItem('egc_user_profile');
+    localStorage.removeItem('egc_last_route');
     setUser(null);
     setIsAuthenticated(false);
   };

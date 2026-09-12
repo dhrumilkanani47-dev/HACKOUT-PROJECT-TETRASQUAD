@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { VehicleProvider } from './context/VehicleContext';
 import { StationProvider } from './context/StationContext';
@@ -37,6 +37,28 @@ const PublicOnly = ({ children }) => {
   return isAuthenticated ? <Navigate to="/" replace /> : children;
 };
 
+const StartupFlow = ({ children }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const hasRedirected = useRef(location.pathname === '/splash');
+
+  useEffect(() => {
+    if (isAuthenticated && !['/splash', '/login', '/signup'].includes(location.pathname)) {
+      localStorage.setItem('egc_last_route', `${location.pathname}${location.search}`);
+    }
+  }, [isAuthenticated, location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!hasRedirected.current && location.pathname !== '/splash') {
+      hasRedirected.current = true;
+      navigate('/splash', { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  return children;
+};
+
 export const App = () => {
   return (
     <AuthProvider>
@@ -44,7 +66,8 @@ export const App = () => {
         <StationProvider>
           <DrawerProvider>
             <MobileAppShell>
-              <Routes>
+              <StartupFlow>
+                <Routes>
                 {/* Screen 01: Splash Screen */}
                 <Route path="/splash" element={<MobileSplashScreen />} />
 
@@ -88,7 +111,8 @@ export const App = () => {
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                </Routes>
+              </StartupFlow>
             </MobileAppShell>
           </DrawerProvider>
         </StationProvider>

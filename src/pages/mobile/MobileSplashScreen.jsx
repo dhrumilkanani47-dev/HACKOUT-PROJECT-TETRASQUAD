@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
+import { useAuth } from '../../context/AuthContext';
 
 export const MobileSplashScreen = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [progress, setProgress] = useState(15);
+
+  const getDestination = () => {
+    if (!isAuthenticated) return '/login';
+    return localStorage.getItem('egc_last_route') || '/';
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(timer);
-          setTimeout(() => navigate('/'), 400);
+          setTimeout(() => navigate(getDestination()), 400);
           return 100;
         }
         return prev + 25;
@@ -23,7 +30,7 @@ export const MobileSplashScreen = () => {
 
   return (
     <div
-      onClick={() => navigate('/')}
+      onClick={() => navigate(getDestination())}
       className="relative w-full h-full min-h-[580px] flex flex-col justify-between select-none cursor-pointer overflow-hidden bg-gradient-to-br from-green-50 via-white to-emerald-50"
     >
       {/* Mobile status bar */}
