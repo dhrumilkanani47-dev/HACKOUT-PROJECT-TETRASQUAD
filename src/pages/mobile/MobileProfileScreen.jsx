@@ -113,8 +113,6 @@ export const MobileProfileScreen = () => {
       { id: 'security', title: 'Security & Password', sub: 'Change password or reset via OTP', icon: KeyRound, action: () => { setSecurityStep('change'); setPwError(''); setPwSuccess(''); setActiveModal('security'); } },
     ]
     : [
-      { id: 'vehicle', title: 'My Vehicle', sub: `${selectedVehicle} (${batteryLevel}%)`, icon: Car, action: () => setActiveModal('vehicle') },
-      { id: 'payment', title: 'Payment Methods', sub: `GreenWallet (₹${walletBalance}) • UPI Auto-Pay`, icon: CreditCard, action: () => setActiveModal('payment') },
       { id: 'price_target', title: 'Price Alert Target', sub: `Alert at ₹${priceTarget.toFixed(2)}/kWh`, icon: Sliders, action: () => setActiveModal('price_target') },
       { id: 'preferences', title: 'Charging Preferences', sub: greenPref ? 'Prefer Solar & Battery Care' : 'Standard Charging', icon: ShieldCheck, action: () => setActiveModal('preferences') },
       { id: 'notifications', title: 'Notifications & Alerts', sub: priceAlertsActive ? 'Push & WhatsApp alerts enabled' : 'Muted', icon: Bell, action: () => setActiveModal('notifications') },
