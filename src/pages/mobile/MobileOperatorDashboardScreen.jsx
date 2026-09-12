@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { Sliders, Zap, TrendingUp, Radio, Leaf, Activity, Clock3 } from 'lucide-react';
-import { ProfilePhotoUploader } from '../../components/common/ProfilePhotoUploader';
 
 export const MobileOperatorDashboardScreen = () => {
-  const navigate = useNavigate();
   const [stationTariff, setStationTariff] = useState(8.40);
   const [activeChargers] = useState(23);
 
@@ -14,18 +11,10 @@ export const MobileOperatorDashboardScreen = () => {
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
       <div className="flex-1 flex flex-col overflow-y-auto">
         <MobileStatusBar />
-        <MobileTopNav title="Operator Dashboard" onBack={() => navigate('/')} />
+        <MobileTopNav title="Operator Dashboard" showBack={false} />
 
         {/* Content Container matching Screen 12 */}
         <div className="px-4 pt-2 pb-5 flex flex-col gap-2.5">
-          <div className="flex items-center gap-3 rounded-2xl bg-slate-50 border border-green-200 p-3">
-            <ProfilePhotoUploader />
-            <div>
-              <b className="block text-sm font-heading text-slate-900">Network Operations</b>
-              <span className="text-[10px] text-slate-500">GreenHub Supercharger Network</span>
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-2">
             <div className="app-card p-3 bg-white"><Radio className="w-4 h-4 text-emerald-600" /><span className="block text-[9px] text-slate-500 mt-1">Charging Stations</span><b className="font-heading text-lg text-slate-900">50</b></div>
             <div className="app-card p-3 bg-white"><Activity className="w-4 h-4 text-emerald-600" /><span className="block text-[9px] text-slate-500 mt-1">Active Charging</span><b className="font-heading text-lg text-slate-900">23</b></div>
