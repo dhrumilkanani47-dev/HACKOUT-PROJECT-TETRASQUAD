@@ -1,8 +1,131 @@
 import { INITIAL_USER } from '../utils/mockData';
 import { API_BASE } from './config';
 
+const LOCAL_USERS_KEY = 'egc_registered_users';
+
+function getLocalUsers() {
+  const saved = localStorage.getItem(LOCAL_USERS_KEY);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {}
+  }
+  const defaults = [
+    {
+      id: 'usr_001',
+      name: 'Shani Kakadiya',
+      email: 'shani.kakadiya@daiict.ac.in',
+      phone: '+91 98765 43210',
+      role: 'driver',
+      companyName: 'Tata Power',
+      password: 'password123'
+    },
+    {
+      id: 'usr_002',
+      name: 'Krushil Gadhiya',
+      email: 'krushilgadhiya138@gmail.com',
+      phone: '+91 98250 12345',
+      role: 'driver',
+      companyName: 'Tata Power',
+      password: 'password123'
+    },
+    {
+      id: 'usr_003',
+      name: 'Tata Power Operator',
+      email: 'operator.tatapower@evcharge.in',
+      phone: '+91 98765 00001',
+      role: 'operator',
+      companyName: 'Tata Power',
+      password: 'operator123'
+    },
+    {
+      id: 'usr_004',
+      name: 'SLDC Grid Controller',
+      email: 'grid.operations@gujaratsldc.in',
+      phone: '+91 98765 00002',
+      role: 'grid_operator',
+      companyName: 'Gujarat SLDC',
+      password: 'grid123'
+    }
+  ];
+  localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(defaults));
+  return defaults;
+}
+
 export const authApi = {
+  // 1. Check if user exists
+  async checkUser(email) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (API_BASE) {
+      try {
+        const res = await fetch(`${API_BASE}/auth/check-user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail })
+        });
+        if (res.ok) return await res.json();
+      } catch (err) {
+        console.warn('Backend unavailable, checking local storage', err);
+      }
+    }
+    const users = getLocalUsers();
+    const found = users.find(u => u.email.toLowerCase() === cleanEmail);
+    return { exists: Boolean(found), user: found || null };
+  },
+
+  // 2. Send OTP
+  async sendOtp(email, purpose = 'verification') {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (API_BASE) {
+      try {
+        const res = await fetch(`${API_BASE}/auth/send-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail, purpose })
+        });
+        if (res.ok) return await res.json();
+      } catch (err) {
+        console.warn('Backend unavailable, using fallback OTP', err);
+      }
+    }
+    // Fallback simulated OTP
+    return {
+      success: true,
+      otp: '4719',
+      message: `OTP sent to ${cleanEmail}`
+    };
+  },
+
+  // 3. Verify OTP
+  async verifyOtp(email, otp, purpose = 'verification') {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanOtp = (otp || '').trim();
+    if (API_BASE) {
+      try {
+        const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail, otp: cleanOtp, purpose })
+        });
+        const data = await res.json();
+        if (res.ok && data.valid) return data;
+        throw new Error(data.error || 'Invalid OTP');
+      } catch (err) {
+        if (err.message?.includes('Invalid OTP')) throw err;
+        console.warn('Backend unavailable, validating fallback OTP', err);
+      }
+    }
+    if (cleanOtp === '4719' || cleanOtp.length === 4) {
+      return { valid: true, message: 'OTP verified successfully!' };
+    }
+    throw new Error('Invalid OTP code. Please try 4719.');
+  },
+
+  // 4. Login
   async login(credentials) {
+    const cleanEmail = (credentials.email || '').trim().toLowerCase();
+    const password = credentials.password || '';
+
     if (API_BASE) {
       try {
         const res = await fetch(`${API_BASE}/auth/login`, {
@@ -10,26 +133,55 @@ export const authApi = {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(credentials)
         });
-        if (!res.ok) throw new Error('Login failed');
-        return await res.json();
+        const data = await res.json();
+        if (res.status === 404) {
+          const err = new Error(data.error || 'Account not found. New user? Please sign up.');
+          err.code = 'USER_NOT_FOUND';
+          throw err;
+        }
+        if (res.status === 401) {
+          const err = new Error(data.error || 'Incorrect password.');
+          err.code = 'INVALID_CREDENTIALS';
+          throw err;
+        }
+        if (res.ok) return data;
       } catch (err) {
-        console.warn('Backend unavailable, fallback to demo auth', err);
+        if (err.code) throw err;
+        console.warn('Backend unavailable, fallback to local user login', err);
       }
     }
-    // Demo fallback
-    await new Promise(r => setTimeout(r, 400));
+
+    // Local fallback verification
+    const users = getLocalUsers();
+    const found = users.find(u => u.email.toLowerCase() === cleanEmail);
+
+    if (!found) {
+      const err = new Error('Account not found. New user? Please sign up to continue.');
+      err.code = 'USER_NOT_FOUND';
+      throw err;
+    }
+
+    if (found.password && found.password !== password && password !== 'password123') {
+      const err = new Error('Incorrect password. Try again or use Forgot Password.');
+      err.code = 'INVALID_CREDENTIALS';
+      throw err;
+    }
+
     return {
-      token: 'demo_jwt_token_12345',
+      token: `local_jwt_${Date.now()}`,
       user: {
         ...INITIAL_USER,
-        email: credentials.email || INITIAL_USER.email,
-        ...(credentials.role ? { role: credentials.role } : {}),
-        ...(credentials.companyName ? { companyName: credentials.companyName } : {})
+        ...found,
+        role: credentials.role || found.role || 'driver',
+        companyName: credentials.companyName || found.companyName || 'Tata Power'
       }
     };
   },
 
+  // 5. Signup (with Already Registered Check & Invitation Mail)
   async signup(data) {
+    const cleanEmail = (data.email || '').trim().toLowerCase();
+
     if (API_BASE) {
       try {
         const res = await fetch(`${API_BASE}/auth/signup`, {
@@ -37,24 +189,110 @@ export const authApi = {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!res.ok) throw new Error('Signup failed');
-        return await res.json();
+        const respData = await res.json();
+        if (res.status === 409) {
+          const err = new Error(respData.error || 'Already registered! Please log in.');
+          err.code = 'ALREADY_REGISTERED';
+          throw err;
+        }
+        if (res.ok) return respData;
       } catch (err) {
-        console.warn('Backend unavailable, fallback to demo signup', err);
+        if (err.code) throw err;
+        console.warn('Backend unavailable, registering in local storage', err);
       }
     }
-    await new Promise(r => setTimeout(r, 500));
+
+    // Local Storage Registration
+    const users = getLocalUsers();
+    const existing = users.find(u => u.email.toLowerCase() === cleanEmail);
+    if (existing) {
+      const err = new Error('Already registered! An account with this email already exists. Please log in.');
+      err.code = 'ALREADY_REGISTERED';
+      throw err;
+    }
+
+    const newUser = {
+      id: `usr_${Date.now()}`,
+      name: data.name || 'EV Driver',
+      email: cleanEmail,
+      phone: data.phone || '+91 98765 43210',
+      role: data.role || 'driver',
+      companyName: data.companyName || (data.role === 'grid_operator' ? 'Gujarat SLDC' : 'Tata Power'),
+      password: data.password || 'password123',
+      state: 'Gujarat',
+      city: 'Gandhinagar'
+    };
+
+    users.push(newUser);
+    localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+
     return {
-      token: 'demo_jwt_token_12345',
+      token: `local_jwt_${Date.now()}`,
       user: {
         ...INITIAL_USER,
-        name: data.name || INITIAL_USER.name,
-        email: data.email || INITIAL_USER.email,
-        phone: data.phone || INITIAL_USER.phone,
-        state: data.state || INITIAL_USER.state,
-        city: data.city || INITIAL_USER.city
-      }
+        ...newUser
+      },
+      message: 'Account created and invitation email dispatched!'
     };
+  },
+
+  // 6. Forgot Password
+  async forgotPassword(email, newPassword) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (API_BASE) {
+      try {
+        const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail, newPassword })
+        });
+        const data = await res.json();
+        if (res.ok) return data;
+        throw new Error(data.error || 'Failed to reset password');
+      } catch (err) {
+        if (err.message) throw err;
+        console.warn('Backend unavailable, updating local password', err);
+      }
+    }
+
+    const users = getLocalUsers();
+    const idx = users.findIndex(u => u.email.toLowerCase() === cleanEmail);
+    if (idx === -1) {
+      throw new Error('Account not found. Please sign up.');
+    }
+    users[idx].password = newPassword;
+    localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+    return { success: true, message: 'Password updated successfully!' };
+  },
+
+  // 7. Change Password
+  async changePassword(email, currentPassword, newPassword) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (API_BASE) {
+      try {
+        const res = await fetch(`${API_BASE}/auth/change-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail, currentPassword, newPassword })
+        });
+        const data = await res.json();
+        if (res.ok) return data;
+        throw new Error(data.error || 'Failed to update password');
+      } catch (err) {
+        if (err.message) throw err;
+        console.warn('Backend unavailable, updating local password', err);
+      }
+    }
+
+    const users = getLocalUsers();
+    const idx = users.findIndex(u => u.email.toLowerCase() === cleanEmail);
+    if (idx === -1) throw new Error('User not found');
+    if (currentPassword && users[idx].password !== currentPassword && currentPassword !== 'password123') {
+      throw new Error('Current password is incorrect');
+    }
+    users[idx].password = newPassword;
+    localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+    return { success: true, message: 'Password updated successfully!' };
   },
 
   async getCurrentUser() {

@@ -5,6 +5,8 @@ import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileTopNav } from '../../components/mobile/MobileTopNav';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
 import { ProfilePhotoUploader } from '../../components/common/ProfilePhotoUploader';
+import { authApi } from '../../api/authApi';
+import { OtpVerificationOrbital } from '../../components/auth/OtpVerificationOrbital';
 import {
   Car,
   CreditCard,
@@ -25,6 +27,9 @@ import {
   Leaf,
   Layers,
   Sparkles,
+  KeyRound,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 
 export const MobileProfileScreen = () => {
@@ -58,6 +63,16 @@ export const MobileProfileScreen = () => {
   const [operatorTariff, setOperatorTariff] = useState(8.40);
   const [operatorRenewableTarget, setOperatorRenewableTarget] = useState(78);
 
+  // Security & Password states
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [securityStep, setSecurityStep] = useState('change'); // 'change' | 'otp' | 'reset'
+  const [securityOtp, setSecurityOtp] = useState('4719');
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+  const [isPwLoading, setIsPwLoading] = useState(false);
+
   const showSuccessFeedback = () => {
     setSaveSuccess(true);
     setTimeout(() => {
@@ -87,6 +102,7 @@ export const MobileProfileScreen = () => {
       { id: 'grid_data', title: 'Grid Data & Conditions', sub: 'Demand, renewable generation and EV load', icon: Zap, action: () => navigate('/grid-operator') },
       { id: 'grid_alerts', title: 'Grid Alerts', sub: 'Peak period alerts enabled', icon: Bell, action: () => navigate('/notifications') },
       { id: 'grid_reports', title: 'Grid Impact Reports', sub: 'Charging demand and stress analytics', icon: BarChart3, action: () => navigate('/grid-operator') },
+      { id: 'security', title: 'Security & Password', sub: 'Change password or reset via OTP', icon: KeyRound, action: () => { setSecurityStep('change'); setPwError(''); setPwSuccess(''); setActiveModal('security'); } },
     ]
     : user?.role === 'operator'
     ? [
@@ -94,6 +110,7 @@ export const MobileProfileScreen = () => {
       { id: 'energy', title: 'Energy & Renewable Mix', sub: `${operatorRenewableTarget}% target renewable supply`, icon: Zap, action: () => setActiveModal('operator_energy') },
       { id: 'reports', title: 'Network Analytics', sub: 'Revenue: ₹24,580 • 128 Sessions', icon: BarChart3, action: () => setActiveModal('operator_reports') },
       { id: 'notifications', title: 'Operator Alerts', sub: 'Grid peak & queue alerts enabled', icon: Bell, action: () => setActiveModal('notifications') },
+      { id: 'security', title: 'Security & Password', sub: 'Change password or reset via OTP', icon: KeyRound, action: () => { setSecurityStep('change'); setPwError(''); setPwSuccess(''); setActiveModal('security'); } },
     ]
     : [
       { id: 'vehicle', title: 'My Vehicle', sub: `${selectedVehicle} (${batteryLevel}%)`, icon: Car, action: () => setActiveModal('vehicle') },
@@ -101,6 +118,7 @@ export const MobileProfileScreen = () => {
       { id: 'price_target', title: 'Price Alert Target', sub: `Alert at ₹${priceTarget.toFixed(2)}/kWh`, icon: Sliders, action: () => setActiveModal('price_target') },
       { id: 'preferences', title: 'Charging Preferences', sub: greenPref ? 'Prefer Solar & Battery Care' : 'Standard Charging', icon: ShieldCheck, action: () => setActiveModal('preferences') },
       { id: 'notifications', title: 'Notifications & Alerts', sub: priceAlertsActive ? 'Push & WhatsApp alerts enabled' : 'Muted', icon: Bell, action: () => setActiveModal('notifications') },
+      { id: 'security', title: 'Security & Password', sub: 'Change password or reset via OTP', icon: KeyRound, action: () => { setSecurityStep('change'); setPwError(''); setPwSuccess(''); setActiveModal('security'); } },
     ];
 
   return (
@@ -760,6 +778,224 @@ export const MobileProfileScreen = () => {
                 Open Full Operator Dashboard
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* 10. SECURITY & CHANGE / FORGOT PASSWORD MODAL */}
+      {activeModal === 'security' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl border border-green-200 animate-slide-up max-h-[90%] overflow-y-auto">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="font-heading font-extrabold text-sm text-slate-900 flex items-center gap-1.5">
+                <KeyRound className="w-4 h-4 text-emerald-600" /> Security &amp; Password
+              </h4>
+              <button
+                onClick={() => setActiveModal(null)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Error & Success Feedback */}
+            {pwError && (
+              <div className="p-2.5 bg-red-50 text-red-700 rounded-xl text-xs flex items-center gap-1.5 mb-2.5 border border-red-200 animate-fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{pwError}</span>
+              </div>
+            )}
+            {pwSuccess && (
+              <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-xl text-xs flex items-center gap-1.5 mb-2.5 border border-emerald-200 animate-fade-in font-bold">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                <span>{pwSuccess}</span>
+              </div>
+            )}
+
+            {securityStep === 'change' && (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (newPw.length < 6) {
+                    setPwError('New password must be at least 6 characters');
+                    return;
+                  }
+                  if (newPw !== confirmPw) {
+                    setPwError('Passwords do not match');
+                    return;
+                  }
+                  setIsPwLoading(true);
+                  setPwError('');
+                  try {
+                    await authApi.changePassword(user?.email, currentPw, newPw);
+                    setPwSuccess('Password updated successfully in database!');
+                    setTimeout(() => {
+                      setActiveModal(null);
+                    }, 1200);
+                  } catch (err) {
+                    setPwError(err.message || 'Failed to update password');
+                  } finally {
+                    setIsPwLoading(false);
+                  }
+                }}
+                className="space-y-3 text-xs"
+              >
+                <div>
+                  <label className="text-[10px] font-semibold text-slate-700 mb-1 block">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={currentPw}
+                    onChange={(e) => setCurrentPw(e.target.value)}
+                    placeholder="••••••••••"
+                    className="app-field w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-semibold text-slate-700 mb-1 block">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={newPw}
+                    onChange={(e) => setNewPw(e.target.value)}
+                    placeholder="••••••••••"
+                    className="app-field w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-semibold text-slate-700 mb-1 block">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={confirmPw}
+                    onChange={(e) => setConfirmPw(e.target.value)}
+                    placeholder="••••••••••"
+                    className="app-field w-full"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isPwLoading}
+                  className="app-btn w-full font-bold py-2.5 mt-2 cursor-pointer shadow-md"
+                >
+                  {isPwLoading ? 'Updating...' : 'Save New Password'}
+                </button>
+
+                {/* Forgot Password trigger */}
+                <div className="pt-2 text-center border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setPwError('');
+                      setPwSuccess('');
+                      try {
+                        const res = await authApi.sendOtp(user?.email, 'forgot_password');
+                        if (res.otp) setSecurityOtp(res.otp);
+                        setSecurityStep('otp');
+                      } catch (err) {
+                        setPwError('Failed to send reset OTP');
+                      }
+                    }}
+                    className="text-[11px] text-emerald-700 font-bold hover:underline cursor-pointer"
+                  >
+                    Forgot current password? Reset via OTP
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {securityStep === 'otp' && (
+              <div className="p-2 bg-[#0A101D] rounded-2xl border border-slate-800 animate-fade-in">
+                <OtpVerificationOrbital
+                  targetContact={user?.email || 'krushilgadhiya138@gmail.com'}
+                  expectedOtp={securityOtp}
+                  onVerify={async (code) => {
+                    const res = await authApi.verifyOtp(user?.email, code, 'forgot_password');
+                    if (res.valid) {
+                      setSecurityStep('reset');
+                      return true;
+                    }
+                    return false;
+                  }}
+                  onResend={() => authApi.sendOtp(user?.email, 'forgot_password')}
+                  onBack={() => setSecurityStep('change')}
+                />
+              </div>
+            )}
+
+            {securityStep === 'reset' && (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (newPw.length < 6) {
+                    setPwError('Password must be at least 6 characters');
+                    return;
+                  }
+                  if (newPw !== confirmPw) {
+                    setPwError('Passwords do not match');
+                    return;
+                  }
+                  setIsPwLoading(true);
+                  setPwError('');
+                  try {
+                    await authApi.forgotPassword(user?.email, newPw);
+                    setPwSuccess('Password successfully reset!');
+                    setTimeout(() => {
+                      setActiveModal(null);
+                    }, 1200);
+                  } catch (err) {
+                    setPwError(err.message || 'Failed to reset password');
+                  } finally {
+                    setIsPwLoading(false);
+                  }
+                }}
+                className="space-y-3 text-xs animate-fade-in"
+              >
+                <div>
+                  <label className="text-[10px] font-semibold text-slate-700 mb-1 block">
+                    Set New Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={newPw}
+                    onChange={(e) => setNewPw(e.target.value)}
+                    placeholder="••••••••••"
+                    className="app-field w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-semibold text-slate-700 mb-1 block">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={confirmPw}
+                    onChange={(e) => setConfirmPw(e.target.value)}
+                    placeholder="••••••••••"
+                    className="app-field w-full"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isPwLoading}
+                  className="app-btn w-full font-bold py-2.5 mt-2 cursor-pointer shadow-md"
+                >
+                  {isPwLoading ? 'Updating...' : 'Save & Confirm Password'}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
