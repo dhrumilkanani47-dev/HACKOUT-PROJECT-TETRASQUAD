@@ -16,6 +16,7 @@ import { MobileSmartChargingScreen } from './pages/mobile/MobileSmartChargingScr
 import { MobileChargingSessionScreen } from './pages/mobile/MobileChargingSessionScreen';
 import { MobilePriceGreenScoreScreen } from './pages/mobile/MobilePriceGreenScoreScreen';
 import { MobileHistoryScreen } from './pages/mobile/MobileHistoryScreen';
+import { MobileHistoryDetailsScreen } from './pages/mobile/MobileHistoryDetailsScreen';
 import { MobileNotificationsScreen } from './pages/mobile/MobileNotificationsScreen';
 import { MobileOperatorDashboardScreen } from './pages/mobile/MobileOperatorDashboardScreen';
 import { MobileGridOperatorDashboardScreen } from './pages/mobile/MobileGridOperatorDashboardScreen';
@@ -123,6 +124,7 @@ export const App = () => {
                 <Route path="/price-score" element={<RequireDriver><MobilePriceGreenScoreScreen /></RequireDriver>} />
 
                 {/* Screen 10: Charging History */}
+                <Route path="/history/:sessionId" element={<RequireDriver><MobileHistoryDetailsScreen /></RequireDriver>} />
                 <Route path="/history" element={<RequireDriver><MobileHistoryScreen /></RequireDriver>} />
                 <Route path="/activity" element={<RequireDriver><MobileHistoryScreen /></RequireDriver>} />
 

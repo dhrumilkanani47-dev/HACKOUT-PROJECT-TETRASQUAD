@@ -12,42 +12,50 @@ export const MobileHistoryScreen = () => {
   const historySessions = [
     {
       id: 'h_01',
-      station: 'GreenHub Station',
+      station: 'GreenHub Solar Supercharger',
+      address: 'Infocity Circle, Gandhinagar',
       date: '12 Sep',
       kwh: '24.5 kWh',
       pricePerKwh: '₹18.00/kWh',
       totalCost: '₹441.00',
       renewablePct: 92,
+      energySource: 'Solar + Wind mix',
       score: 94,
     },
     {
       id: 'h_02',
       station: 'SunCharge Station',
+      address: 'SG Highway, Ahmedabad',
       date: '5 Sep',
       kwh: '18.2 kWh',
       pricePerKwh: '₹18.02/kWh',
       totalCost: '₹328.00',
       renewablePct: 78,
+      energySource: 'Solar + Grid mix',
       score: 88,
     },
     {
       id: 'h_03',
       station: 'EcoVolt Station',
+      address: 'GIFT City Boulevard, Gandhinagar',
       date: '28 Aug',
       kwh: '32.0 kWh',
       pricePerKwh: '₹18.00/kWh',
       totalCost: '₹576.00',
       renewablePct: 65,
+      energySource: 'Wind + Grid mix',
       score: 79,
     },
     {
       id: 'h_04',
       station: 'Jio-bp pulse Express',
+      address: 'SG Highway, Ahmedabad',
       date: '19 Aug',
       kwh: '21.0 kWh',
       pricePerKwh: '₹18.00/kWh',
       totalCost: '₹378.00',
       renewablePct: 84,
+      energySource: 'Solar + Wind mix',
       score: 90,
     },
   ];
@@ -91,7 +99,7 @@ export const MobileHistoryScreen = () => {
           {displayedSessions.map((session) => (
             <div
               key={session.id}
-              onClick={() => navigate('/price-score')}
+              onClick={() => navigate(`/history/${session.id}`)}
               className="app-card cursor-pointer hover:border-emerald-400 transition-colors py-2.5 px-3 bg-white"
             >
               <div className="flex justify-between items-center">
