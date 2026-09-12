@@ -21,34 +21,35 @@ export const MobileBottomBar = () => {
   ];
 
   return (
-    <div className="flex justify-around items-center pt-2 pb-3 px-2 border-t border-green-200/80 bg-white/95 backdrop-blur-md select-none text-[10px] font-heading font-semibold text-slate-500">
+    <nav className="flex justify-around items-center pt-2 pb-2 px-3 border-t border-green-100 bg-white/95 backdrop-blur-md select-none text-[10.5px] font-heading font-semibold text-slate-500 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] shrink-0 z-30">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
           <button
             key={tab.label}
             onClick={() => navigate(tab.path)}
-            className={`flex flex-col items-center gap-1 flex-1 py-1 transition-all active:scale-95 ${
+            className={`flex flex-col items-center gap-1 flex-1 py-1 transition-all duration-200 active:scale-95 ${
               tab.active
-                ? 'text-emerald-800 font-extrabold'
-                : 'hover:text-emerald-700 text-slate-500'
+                ? 'text-emerald-700 font-extrabold'
+                : 'hover:text-emerald-600 text-slate-500'
             }`}
           >
             <div
-              className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${
+              className={`w-9 h-7 rounded-xl flex items-center justify-center transition-all ${
                 tab.active
-                  ? 'bg-green-100 text-emerald-800 border border-green-300 shadow-2xs'
-                  : 'text-slate-400'
+                  ? 'bg-emerald-100/80 text-emerald-800 shadow-xs ring-1 ring-emerald-300/60'
+                  : 'text-slate-400 hover:bg-slate-100'
               }`}
             >
               <Icon className="w-4 h-4" strokeWidth={tab.active ? 2.5 : 2} />
             </div>
-            <span>{tab.label}</span>
+            <span className="tracking-tight">{tab.label}</span>
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 };
 
 export default MobileBottomBar;
+
