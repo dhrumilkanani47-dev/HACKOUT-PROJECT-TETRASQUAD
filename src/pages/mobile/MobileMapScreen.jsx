@@ -54,6 +54,7 @@ export const MobileMapScreen = () => {
   const userLng = user?.longitude || 72.6289;
 
   const isOperator = user?.role === 'operator';
+  const isGridOperator = user?.role === 'grid_operator';
   const operatorCompany = user?.companyName?.trim() || 'Tata Power';
   const [activeFilter, setActiveFilter] = useState(isOperator ? 'all' : 'recommended'); // 'recommended' | 'all' | 'nearby' | 'cheapest' | 'fast' | 'available'
   const [sortBy, setSortBy] = useState(isOperator ? 'distance' : 'smart'); // 'smart' | 'price' | 'distance'
@@ -358,10 +359,10 @@ export const MobileMapScreen = () => {
               selectedStation={activeStation}
               recommendedStationId={isOperator ? null : topRecommended?.id}
               onSelectStation={(st) => setSelectedStation(st)}
-              vehicles={isOperator ? [] : vehicles}
-              showVehicles={!isOperator}
+              vehicles={isOperator || isGridOperator ? [] : vehicles}
+              showVehicles={!isOperator && !isGridOperator}
               onSelectVehicle={(vehicle) => {
-                if (isOperator) return;
+                if (isOperator || isGridOperator) return;
                 setSelectedVehicle((current) => current?.id === vehicle.id ? null : vehicle);
               }}
               userLocation={{
@@ -370,11 +371,11 @@ export const MobileMapScreen = () => {
                 label: `${user?.city || 'Gandhinagar'} (You)`,
               }}
               height="100%"
-              showRoute={!isOperator}
+              showRoute={!isOperator && !isGridOperator}
             />
           </div>
 
-          {!isOperator && selectedVehicle && (
+          {!isOperator && !isGridOperator && selectedVehicle && (
             <div className="app-card p-3 bg-white border border-green-200 shadow-sm animate-slide-up">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
