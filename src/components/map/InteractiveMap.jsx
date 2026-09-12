@@ -57,6 +57,8 @@ export const InteractiveMap = ({
   userLocation: propUserLocation,
   height = '360px',
   showRoute = true,
+  vehicles = [],
+  onSelectVehicle,
   className = '',
 }) => {
   let activeVehicle = {
@@ -80,7 +82,7 @@ export const InteractiveMap = ({
   const mapInstanceRef = useRef(null);
   const tileLayerRef = useRef(null);
   const markersGroupRef = useRef(null);
-  const vehicleMarkerRef = useRef(null);
+  const vehicleMarkersRef = useRef([]);
   const routePolylineRef = useRef(null);
 
   const [activeLayerKey, setActiveLayerKey] = useState('streets');
@@ -179,16 +181,21 @@ export const InteractiveMap = ({
     const map = mapInstanceRef.current;
     if (!map || !userLivePos?.lat || !userLivePos?.lng) return;
 
-    if (vehicleMarkerRef.current) {
-      map.removeLayer(vehicleMarkerRef.current);
-    }
+    vehicleMarkersRef.current.forEach((marker) => map.removeLayer(marker));
+    vehicleMarkersRef.current = [];
 
-    const isScooter = activeVehicle?.type === 'Scooter' || activeVehicle?.type === 'Motorcycle' || activeVehicle?.brand === 'Ather' || activeVehicle?.brand === 'Ola';
-    const vehicleIconSymbol = isScooter ? '🛵' : '🚗';
-    const vehName = activeVehicle?.nickname || activeVehicle?.name || 'My EV';
-    const vehPlate = activeVehicle?.plateNumber || 'GJ 01 EV 0000';
-    const battPct = activeVehicle?.currentBatteryPct || 76;
-    const rangeEst = activeVehicle?.currentRangeEstimate || 248;
+    const vehicleList = vehicles.length ? vehicles : [activeVehicle];
+    const fallbackOffsets = [[0, 0], [0.008, 0.006], [-0.006, 0.009], [0.01, -0.008]];
+
+    vehicleList.forEach((vehicle, index) => {
+      const vehicleLat = vehicle.latitude || vehicle.lat || userLivePos.lat + (fallbackOffsets[index % fallbackOffsets.length][0]);
+      const vehicleLng = vehicle.longitude || vehicle.lng || userLivePos.lng + (fallbackOffsets[index % fallbackOffsets.length][1]);
+      const isScooter = vehicle?.type === 'Scooter' || vehicle?.type === 'Motorcycle' || vehicle?.brand === 'Ather' || vehicle?.brand === 'Ola';
+      const vehicleIconSymbol = isScooter ? '🛵' : '🚗';
+      const vehName = vehicle?.nickname || vehicle?.name || 'My EV';
+      const vehPlate = vehicle?.plateNumber || 'GJ 01 EV 0000';
+      const battPct = vehicle?.currentBatteryPct || 76;
+      const rangeEst = vehicle?.currentRangeEstimate || 248;
 
     const vehicleMarkerHtml = `
       <div class="relative flex flex-col items-center select-none cursor-pointer group -translate-x-1/2 -translate-y-[80%]">
@@ -220,19 +227,19 @@ export const InteractiveMap = ({
       </div>
     `;
 
-    const customVehicleIcon = L.divIcon({
+      const customVehicleIcon = L.divIcon({
       className: 'custom-vehicle-map-pin',
       html: vehicleMarkerHtml,
       iconSize: [120, 60],
       iconAnchor: [60, 56],
     });
 
-    const marker = L.marker([userLivePos.lat, userLivePos.lng], {
+      const marker = L.marker([vehicleLat, vehicleLng], {
       icon: customVehicleIcon,
       zIndexOffset: 1200,
     }).addTo(map);
 
-    marker.bindPopup(`
+      marker.bindPopup(`
       <div class="p-1 font-sans text-xs min-w-[170px]">
         <div class="flex items-center gap-1.5 pb-1 border-b border-slate-200">
           <span class="text-sm">${vehicleIconSymbol}</span>
@@ -256,8 +263,10 @@ export const InteractiveMap = ({
       offset: [0, -45]
     });
 
-    vehicleMarkerRef.current = marker;
-  }, [userLivePos, activeVehicle]);
+      marker.on('click', () => onSelectVehicle?.(vehicle));
+      vehicleMarkersRef.current.push(marker);
+    });
+  }, [userLivePos, activeVehicle, vehicles, onSelectVehicle]);
 
   // Render Station Markers & Hospital Markers
   useEffect(() => {

@@ -6,6 +6,7 @@ import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
 import { InteractiveMap } from '../../components/map/InteractiveMap';
 import { useStations } from '../../context/StationContext';
 import { useAuth } from '../../context/AuthContext';
+import { useVehicles } from '../../context/VehicleContext';
 import {
   Search,
   ChevronRight,
@@ -45,6 +46,7 @@ export const MobileMapScreen = () => {
   const navigate = useNavigate();
   const { stations, hospitals, selectedStation, setSelectedStation } = useStations();
   const { user } = useAuth();
+  const { vehicles } = useVehicles();
 
   const userLat = user?.latitude || 23.1884;
   const userLng = user?.longitude || 72.6289;
@@ -54,6 +56,7 @@ export const MobileMapScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showTopPickBanner, setShowTopPickBanner] = useState(true);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
 
   // 1. Enrich stations with dynamic distances and AI Recommendation Scores
   const scoredStations = useMemo(() => {
@@ -310,6 +313,8 @@ export const MobileMapScreen = () => {
               selectedStation={activeStation}
               recommendedStationId={topRecommended?.id}
               onSelectStation={(st) => setSelectedStation(st)}
+              vehicles={vehicles}
+              onSelectVehicle={(vehicle) => setSelectedVehicle(vehicle)}
               userLocation={{
                 lat: userLat,
                 lng: userLng,
@@ -319,6 +324,24 @@ export const MobileMapScreen = () => {
               showRoute={true}
             />
           </div>
+
+          {selectedVehicle && (
+            <div className="app-card p-3 bg-slate-950 text-white border border-emerald-400 shadow-sm animate-slide-up">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="text-[9px] text-emerald-300 font-bold uppercase">Selected vehicle</span>
+                  <h4 className="font-heading font-extrabold text-sm mt-0.5">{selectedVehicle.nickname || selectedVehicle.name}</h4>
+                  <p className="text-[10px] text-slate-300 mt-0.5">{selectedVehicle.brand} {selectedVehicle.model || selectedVehicle.name}</p>
+                </div>
+                <span className="text-lg">{selectedVehicle.type === 'Scooter' ? '🛵' : '🚗'}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 mt-2 text-center">
+                <div className="rounded-lg bg-white/10 py-1.5"><span className="block text-[8px] text-slate-300">Battery</span><b className="text-[10px]">{selectedVehicle.currentBatteryPct || 0}%</b></div>
+                <div className="rounded-lg bg-white/10 py-1.5"><span className="block text-[8px] text-slate-300">Range</span><b className="text-[10px]">{selectedVehicle.currentRangeEstimate || 0} km</b></div>
+                <div className="rounded-lg bg-white/10 py-1.5"><span className="block text-[8px] text-slate-300">Connector</span><b className="text-[10px]">{selectedVehicle.connector || 'CCS2'}</b></div>
+              </div>
+            </div>
+          )}
 
           {/* Active Station Preview & Navigation Bottom Sheet */}
           {activeStation && (
