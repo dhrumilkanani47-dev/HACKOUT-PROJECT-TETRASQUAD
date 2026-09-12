@@ -33,6 +33,9 @@ export const MobileHomeScreen = () => {
 
   useEffect(() => {
     if (!cheapestStation || !expensiveStation) return undefined;
+    if (sessionStorage.getItem('egc_price_notification_seen') === 'true') return undefined;
+
+    sessionStorage.setItem('egc_price_notification_seen', 'true');
     setNotificationToast(`${cheapestStation.name} is ₹${cheapestStation.pricePerKwh.toFixed(2)}/kWh nearby. ${expensiveStation.name} is currently the highest at ₹${expensiveStation.pricePerKwh.toFixed(2)}/kWh.`);
     const timer = setTimeout(() => setNotificationToast(''), 6000);
     return () => clearTimeout(timer);
