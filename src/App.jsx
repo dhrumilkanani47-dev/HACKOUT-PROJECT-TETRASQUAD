@@ -1,120 +1,76 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { VehicleProvider } from './context/VehicleContext';
 import { StationProvider } from './context/StationContext';
-import { Navbar } from './components/common/Navbar';
-import { BottomNav } from './components/common/BottomNav';
+import { MobileAppShell } from './components/mobile/MobileAppShell';
 
-// Pages
-import { HomePage } from './pages/HomePage';
-import { LoginPage } from './pages/LoginPage';
-import { SignupPage } from './pages/SignupPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { MapPage } from './pages/MapPage';
-import { VehiclesPage } from './pages/VehiclesPage';
-import { AddVehiclePage } from './pages/AddVehiclePage';
-import { VehicleDetailPage } from './pages/VehicleDetailPage';
-import { ChargingSessionPage } from './pages/ChargingSessionPage';
-import { AiAssistantPage } from './pages/AiAssistantPage';
-import { ActivityPage } from './pages/ActivityPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { SettingsPage } from './pages/SettingsPage';
-
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  return children;
-};
+// 13 Mobile Screens from Attachment
+import { MobileSplashScreen } from './pages/mobile/MobileSplashScreen';
+import { MobileLoginScreen } from './pages/mobile/MobileLoginScreen';
+import { MobileHomeScreen } from './pages/mobile/MobileHomeScreen';
+import { MobileMapScreen } from './pages/mobile/MobileMapScreen';
+import { MobileStationDetailsScreen } from './pages/mobile/MobileStationDetailsScreen';
+import { MobileSmartChargingScreen } from './pages/mobile/MobileSmartChargingScreen';
+import { MobileChargingSessionScreen } from './pages/mobile/MobileChargingSessionScreen';
+import { MobilePriceGreenScoreScreen } from './pages/mobile/MobilePriceGreenScoreScreen';
+import { MobileHistoryScreen } from './pages/mobile/MobileHistoryScreen';
+import { MobileNotificationsScreen } from './pages/mobile/MobileNotificationsScreen';
+import { MobileOperatorDashboardScreen } from './pages/mobile/MobileOperatorDashboardScreen';
+import { MobileProfileScreen } from './pages/mobile/MobileProfileScreen';
 
 export const App = () => {
   return (
     <AuthProvider>
       <VehicleProvider>
         <StationProvider>
-          <div className="min-h-screen bg-paper dark:bg-paper-dark text-ink dark:text-white flex flex-col font-sans selection:bg-leaf/20 selection:text-forest">
-            {/* Top Navigation Bar */}
-            <Navbar />
+          <MobileAppShell>
+            <Routes>
+              {/* Screen 01: Splash Screen */}
+              <Route path="/splash" element={<MobileSplashScreen />} />
 
-            {/* Application Routes */}
-            <main className="flex-1">
-              <Routes>
-                {/* Public / Landing */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
+              {/* Screen 02: Login / Sign Up */}
+              <Route path="/login" element={<MobileLoginScreen />} />
+              <Route path="/signup" element={<MobileLoginScreen />} />
 
-                {/* Dashboard & Core Features */}
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/map" element={<MapPage />} />
-                <Route
-                  path="/vehicles"
-                  element={
-                    <ProtectedRoute>
-                      <VehiclesPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/vehicles/add"
-                  element={
-                    <ProtectedRoute>
-                      <AddVehiclePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/vehicles/:id"
-                  element={
-                    <ProtectedRoute>
-                      <VehicleDetailPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/charging/:stationId" element={<ChargingSessionPage />} />
-                <Route path="/ai" element={<AiAssistantPage />} />
-                <Route
-                  path="/activity"
-                  element={
-                    <ProtectedRoute>
-                      <ActivityPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute>
-                      <SettingsPage />
-                    </ProtectedRoute>
-                  }
-                />
+              {/* Screen 03: Home / Dashboard */}
+              <Route path="/" element={<MobileHomeScreen />} />
+              <Route path="/dashboard" element={<MobileHomeScreen />} />
 
-                {/* Fallback to Home */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
+              {/* Screen 04: Map & Charging Stations */}
+              <Route path="/map" element={<MobileMapScreen />} />
 
-            {/* Mobile Bottom Navigation Bar (Logged in) */}
-            <BottomNav />
-          </div>
+              {/* Screen 05: Station Details */}
+              <Route path="/station/:id" element={<MobileStationDetailsScreen />} />
+
+              {/* Screen 07: Smart Charging */}
+              <Route path="/smart-charge" element={<MobileSmartChargingScreen />} />
+
+              {/* Screen 08: Charging Session Progress */}
+              <Route path="/charging" element={<MobileChargingSessionScreen />} />
+              <Route path="/charging/:stationId" element={<MobileChargingSessionScreen />} />
+
+              {/* Screen 09: Price & Green Score */}
+              <Route path="/price-score" element={<MobilePriceGreenScoreScreen />} />
+
+              {/* Screen 10: Charging History */}
+              <Route path="/history" element={<MobileHistoryScreen />} />
+              <Route path="/activity" element={<MobileHistoryScreen />} />
+
+              {/* Screen 11: Notifications & Price Alert */}
+              <Route path="/notifications" element={<MobileNotificationsScreen />} />
+
+              {/* Screen 12: Operator Dashboard */}
+              <Route path="/operator" element={<MobileOperatorDashboardScreen />} />
+
+              {/* Screen 13: Profile & Settings */}
+              <Route path="/profile" element={<MobileProfileScreen />} />
+              <Route path="/settings" element={<MobileProfileScreen />} />
+
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </MobileAppShell>
         </StationProvider>
       </VehicleProvider>
     </AuthProvider>
