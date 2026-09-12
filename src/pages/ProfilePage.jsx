@@ -179,8 +179,8 @@ export const ProfilePage = () => {
               <Info className="w-4 h-4" />
             </div>
             <div>
-              <b className="font-heading text-slate-900 dark:text-white block">About EV GreenCharge</b>
-              <span className="text-slate-500 text-[11px]">TetraSquad for HackOut 2026 · Gujarat Clean Energy Grid</span>
+              <b className="font-heading text-slate-900 dark:text-white block">About Our EV Navigation</b>
+              <span className="text-slate-500 text-[11px]">Your simple guide to finding EV charging stations wherever you go.</span>
             </div>
           </div>
           <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">

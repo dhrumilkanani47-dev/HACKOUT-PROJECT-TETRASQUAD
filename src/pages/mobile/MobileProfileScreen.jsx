@@ -222,7 +222,7 @@ export const MobileProfileScreen = () => {
                   About Us &amp; Platform Info
                 </span>
                 <span className="text-[10px] text-slate-500">
-                  Team TetraSquad · HackOut 2026 · Gujarat Grid
+                  Making EV travel easier, smarter, and more convenient.
                 </span>
               </div>
             </div>
@@ -1050,10 +1050,10 @@ export const MobileProfileScreen = () => {
                 </div>
                 <div>
                   <h4 className="font-heading font-extrabold text-sm text-slate-900 leading-tight">
-                    About EV GreenCharge
+                    About Our EV Navigation
                   </h4>
                   <span className="text-[10px] text-slate-500">
-                    Gujarat Smart Clean-Energy Grid
+                    Your simple guide to finding EV charging stations wherever you go.
                   </span>
                 </div>
               </div>
@@ -1069,10 +1069,10 @@ export const MobileProfileScreen = () => {
             {/* Mission & Overview */}
             <div className="my-3 p-3 rounded-2xl bg-gradient-to-br from-emerald-900 to-teal-950 text-white shadow-sm">
               <span className="text-[9.5px] font-mono font-bold text-emerald-400 uppercase tracking-wider block">
-                Mission &amp; Innovation
+                About Us
               </span>
               <p className="text-xs text-slate-200 mt-1 leading-relaxed font-sans">
-                EV GreenCharge is an AI-powered smart EV charging assistant built for India. We synchronize EV charging windows with Gujarat SLDC real-time renewable solar &amp; wind availability, cutting energy costs by up to <b>40%</b> and eliminating grid carbon spikes.
+                Our EV Navigation platform helps EV users easily find nearby charging stations. It is designed to make electric vehicle travel easier by helping users discover suitable charging stations for different types of electric vehicles.
               </p>
             </div>
 
@@ -1083,9 +1083,9 @@ export const MobileProfileScreen = () => {
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <b className="font-heading text-slate-900 block text-[11.5px]">Dynamic Solar Sync</b>
+                    <b className="font-heading text-slate-900 block text-[11.5px]">Find nearby EV charging stations</b>
                   <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
-                    AI pricing curves that dynamically match your vehicle battery charge with afternoon solar peak production windows (₹6.50/kWh).
+                    Discover nearby charging stations wherever you go.
                   </p>
                 </div>
               </div>
@@ -1095,9 +1095,9 @@ export const MobileProfileScreen = () => {
                   <Radio className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div>
-                  <b className="font-heading text-slate-900 block text-[11.5px]">Live Telematics &amp; GPS Tracking</b>
+                    <b className="font-heading text-slate-900 block text-[11.5px]">Support for different EV vehicles</b>
                   <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
-                    Real-time OBD-II vehicle connectivity, accurate battery SoC monitoring, and live station turn-by-turn routing.
+                    Find suitable charging options for different types of electric vehicles.
                   </p>
                 </div>
               </div>
@@ -1107,26 +1107,26 @@ export const MobileProfileScreen = () => {
                   <ShieldCheck className="w-4 h-4 text-sky-600" />
                 </div>
                 <div>
-                  <b className="font-heading text-slate-900 block text-[11.5px]">Anti-Spam Orbital Verification</b>
+                    <b className="font-heading text-slate-900 block text-[11.5px]">Simple and convenient navigation</b>
                   <p className="text-[10.5px] text-slate-500 mt-0.5 leading-snug">
-                    Real-time 4-digit orbital security with direct inbox delivery standards and zero spam delays.
+                    Make EV travel easier with clear and convenient station navigation.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Hackathon & Team Credits */}
+            {/* Platform statement */}
             <div className="mt-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs">
               <div className="flex items-center gap-1.5 font-heading font-extrabold text-emerald-950 text-[11.5px]">
                 <Award className="w-4 h-4 text-emerald-700" />
-                <span>Developed by Team TetraSquad</span>
+                <span>Making EV travel easier, smarter, and more convenient.</span>
               </div>
               <p className="text-[10.5px] text-emerald-800 mt-1">
-                Created for <b>HackOut 2026</b>. Empowering clean-energy smart mobility across Gujarat, India.
+                Your simple guide to finding EV charging stations wherever you go.
               </p>
               <div className="mt-2 pt-2 border-t border-emerald-200/60 flex items-center justify-between text-[10px] text-emerald-900 font-mono">
-                <span>Version: v2.4.0 (Prod)</span>
-                <span>Made in Gujarat 🇮🇳</span>
+                <span>EV Navigation platform</span>
+                <span>Simple EV travel</span>
               </div>
             </div>
 
