@@ -62,11 +62,10 @@ export const MobileAppShell = ({ children }) => {
           <div className="flex items-center bg-slate-800/90 border border-slate-700/70 rounded-xl p-0.5">
             <button
               onClick={() => setDeviceMode('framed')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                deviceMode === 'framed'
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${deviceMode === 'framed'
                   ? 'bg-emerald-500 text-slate-950 shadow-xs'
                   : 'text-slate-400 hover:text-white'
-              }`}
+                }`}
               title="Smartphone Device Frame"
             >
               <Smartphone className="w-3.5 h-3.5" />
@@ -74,11 +73,10 @@ export const MobileAppShell = ({ children }) => {
             </button>
             <button
               onClick={() => setDeviceMode('fluid')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                deviceMode === 'fluid'
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${deviceMode === 'fluid'
                   ? 'bg-emerald-500 text-slate-950 shadow-xs'
                   : 'text-slate-400 hover:text-white'
-              }`}
+                }`}
               title="Fluid Mobile Width"
             >
               <Monitor className="w-3.5 h-3.5" />
@@ -103,7 +101,7 @@ export const MobileAppShell = ({ children }) => {
             {/* Inner Phone Screen Content */}
             <div className="w-full h-full bg-white sm:rounded-[40px] overflow-y-auto overflow-x-hidden flex flex-col justify-start relative select-none">
               {children}
-              
+
               {/* Home Indicator bar on mobile/frame */}
               <div className="w-full py-1.5 flex justify-center items-center shrink-0 bg-white/95">
                 <div className="w-32 h-1 bg-slate-300 rounded-full" />

@@ -61,22 +61,20 @@ export const MobileLoginScreen = () => {
               <button
                 type="button"
                 onClick={() => handleRoleChange('driver')}
-                className={`py-1.5 text-xs font-heading font-bold rounded-lg transition-all ${
-                  role === 'driver'
+                className={`py-1.5 text-xs font-heading font-bold rounded-lg transition-all ${role === 'driver'
                     ? 'bg-emerald-400 text-emerald-950 shadow-sm border border-emerald-500'
                     : 'text-slate-600 hover:text-emerald-800'
-                }`}
+                  }`}
               >
                 🚗 EV Driver
               </button>
               <button
                 type="button"
                 onClick={() => handleRoleChange('operator')}
-                className={`py-1.5 text-xs font-heading font-bold rounded-lg transition-all ${
-                  role === 'operator'
+                className={`py-1.5 text-xs font-heading font-bold rounded-lg transition-all ${role === 'operator'
                     ? 'bg-emerald-400 text-emerald-950 shadow-sm border border-emerald-500'
                     : 'text-slate-600 hover:text-emerald-800'
-                }`}
+                  }`}
               >
                 ⚡ Station Operator
               </button>
