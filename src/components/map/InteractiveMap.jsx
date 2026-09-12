@@ -478,37 +478,6 @@ export const InteractiveMap = ({
         <span className="text-slate-400">•</span>
         <span className="text-slate-500 font-mono">{stations.length} Chargers</span>
       </div>
-
-      {/* Selected Station Quick Navigation Overlay Pill on Map */}
-      {selectedStation && (
-        <div className="absolute top-3 left-3 z-30 max-w-[210px] sm:max-w-[260px] animate-fade-in">
-          <div className="bg-slate-950/85 text-white p-2.5 rounded-2xl shadow-xl backdrop-blur-md border border-white/20 flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/30 text-emerald-300 font-bold">
-                Selected
-              </span>
-              <span className="text-[10px] text-emerald-400 font-bold font-heading">
-                {selectedStation.pricePerKwh ? `₹${selectedStation.pricePerKwh.toFixed(2)}/kWh` : '₹8.40'}
-              </span>
-            </div>
-            <div className="font-heading font-bold text-xs truncate">
-              {selectedStation.name}
-            </div>
-            <div className="text-[9.5px] text-slate-300 truncate">
-              {calculatedDist ? `${calculatedDist} km away` : (selectedStation.distance || selectedStation.distanceKm ? `${selectedStation.distance || selectedStation.distanceKm + ' km'}` : 'Nearby')}
-            </div>
-
-            <button
-              onClick={() => handleOpenGoogleMaps(selectedStation)}
-              className="mt-0.5 w-full py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading font-bold text-[10.5px] flex items-center justify-center gap-1 shadow-xs transition-colors"
-            >
-              <Navigation className="w-3 h-3 fill-current" />
-              <span>Navigate in Google Maps</span>
-              <ExternalLink className="w-2.5 h-2.5 opacity-70" />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
