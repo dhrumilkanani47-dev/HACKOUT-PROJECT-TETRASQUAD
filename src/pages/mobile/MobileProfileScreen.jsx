@@ -72,7 +72,7 @@ export const MobileProfileScreen = () => {
       name: editName,
       city: editCity,
       phone: editPhone,
-      companyName: user?.role === 'operator' ? editCompany : user?.companyName,
+      companyName: user?.role !== 'driver' ? editCompany : user?.companyName,
     });
     showSuccessFeedback();
   };
@@ -82,7 +82,13 @@ export const MobileProfileScreen = () => {
     navigate('/login');
   };
 
-  const menuRows = user?.role === 'operator'
+  const menuRows = user?.role === 'grid_operator'
+    ? [
+      { id: 'grid_data', title: 'Grid Data & Conditions', sub: 'Demand, renewable generation and EV load', icon: Zap, action: () => navigate('/grid-operator') },
+      { id: 'grid_alerts', title: 'Grid Alerts', sub: 'Peak period alerts enabled', icon: Bell, action: () => navigate('/notifications') },
+      { id: 'grid_reports', title: 'Grid Impact Reports', sub: 'Charging demand and stress analytics', icon: BarChart3, action: () => navigate('/grid-operator') },
+    ]
+    : user?.role === 'operator'
     ? [
       { id: 'pricing', title: 'Pricing & Green Incentives', sub: `Dynamic Rate: ₹${operatorTariff.toFixed(2)}/kWh`, icon: Sliders, action: () => setActiveModal('operator_pricing') },
       { id: 'energy', title: 'Energy & Renewable Mix', sub: `${operatorRenewableTarget}% target renewable supply`, icon: Zap, action: () => setActiveModal('operator_energy') },
@@ -119,6 +125,8 @@ export const MobileProfileScreen = () => {
                   <div className="text-[10px] text-slate-600 font-medium">
                     {user?.role === 'operator' ? (
                       <span className="text-emerald-900 font-semibold">⚡ Station Operator · 🏢 {user?.companyName || editCompany}</span>
+                    ) : user?.role === 'grid_operator' ? (
+                      <span className="text-emerald-900 font-semibold">🌐 Grid Operator · 🏢 {user?.companyName || editCompany}</span>
                     ) : (
                       <span>🚗 EV Driver</span>
                     )} · {user?.city || editCity}
@@ -213,10 +221,10 @@ export const MobileProfileScreen = () => {
                 />
               </div>
 
-              {user?.role === 'operator' && (
+              {user?.role !== 'driver' && (
                 <div>
                   <label className="text-[10px] font-semibold text-emerald-950 block mb-1 font-heading">
-                    Operator Company Name
+                    {user?.role === 'grid_operator' ? 'Grid Organization' : 'Operator Company Name'}
                   </label>
                   <input
                     type="text"

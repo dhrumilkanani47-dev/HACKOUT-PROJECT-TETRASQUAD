@@ -18,12 +18,14 @@ import { MobilePriceGreenScoreScreen } from './pages/mobile/MobilePriceGreenScor
 import { MobileHistoryScreen } from './pages/mobile/MobileHistoryScreen';
 import { MobileNotificationsScreen } from './pages/mobile/MobileNotificationsScreen';
 import { MobileOperatorDashboardScreen } from './pages/mobile/MobileOperatorDashboardScreen';
+import { MobileGridOperatorDashboardScreen } from './pages/mobile/MobileGridOperatorDashboardScreen';
 import { MobileManageStationsScreen } from './pages/mobile/MobileManageStationsScreen';
 import { MobileProfileScreen } from './pages/mobile/MobileProfileScreen';
 import { useAuth } from './context/AuthContext';
 
 const RoleHome = () => {
   const { user } = useAuth();
+  if (user?.role === 'grid_operator') return <MobileGridOperatorDashboardScreen />;
   return user?.role === 'operator' ? <MobileOperatorDashboardScreen /> : <MobileHomeScreen />;
 };
 
@@ -38,10 +40,16 @@ const RequireOperator = ({ children }) => {
   return user?.role === 'operator' ? children : <Navigate to="/" replace />;
 };
 
+const RequireGridOperator = ({ children }) => {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return user?.role === 'grid_operator' ? children : <Navigate to="/" replace />;
+};
+
 const RequireDriver = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return user?.role === 'driver' ? children : <Navigate to="/operator" replace />;
+  return user?.role === 'driver' ? children : <Navigate to={user?.role === 'grid_operator' ? '/grid-operator' : '/operator'} replace />;
 };
 
 const PublicOnly = ({ children }) => {
@@ -119,6 +127,7 @@ export const App = () => {
 
                 {/* Screen 12: Operator Dashboard */}
                 <Route path="/operator" element={<RequireOperator><MobileOperatorDashboardScreen /></RequireOperator>} />
+                <Route path="/grid-operator" element={<RequireGridOperator><MobileGridOperatorDashboardScreen /></RequireGridOperator>} />
 
                 {/* Screen 13: Profile & Settings */}
                 <Route path="/profile" element={<RequireAuth><MobileProfileScreen /></RequireAuth>} />

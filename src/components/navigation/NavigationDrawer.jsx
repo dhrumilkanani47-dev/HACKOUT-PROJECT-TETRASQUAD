@@ -12,13 +12,14 @@ export const NavigationDrawer = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const isOperator = user?.role === 'operator';
+  const isGridOperator = user?.role === 'grid_operator';
 
   const screens = [
     ...(!isAuthenticated ? [{ name: 'Splash Screen', path: '/splash', match: (p) => p === '/splash' }] : []),
     ...(!isAuthenticated ? [{ name: 'Login & Role Select', path: '/login', match: (p) => p === '/login' || p === '/signup' }] : []),
-    { name: isOperator ? 'Operator Dashboard' : 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
+    { name: isGridOperator ? 'Grid Operations' : isOperator ? 'Operator Dashboard' : 'Home Dashboard', path: '/', match: (p) => p === '/' || p === '/dashboard' },
     { name: 'Map & Stations', path: '/map', match: (p) => p.startsWith('/map') },
-    ...(!isOperator ? [
+    ...(!isOperator && !isGridOperator ? [
       { name: 'Station Details', path: '/station/st_01', match: (p) => p.startsWith('/station') },
       { name: 'Smart Charging AI', path: '/smart-charge', match: (p) => p.startsWith('/smart-charge') },
       { name: 'Live Charging Session', path: '/charging', match: (p) => p.startsWith('/charging') },
@@ -29,7 +30,8 @@ export const NavigationDrawer = () => {
       { name: 'Manage Stations', path: '/manage-stations', match: (p) => p.startsWith('/manage-stations') },
       { name: 'Operator Controls', path: '/operator', match: (p) => p.startsWith('/operator') },
     ] : []),
-    { name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') },
+    ...(isGridOperator ? [{ name: 'Grid Alerts & Data', path: '/notifications', match: (p) => p.startsWith('/notifications') }] : []),
+    ...(!isGridOperator ? [{ name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') }] : []),
     { name: 'Profile & Settings', path: '/profile', match: (p) => p.startsWith('/profile') || p.startsWith('/settings') },
   ];
 

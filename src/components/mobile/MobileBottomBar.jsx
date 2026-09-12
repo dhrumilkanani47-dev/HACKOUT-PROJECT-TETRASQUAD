@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, MapPin, History, User } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export const MobileBottomBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const currentPath = location.pathname;
 
@@ -12,13 +14,23 @@ export const MobileBottomBar = () => {
   const isMap = currentPath.startsWith('/map');
   const isHistory = currentPath.startsWith('/history') || currentPath.startsWith('/activity');
   const isProfile = currentPath.startsWith('/profile') || currentPath.startsWith('/settings');
+  const isGridOperator = user?.role === 'grid_operator';
+  const isOperator = user?.role === 'operator';
 
-  const tabs = [
+  const driverTabs = [
     { label: 'Home', path: '/', active: isHome, icon: Home },
     { label: 'Map', path: '/map', active: isMap, icon: MapPin },
     { label: 'History', path: '/history', active: isHistory, icon: History },
     { label: 'Profile', path: '/profile', active: isProfile, icon: User },
   ];
+  const roleTabs = [
+    { label: 'Home', path: '/', active: isHome, icon: Home },
+    { label: 'Map', path: '/map', active: isMap, icon: MapPin },
+    ...(isGridOperator ? [{ label: 'Alerts', path: '/notifications', active: currentPath.startsWith('/notifications'), icon: History }] : []),
+    ...(isOperator ? [{ label: 'Controls', path: '/operator', active: currentPath.startsWith('/operator'), icon: History }] : []),
+    { label: 'Profile', path: '/profile', active: isProfile, icon: User },
+  ];
+  const tabs = isGridOperator || isOperator ? roleTabs : driverTabs;
 
   return (
     <nav className="flex justify-around items-center pt-2 pb-2 px-3 border-t border-green-100 bg-white/95 backdrop-blur-md select-none text-[10.5px] font-heading font-semibold text-slate-500 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] shrink-0 z-30">
