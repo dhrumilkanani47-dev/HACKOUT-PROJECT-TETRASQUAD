@@ -4,33 +4,18 @@
 
 @layer base {
   :root {
-    --forest: #0F3D2E;
-    --forest-2: #155C41;
-    --leaf: #3FA66B;
-    --amber: #E8A33D;
-    --sky: #2E7BB6;
-    --paper: #F6F4EC;
-    --card: #FFFFFF;
-    --card-subtle: #FBFAF6;
-    --ink: #16201B;
-    --ink-soft: #57655C;
-    --line: rgba(15, 61, 46, 0.14);
-    --coal: #B0472F;
-  }
-
-  .dark {
     --forest: #22C55E;
-    --forest-2: #155C41;
-    --leaf: #3FA66B;
-    --amber: #F0B354;
-    --sky: #4CA5E8;
-    --paper: #0B0F0D;
-    --card: #141C18;
-    --card-subtle: #19241F;
-    --ink: #F0F4F2;
-    --ink-soft: #9BAEA3;
-    --line: rgba(255, 255, 255, 0.1);
-    --coal: #E06349;
+    --forest-2: #16A34A;
+    --leaf: #4ADE80;
+    --amber: #F59E0B;
+    --sky: #3B82F6;
+    --paper: #F8FAFC;
+    --card: #FFFFFF;
+    --card-subtle: #F9FAFB;
+    --ink: #1E293B;
+    --ink-soft: #64748B;
+    --line: rgba(34, 197, 94, 0.12);
+    --coal: #DC2626;
   }
 
   body {
@@ -47,16 +32,13 @@
   }
 }
 
-/* Reusable UI Atoms matching attachment design */
+/* Reusable UI Atoms — Light Green White Theme */
 .app-card {
-  background: #FBFAF6;
-  border: 1px solid var(--line);
+  background: #FFFFFF;
+  border: 1px solid rgba(34, 197, 94, 0.12);
   border-radius: 16px;
   padding: 12px 13px;
-}
-.dark .app-card {
-  background: #15201A;
-  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .pill-tag {
@@ -69,15 +51,10 @@
   font-weight: 600;
   font-family: 'Space Grotesk', sans-serif;
 }
-.pill-tag.green { background: #E4F3E9; color: var(--forest-2); }
-.pill-tag.amber { background: #FBEFDB; color: #9C6716; }
-.pill-tag.sky { background: #E4EEF7; color: var(--sky); }
-.pill-tag.coal { background: #F7E7E2; color: var(--coal); }
-
-.dark .pill-tag.green { background: rgba(63, 166, 107, 0.2); color: #4ade80; }
-.dark .pill-tag.amber { background: rgba(232, 163, 61, 0.2); color: #fcd34d; }
-.dark .pill-tag.sky { background: rgba(46, 123, 182, 0.2); color: #60a5fa; }
-.dark .pill-tag.coal { background: rgba(176, 71, 47, 0.2); color: #f87171; }
+.pill-tag.green { background: #DCFCE7; color: #166534; }
+.pill-tag.amber { background: #FEF3C7; color: #92400E; }
+.pill-tag.sky { background: #DBEAFE; color: #1E40AF; }
+.pill-tag.coal { background: #FEE2E2; color: #991B1B; }
 
 .app-btn {
   display: flex;
@@ -89,13 +66,15 @@
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
   font-size: 13px;
-  background: var(--forest);
-  color: #fff;
+  background: #4ADE80;
+  color: #14532D;
   transition: all 0.15s ease;
   cursor: pointer;
+  border: none;
 }
 .app-btn:hover {
-  filter: brightness(1.08);
+  background: #22C55E;
+  filter: brightness(1.02);
 }
 .app-btn:active {
   transform: scale(0.98);
@@ -103,40 +82,34 @@
 
 .app-btn.outline {
   background: transparent;
-  border: 1.4px solid var(--forest);
-  color: var(--forest);
+  border: 1.4px solid #22C55E;
+  color: #16A34A;
 }
-.dark .app-btn.outline {
-  border-color: #4ade80;
-  color: #4ade80;
+.app-btn.outline:hover {
+  background: rgba(34, 197, 94, 0.06);
 }
 
 .app-btn.ghost {
-  background: #F1EFE6;
-  color: var(--ink);
+  background: #F1F5F9;
+  color: #334155;
 }
-.dark .app-btn.ghost {
-  background: #202D26;
-  color: #F0F4F2;
+.app-btn.ghost:hover {
+  background: #E2E8F0;
 }
 
 .app-field {
-  border: 1px solid var(--line);
+  border: 1px solid rgba(34, 197, 94, 0.18);
   border-radius: 11px;
   padding: 10px 12px;
   font-size: 12px;
   color: var(--ink);
-  background: #FBFAF6;
+  background: #FFFFFF;
   outline: none;
   transition: border-color 0.2s;
 }
 .app-field:focus {
-  border-color: var(--forest-2);
-}
-.dark .app-field {
-  background: #16221C;
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #F0F4F2;
+  border-color: #22C55E;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
 }
 
 .app-list-row {
@@ -145,7 +118,7 @@
   align-items: center;
   font-size: 11.5px;
   padding: 8px 0;
-  border-bottom: 1px dashed var(--line);
+  border-bottom: 1px dashed rgba(34, 197, 94, 0.12);
 }
 .app-list-row:last-child {
   border-bottom: none;
@@ -153,9 +126,6 @@
 .app-list-row b {
   font-family: 'Space Grotesk', sans-serif;
   color: var(--ink);
-}
-.dark .app-list-row b {
-  color: #F0F4F2;
 }
 
 /* Circular Conic Ring Gauge */
@@ -167,17 +137,14 @@
   align-items: center;
   justify-content: center;
   margin: 2px auto;
-  background: conic-gradient(var(--forest) calc(var(--pct)*1%), #E7E4D8 0);
+  background: conic-gradient(#4ADE80 calc(var(--pct)*1%), #E2E8F0 0);
   transition: all 0.5s ease-out;
-}
-.dark .app-ring {
-  background: conic-gradient(#3FA66B calc(var(--pct)*1%), #23332A 0);
 }
 .app-ring .hole {
   width: 74px;
   height: 74px;
   border-radius: 50%;
-  background: var(--card);
+  background: #FFFFFF;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -186,10 +153,7 @@
 .app-ring .hole b {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 19px;
-  color: var(--forest);
-}
-.dark .app-ring .hole b {
-  color: #4ade80;
+  color: #16A34A;
 }
 .app-ring .hole span {
   font-size: 9px;
@@ -202,11 +166,11 @@
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
   font-size: 10px;
-  background: var(--forest);
-  color: #fff;
+  background: #22C55E;
+  color: #FFFFFF;
   padding: 3px 7px;
   border-radius: 8px 8px 8px 2px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
   cursor: pointer;
   transition: transform 0.15s ease;
   z-index: 10;
@@ -215,16 +179,16 @@
   transform: scale(1.1);
 }
 .app-pin.alt {
-  background: var(--amber);
-  color: #4a3103;
+  background: #F59E0B;
+  color: #78350F;
 }
 .app-pin.me {
-  background: var(--sky);
+  background: #3B82F6;
   border-radius: 50%;
   width: 14px;
   height: 14px;
   padding: 0;
-  box-shadow: 0 0 0 4px rgba(46, 123, 182, 0.3);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
 }
 
 /* Custom Scrollbar */
@@ -236,11 +200,8 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(15, 61, 46, 0.2);
+  background: rgba(34, 197, 94, 0.2);
   border-radius: 999px;
-}
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Safe area insets for modern mobile devices */
@@ -251,3 +212,18 @@
   padding-top: env(safe-area-inset-top, 16px);
 }
 
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
