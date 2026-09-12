@@ -107,7 +107,7 @@ export const Navbar = () => {
             title="Toggle between Driver and Operator mode"
           >
             <Shield className="w-3 h-3 text-leaf" />
-            <span>{user?.role === 'operator' ? 'Operator' : 'Driver'}</span>
+            <span>{user?.role === 'grid_operator' ? 'Grid SLDC' : user?.role === 'operator' ? 'Operator' : 'Driver'}</span>
           </button>
 
           {/* Location Badge */}
