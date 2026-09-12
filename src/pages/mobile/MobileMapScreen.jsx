@@ -53,14 +53,14 @@ export const MobileMapScreen = () => {
   const userLat = user?.latitude || 23.1884;
   const userLng = user?.longitude || 72.6289;
 
-  const [activeFilter, setActiveFilter] = useState('recommended'); // 'recommended' | 'all' | 'nearby' | 'cheapest' | 'fast' | 'available'
-  const [sortBy, setSortBy] = useState('smart'); // 'smart' | 'price' | 'distance'
+  const isOperator = user?.role === 'operator';
+  const operatorCompany = user?.companyName?.trim() || 'Tata Power';
+  const [activeFilter, setActiveFilter] = useState(isOperator ? 'all' : 'recommended'); // 'recommended' | 'all' | 'nearby' | 'cheapest' | 'fast' | 'available'
+  const [sortBy, setSortBy] = useState(isOperator ? 'distance' : 'smart'); // 'smart' | 'price' | 'distance'
   const [searchQuery, setSearchQuery] = useState('');
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showTopPickBanner, setShowTopPickBanner] = useState(true);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const isOperator = user?.role === 'operator';
-  const operatorCompany = user?.companyName?.trim() || 'Tata Power';
 
   // 0. Filter stations if user is Station Operator (Only see own company branches)
   const scopedStations = useMemo(() => {
@@ -258,8 +258,8 @@ export const MobileMapScreen = () => {
             </div>
           )}
 
-          {/* AI Best Recommendation Banner (Smart Distance + Price Callout) */}
-          {showTopPickBanner && topRecommended && activeFilter === 'recommended' && (
+          {/* AI Best Recommendation Banner (Smart Distance + Price Callout) - DRIVERS ONLY */}
+          {!isOperator && showTopPickBanner && topRecommended && activeFilter === 'recommended' && (
             <div
               onClick={() => setSelectedStation(topRecommended)}
               className="p-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-700 to-emerald-800 text-white shadow-sm flex items-center justify-between cursor-pointer hover:shadow-md transition-all active:scale-[0.99] border border-emerald-400/40"
@@ -321,14 +321,21 @@ export const MobileMapScreen = () => {
 
           {/* Filter Pills */}
           <div className="flex gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
-            {[
-              { id: 'recommended', label: '⭐ AI Recommended' },
-              { id: 'cheapest', label: '💰 Lowest Price (≤₹8)' },
-              { id: 'nearby', label: '📍 Nearest (<5km)' },
-              { id: 'available', label: '⚡ Available Now' },
-              { id: 'fast', label: '🚀 Fast DC (≥50kW)' },
-              { id: 'all', label: 'All Stations' },
-            ].map((f) => (
+            {(isOperator
+              ? [
+                  { id: 'all', label: 'All Branches' },
+                  { id: 'available', label: '⚡ Available Now' },
+                  { id: 'fast', label: '🚀 Fast DC (≥50kW)' },
+                ]
+              : [
+                  { id: 'recommended', label: '⭐ AI Recommended' },
+                  { id: 'cheapest', label: '💰 Lowest Price (≤₹8)' },
+                  { id: 'nearby', label: '📍 Nearest (<5km)' },
+                  { id: 'available', label: '⚡ Available Now' },
+                  { id: 'fast', label: '🚀 Fast DC (≥50kW)' },
+                  { id: 'all', label: 'All Stations' },
+                ]
+            ).map((f) => (
               <button
                 key={f.id}
                 onClick={() => setActiveFilter(f.id)}
@@ -343,27 +350,31 @@ export const MobileMapScreen = () => {
             ))}
           </div>
 
-          {/* Real Leaflet Map with Google Maps Style Controls & Recommended Crown Pin */}
+          {/* Real Leaflet Map with Google Maps Style Controls */}
           <div className="relative flex-1 rounded-2xl overflow-hidden border border-green-200 min-h-[300px] h-[340px]">
             <InteractiveMap
               stations={filteredStations.length ? filteredStations : scoredStations}
               hospitals={hospitals}
               selectedStation={activeStation}
-              recommendedStationId={topRecommended?.id}
+              recommendedStationId={isOperator ? null : topRecommended?.id}
               onSelectStation={(st) => setSelectedStation(st)}
-              vehicles={vehicles}
-              onSelectVehicle={(vehicle) => setSelectedVehicle((current) => current?.id === vehicle.id ? null : vehicle)}
+              vehicles={isOperator ? [] : vehicles}
+              showVehicles={!isOperator}
+              onSelectVehicle={(vehicle) => {
+                if (isOperator) return;
+                setSelectedVehicle((current) => current?.id === vehicle.id ? null : vehicle);
+              }}
               userLocation={{
                 lat: userLat,
                 lng: userLng,
                 label: `${user?.city || 'Gandhinagar'} (You)`,
               }}
               height="100%"
-              showRoute={true}
+              showRoute={!isOperator}
             />
           </div>
 
-          {selectedVehicle && (
+          {!isOperator && selectedVehicle && (
             <div className="app-card p-3 bg-white border border-green-200 shadow-sm animate-slide-up">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -404,7 +415,7 @@ export const MobileMapScreen = () => {
                     <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-900 font-mono font-bold border border-emerald-200">
                       {activeStation.network || 'Tata Power'}
                     </span>
-                    {activeStation.id === topRecommended?.id && (
+                    {!isOperator && activeStation.id === topRecommended?.id && (
                       <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-400 text-slate-950 font-heading font-extrabold flex items-center gap-0.5">
                         <Crown className="w-2.5 h-2.5" /> AI Best Value
                       </span>

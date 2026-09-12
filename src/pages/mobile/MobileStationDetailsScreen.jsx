@@ -14,7 +14,10 @@ import {
   AlertCircle,
   Hourglass,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  Building2,
+  Sliders,
+  ChevronRight
 } from 'lucide-react';
 import { useStations } from '../../context/StationContext';
 import { useAuth } from '../../context/AuthContext';
@@ -25,6 +28,7 @@ export const MobileStationDetailsScreen = () => {
   const { id } = useParams();
   const { stations } = useStations();
   const { user } = useAuth();
+  const isOperator = user?.role === 'operator';
   const [showWhyPrice, setShowWhyPrice] = useState(false);
   const [selectedTime, setSelectedTime] = useState('11:00 AM');
   
@@ -54,9 +58,9 @@ export const MobileStationDetailsScreen = () => {
   const isFull = availableChargers <= 0 || station?.isAvailable === false;
   const timeSlots = ['10:00 AM', '11:00 AM', '1:00 PM', '3:00 PM'];
 
-  // Check & poll real-time booking status from backend SQLite
+  // Check & poll real-time booking status from backend SQLite (Drivers Only)
   const checkStatusFromBackend = useCallback(async () => {
-    if (!activeBooking) return;
+    if (isOperator || !activeBooking) return;
     try {
       const company = station?.network || station?.companyName || 'Tata Power';
       const list = await bookingApi.getBookings({ company, timeRange: 'all' });
@@ -88,9 +92,10 @@ export const MobileStationDetailsScreen = () => {
     } catch (err) {
       console.warn('Status poll error:', err);
     }
-  }, [activeBooking, station, id]);
+  }, [activeBooking, station, id, isOperator]);
 
   useEffect(() => {
+    if (isOperator) return;
     // Initial sync
     checkStatusFromBackend();
 
@@ -100,7 +105,7 @@ export const MobileStationDetailsScreen = () => {
     }, 3500);
 
     return () => clearInterval(timer);
-  }, [checkStatusFromBackend]);
+  }, [checkStatusFromBackend, isOperator]);
 
   const handleCancelBooking = () => {
     localStorage.removeItem(`egc_booking_obj_${id}`);
@@ -111,6 +116,7 @@ export const MobileStationDetailsScreen = () => {
   };
 
   const handleBookSlot = async () => {
+    if (isOperator) return;
     setIsSyncing(true);
     const companyName = station?.network || station?.companyName || 'Tata Power';
     
@@ -163,7 +169,7 @@ export const MobileStationDetailsScreen = () => {
     <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
       <div className="flex-1 flex flex-col overflow-y-auto">
         <MobileStatusBar />
-        <MobileTopNav title="Station Details" onBack={() => navigate('/map')} />
+        <MobileTopNav title={isOperator ? "Station Management" : "Station Details"} onBack={() => navigate('/map')} />
 
         {/* Real-time booking toast notification */}
         {bookingToast && (
@@ -187,7 +193,7 @@ export const MobileStationDetailsScreen = () => {
           >
             <div className="z-10">
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-950 text-[9.5px] font-heading font-bold border border-emerald-300">
-                Verified Green
+                {isOperator ? 'Your Station Branch' : 'Verified Green'}
               </span>
               <div className="text-[11.5px] text-emerald-950 font-heading font-extrabold mt-1">
                 Solar Canopy + Battery Storage
@@ -234,7 +240,7 @@ export const MobileStationDetailsScreen = () => {
             </div>
 
             <div className="app-card text-center py-2 px-1">
-              <div className="text-[9px] text-slate-500 font-medium">Price</div>
+              <div className="text-[9px] text-slate-500 font-medium">{isOperator ? 'Base Tariff' : 'Price'}</div>
               <b className="font-heading text-[12px] text-emerald-700 font-bold">₹{price.toFixed(2)}</b>
             </div>
           </div>
@@ -274,200 +280,250 @@ export const MobileStationDetailsScreen = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* REAL-TIME SLOT BOOKING ACTION AREA (PENDING / ACCEPTED / REJECTED STATES) */}
+      {/* OPERATOR MANAGEMENT PANEL (OPERATOR) vs DRIVER SLOT BOOKING (DRIVER) */}
       {/* ========================================================================= */}
       <div className="p-4 pt-0">
-        {/* 1. PENDING APPROVAL STATE */}
-        {activeBooking && activeBooking.status === 'pending' && (
-          <div className="rounded-2xl border-2 border-amber-300 bg-amber-50/80 p-3 shadow-sm animate-slide-up">
-            <div className="flex items-start justify-between gap-2">
+        {isOperator ? (
+          <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50/90 p-3.5 shadow-sm space-y-2.5">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shrink-0">
-                  <Hourglass className="w-4 h-4 animate-spin" />
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
+                  <Building2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="px-2 py-0.2 rounded-md bg-amber-500 text-slate-950 text-[9px] font-heading font-extrabold uppercase tracking-wide">
-                      Pending Approval
-                    </span>
-                    <span className="text-[9.5px] font-mono text-amber-800 font-bold">
-                      {activeBooking.slotTime}
-                    </span>
-                  </div>
-                  <h4 className="font-heading font-extrabold text-xs text-amber-950 mt-0.5">
-                    Awaiting Station Operator
+                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-emerald-200 text-emerald-950 font-extrabold">
+                    Operator Station Control
+                  </span>
+                  <h4 className="font-heading font-extrabold text-xs text-emerald-950 mt-0.5">
+                    {station?.name || 'Branch Operations'}
                   </h4>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={handleCancelBooking}
-                className="p-1.5 rounded-lg text-amber-800 hover:bg-amber-200/60 transition-colors"
-                aria-label="Cancel pending slot request"
-                title="Cancel request"
-              >
-                <Trash2 className="w-4 h-4 text-rose-600" />
-              </button>
-            </div>
-
-            <div className="mt-2 text-[10px] text-amber-900/90 leading-snug bg-amber-100/60 p-2 rounded-xl border border-amber-200/60">
-              Your request for <b>{activeBooking.slotTime}</b> is queued with <b>{station?.network || 'Tata Power'}</b> operator in real-time.
-              <span className="block mt-0.5 text-amber-800 font-semibold">
-                ⚡ &quot;Start Charging&quot; will unlock automatically once the operator accepts your request.
+              <span className="px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900 text-[9.5px] font-bold">
+                🟢 Live & Online
               </span>
             </div>
 
-            <div className="mt-2.5 flex gap-2">
+            <div className="text-[10.5px] text-emerald-900 bg-white/80 p-2.5 rounded-xl border border-emerald-200/80 leading-snug">
+              Station operators manage customer slot approvals and grid pricing. Slot booking is reserved for EV Drivers.
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-0.5">
               <button
                 type="button"
-                disabled
-                className="flex-1 py-2 px-3 rounded-xl bg-amber-200/80 text-amber-900 font-heading font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed border border-amber-300/80"
+                onClick={() => navigate('/operator/bookings')}
+                className="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-heading font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
               >
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                <span>Waiting for Operator...</span>
+                <Clock className="w-3.5 h-3.5" />
+                <span>Slot Requests</span>
               </button>
 
               <button
                 type="button"
-                onClick={handleCancelBooking}
-                className="py-2 px-3 rounded-xl bg-white text-rose-700 hover:bg-rose-50 border border-rose-200 font-heading font-bold text-xs"
+                onClick={() => navigate('/manage-stations')}
+                className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 text-emerald-900 border border-emerald-300 font-heading font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
               >
-                Withdraw
+                <Sliders className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Manage Pricing</span>
               </button>
             </div>
           </div>
-        )}
-
-        {/* 2. ACCEPTED / APPROVED STATE (READY TO CHARGE) */}
-        {activeBooking && activeBooking.status === 'accepted' && (
-          <div className="rounded-2xl border-2 border-emerald-400 bg-emerald-50 p-3 shadow-md animate-slide-up">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="px-2 py-0.2 rounded-md bg-emerald-600 text-white text-[9px] font-heading font-extrabold uppercase">
-                      Slot Approved
-                    </span>
-                    <span className="text-[9.5px] font-mono text-emerald-900 font-bold">
-                      {activeBooking.slotTime}
-                    </span>
+        ) : (
+          /* DRIVER ACTIONS */
+          <>
+            {/* 1. PENDING APPROVAL STATE */}
+            {activeBooking && activeBooking.status === 'pending' && (
+              <div className="rounded-2xl border-2 border-amber-300 bg-amber-50/80 p-3 shadow-sm animate-slide-up">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 shrink-0">
+                      <Hourglass className="w-4 h-4 animate-spin" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.2 rounded-md bg-amber-500 text-slate-950 text-[9px] font-heading font-extrabold uppercase tracking-wide">
+                          Pending Approval
+                        </span>
+                        <span className="text-[9.5px] font-mono text-amber-800 font-bold">
+                          {activeBooking.slotTime}
+                        </span>
+                      </div>
+                      <h4 className="font-heading font-extrabold text-xs text-amber-950 mt-0.5">
+                        Awaiting Station Operator
+                      </h4>
+                    </div>
                   </div>
-                  <h4 className="font-heading font-extrabold text-xs text-emerald-950 mt-0.5">
-                    Allocated: {activeBooking.bayNumber || 'Bay 02'}
-                  </h4>
+
+                  <button
+                    type="button"
+                    onClick={handleCancelBooking}
+                    className="p-1.5 rounded-lg text-amber-800 hover:bg-amber-200/60 transition-colors cursor-pointer"
+                    aria-label="Cancel pending slot request"
+                    title="Cancel request"
+                  >
+                    <Trash2 className="w-4 h-4 text-rose-600" />
+                  </button>
+                </div>
+
+                <div className="mt-2 text-[10px] text-amber-900/90 leading-snug bg-amber-100/60 p-2 rounded-xl border border-amber-200/60">
+                  Your request for <b>{activeBooking.slotTime}</b> is queued with <b>{station?.network || 'Tata Power'}</b> operator in real-time.
+                  <span className="block mt-0.5 text-amber-800 font-semibold">
+                    ⚡ &quot;Start Charging&quot; will unlock automatically once the operator accepts your request.
+                  </span>
+                </div>
+
+                <div className="mt-2.5 flex gap-2">
+                  <button
+                    type="button"
+                    disabled
+                    className="flex-1 py-2 px-3 rounded-xl bg-amber-200/80 text-amber-900 font-heading font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed border border-amber-300/80"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                    <span>Waiting for Operator...</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCancelBooking}
+                    className="py-2 px-3 rounded-xl bg-white text-rose-700 hover:bg-rose-50 border border-rose-200 font-heading font-bold text-xs cursor-pointer"
+                  >
+                    Withdraw
+                  </button>
                 </div>
               </div>
+            )}
 
-              <button
-                type="button"
-                onClick={handleCancelBooking}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-emerald-100"
-                aria-label="Cancel confirmed slot"
-                title="Cancel slot"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
+            {/* 2. ACCEPTED / APPROVED STATE (READY TO CHARGE) */}
+            {activeBooking && activeBooking.status === 'accepted' && (
+              <div className="rounded-2xl border-2 border-emerald-400 bg-emerald-50 p-3 shadow-md animate-slide-up">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.2 rounded-md bg-emerald-600 text-white text-[9px] font-heading font-extrabold uppercase">
+                          Slot Approved
+                        </span>
+                        <span className="text-[9.5px] font-mono text-emerald-900 font-bold">
+                          {activeBooking.slotTime}
+                        </span>
+                      </div>
+                      <h4 className="font-heading font-extrabold text-xs text-emerald-950 mt-0.5">
+                        Allocated: {activeBooking.bayNumber || 'Bay 02'}
+                      </h4>
+                    </div>
+                  </div>
 
-            <div className="mt-2 text-[10px] text-emerald-900 leading-snug bg-emerald-100/70 p-2 rounded-xl border border-emerald-200">
-              {activeBooking.operatorNotes || `Confirmed by ${station?.network || 'Tata Power'} Operator. Fast DC Charger Ready.`}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => navigate('/charging')}
-              className="app-btn w-full text-xs font-bold mt-2.5 py-2.5 shadow-md flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500"
-            >
-              <Zap className="w-4 h-4 fill-current" />
-              <span>Start Charging ({activeBooking.bayNumber || 'Bay 02'})</span>
-            </button>
-          </div>
-        )}
-
-        {/* 3. REJECTED / DECLINED STATE */}
-        {activeBooking && activeBooking.status === 'rejected' && (
-          <div className="rounded-2xl border-2 border-rose-300 bg-rose-50 p-3 shadow-sm animate-slide-up">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-rose-100 border border-rose-300 flex items-center justify-center text-rose-600 shrink-0">
-                <XCircle className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="px-2 py-0.2 rounded-md bg-rose-600 text-white text-[9px] font-heading font-extrabold uppercase">
-                  Request Declined
-                </span>
-                <h4 className="font-heading font-extrabold text-xs text-rose-950 mt-0.5">
-                  Slot at {activeBooking.slotTime} Unavailable
-                </h4>
-              </div>
-            </div>
-
-            <div className="mt-2 text-[10px] text-rose-900 bg-rose-100/60 p-2 rounded-xl border border-rose-200">
-              {activeBooking.operatorNotes || 'Slot is unavailable due to peak grid scheduling. Please choose another time.'}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleCancelBooking}
-              className="w-full mt-2.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-heading font-bold text-xs"
-            >
-              Choose Another Time Slot
-            </button>
-          </div>
-        )}
-
-        {/* 4. DEFAULT STATE: NO BOOKING */}
-        {!activeBooking && (
-          isFull ? (
-            <div className="w-full rounded-xl bg-slate-100 border border-slate-200 py-3 text-center text-sm font-bold text-slate-500">
-              Slots Full
-            </div>
-          ) : (
-            <div className="rounded-xl border border-green-200 bg-white p-2.5 shadow-sm">
-              <div className="flex items-center justify-between text-[10px] font-bold text-slate-700 mb-2">
-                <span className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-emerald-700" /> Choose a charging time
-                </span>
-                <span className="text-[9px] text-slate-400 font-normal">Real-time Operator Sync</span>
-              </div>
-              <div className="grid grid-cols-4 gap-1.5 mb-2">
-                {timeSlots.map((slot) => (
                   <button
-                    key={slot}
                     type="button"
-                    onClick={() => setSelectedTime(slot)}
-                    className={`py-1.5 rounded-lg text-[9px] font-bold border transition-colors ${
-                      selectedTime === slot
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-green-50'
-                    }`}
+                    onClick={handleCancelBooking}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-emerald-100 cursor-pointer"
+                    aria-label="Cancel confirmed slot"
+                    title="Cancel slot"
                   >
-                    {slot}
+                    <Trash2 className="w-4 h-4" />
                   </button>
-                ))}
+                </div>
+
+                <div className="mt-2 text-[10px] text-emerald-900 leading-snug bg-emerald-100/70 p-2 rounded-xl border border-emerald-200">
+                  {activeBooking.operatorNotes || `Confirmed by ${station?.network || 'Tata Power'} Operator. Fast DC Charger Ready.`}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => navigate('/charging')}
+                  className="app-btn w-full text-xs font-bold mt-2.5 py-2.5 shadow-md flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 cursor-pointer"
+                >
+                  <Zap className="w-4 h-4 fill-current" />
+                  <span>Start Charging ({activeBooking.bayNumber || 'Bay 02'})</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleBookSlot}
-                disabled={isSyncing}
-                className="app-btn w-full text-sm font-bold shadow-md flex items-center justify-center gap-1.5"
-              >
-                {isSyncing ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Submitting Request...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Book {selectedTime} (Send Request)</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )
+            )}
+
+            {/* 3. REJECTED / DECLINED STATE */}
+            {activeBooking && activeBooking.status === 'rejected' && (
+              <div className="rounded-2xl border-2 border-rose-300 bg-rose-50 p-3 shadow-sm animate-slide-up">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 border border-rose-300 flex items-center justify-center text-rose-600 shrink-0">
+                    <XCircle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="px-2 py-0.2 rounded-md bg-rose-600 text-white text-[9px] font-heading font-extrabold uppercase">
+                      Request Declined
+                    </span>
+                    <h4 className="font-heading font-extrabold text-xs text-rose-950 mt-0.5">
+                      Slot at {activeBooking.slotTime} Unavailable
+                    </h4>
+                  </div>
+                </div>
+
+                <div className="mt-2 text-[10px] text-rose-900 bg-rose-100/60 p-2 rounded-xl border border-rose-200">
+                  {activeBooking.operatorNotes || 'Slot is unavailable due to peak grid scheduling. Please choose another time.'}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCancelBooking}
+                  className="w-full mt-2.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-heading font-bold text-xs cursor-pointer"
+                >
+                  Choose Another Time Slot
+                </button>
+              </div>
+            )}
+
+            {/* 4. DEFAULT STATE: NO BOOKING */}
+            {!activeBooking && (
+              isFull ? (
+                <div className="w-full rounded-xl bg-slate-100 border border-slate-200 py-3 text-center text-sm font-bold text-slate-500">
+                  Slots Full
+                </div>
+              ) : (
+                <div className="rounded-xl border border-green-200 bg-white p-2.5 shadow-sm">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-700 mb-2">
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-emerald-700" /> Choose a charging time
+                    </span>
+                    <span className="text-[9px] text-slate-400 font-normal">Real-time Operator Sync</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5 mb-2">
+                    {timeSlots.map((slot) => (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => setSelectedTime(slot)}
+                        className={`py-1.5 rounded-lg text-[9px] font-bold border transition-colors cursor-pointer ${
+                          selectedTime === slot
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-green-50'
+                        }`}
+                      >
+                        {slot}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleBookSlot}
+                    disabled={isSyncing}
+                    className="app-btn w-full text-sm font-bold shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    {isSyncing ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Submitting Request...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Book {selectedTime} (Send Request)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )
+            )}
+          </>
         )}
       </div>
 

@@ -58,6 +58,7 @@ export const InteractiveMap = ({
   height = '360px',
   showRoute = true,
   vehicles = [],
+  showVehicles = true,
   onSelectVehicle,
   className = '',
 }) => {
@@ -180,6 +181,8 @@ export const InteractiveMap = ({
     vehicleMarkersRef.current.forEach((marker) => map.removeLayer(marker));
     vehicleMarkersRef.current = [];
 
+    if (!showVehicles) return;
+
     const vehicleList = vehicles.length ? vehicles : [activeVehicle];
     const fallbackOffsets = [[0, 0], [0.008, 0.006], [-0.006, 0.009], [0.01, -0.008]];
 
@@ -262,7 +265,7 @@ export const InteractiveMap = ({
       marker.on('click', () => onSelectVehicle?.(vehicle));
       vehicleMarkersRef.current.push(marker);
     });
-  }, [userLivePos, activeVehicle, vehicles, onSelectVehicle]);
+  }, [userLivePos, activeVehicle, vehicles, onSelectVehicle, showVehicles]);
 
   // Render Station Markers & Hospital Markers
   useEffect(() => {
@@ -456,15 +459,17 @@ export const InteractiveMap = ({
       {/* TOP FLOATING CONTROLS: MY VEHICLE RECENTER & MAP STYLES */}
       {/* ========================================================= */}
       <div className="absolute top-3 right-3 z-30 flex items-center gap-1.5">
-        {/* Recenter on Our Vehicle Button */}
-        <button
-          type="button"
-          onClick={handleRecenterVehicle}
-          className="px-2.5 py-1.5 rounded-xl bg-white/95 text-slate-900 hover:text-emerald-700 shadow-md border border-slate-200/80 font-heading font-extrabold text-[11px] flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer backdrop-blur-md"
-        >
-          <span className="text-xs">🚗</span>
-          <span>My Vehicle</span>
-        </button>
+        {/* Recenter on Our Vehicle Button (Only for Drivers) */}
+        {showVehicles && (
+          <button
+            type="button"
+            onClick={handleRecenterVehicle}
+            className="px-2.5 py-1.5 rounded-xl bg-white/95 text-slate-900 hover:text-emerald-700 shadow-md border border-slate-200/80 font-heading font-extrabold text-[11px] flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+          >
+            <span className="text-xs">🚗</span>
+            <span>My Vehicle</span>
+          </button>
+        )}
 
         {/* Layer Style Switcher */}
         <div className="relative">
@@ -527,18 +532,22 @@ export const InteractiveMap = ({
         </button>
       </div>
 
-      {/* Bottom Left: Live Vehicle Telematics Link Pill */}
+      {/* Bottom Left: Live Vehicle / Station Network Telematics Pill */}
       <div
-        onClick={handleRecenterVehicle}
+        onClick={showVehicles ? handleRecenterVehicle : undefined}
         className="absolute bottom-3 left-3 z-30 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-emerald-500/40 text-[10px] text-white shadow-lg cursor-pointer hover:border-emerald-400 transition-all"
       >
         <span className="relative flex h-2 w-2">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
         </span>
-        <span className="font-heading font-extrabold text-emerald-300">{activeVehicle?.name || 'EV Connected'}</span>
+        <span className="font-heading font-extrabold text-emerald-300">
+          {showVehicles ? (activeVehicle?.name || 'EV Connected') : 'Network Online'}
+        </span>
         <span className="text-slate-400">•</span>
-        <span className="text-slate-300 font-mono">{stations.length} Green Hubs</span>
+        <span className="text-slate-300 font-mono">
+          {stations.length} {showVehicles ? 'Green Hubs' : 'Branches'}
+        </span>
       </div>
     </div>
   );
