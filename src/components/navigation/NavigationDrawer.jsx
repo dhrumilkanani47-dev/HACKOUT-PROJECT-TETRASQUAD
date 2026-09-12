@@ -29,8 +29,8 @@ export const NavigationDrawer = () => {
       { name: 'Manage Stations', path: '/manage-stations', match: (p) => p.startsWith('/manage-stations') },
       { name: 'Operator Controls', path: '/operator', match: (p) => p.startsWith('/operator') },
     ] : []),
-    ...(isGridOperator ? [{ name: 'Grid Alerts & Data', path: '/notifications', match: (p) => p.startsWith('/notifications') }] : []),
-    ...(!isGridOperator ? [{ name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications') }] : []),
+    ...(isGridOperator ? [{ name: 'Grid Alerts & Data', path: '/notifications', match: (p) => p.startsWith('/notifications'), disabled: true }] : []),
+    ...(!isGridOperator ? [{ name: 'Notifications & Alerts', path: '/notifications', match: (p) => p.startsWith('/notifications'), disabled: true }] : []),
     { name: 'Profile & Settings', path: '/profile', match: (p) => p.startsWith('/profile') || p.startsWith('/settings') },
   ];
 
@@ -73,7 +73,8 @@ export const NavigationDrawer = () => {
                 key={screen.path}
                 name={screen.name}
                 isActive={isActive}
-                onClick={() => handleItemClick(screen.path)}
+                onClick={screen.disabled ? undefined : () => handleItemClick(screen.path)}
+                disabled={screen.disabled}
               />
             );
           })}

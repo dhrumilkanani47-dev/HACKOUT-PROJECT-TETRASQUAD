@@ -23,10 +23,7 @@ export const MobileNotificationsScreen = () => {
         {/* Content Container matching Screen 11 */}
         <div className="px-4 pt-2 pb-5 flex flex-col gap-2.5">
           {/* Card 1: Price drop alert matching attachment */}
-          <div
-            onClick={() => navigate('/smart-charge')}
-            className="app-card cursor-pointer hover:border-amber-400 transition-colors py-2.5 px-3 bg-white"
-          >
+          <div className="app-card py-2.5 px-3 bg-white">
             <span className="pill-tag amber">
               Price drop alert
             </span>
@@ -39,10 +36,7 @@ export const MobileNotificationsScreen = () => {
           </div>
 
           {/* Card 2: Best time tonight matching attachment */}
-          <div
-            onClick={() => navigate('/smart-charge')}
-            className="app-card cursor-pointer hover:border-emerald-400 transition-colors py-2.5 px-3 bg-white"
-          >
+          <div className="app-card py-2.5 px-3 bg-white">
             <span className="pill-tag green">
               Best time tonight
             </span>
@@ -55,10 +49,7 @@ export const MobileNotificationsScreen = () => {
           </div>
 
           {/* Card 3: Booking confirmed matching attachment */}
-          <div
-            onClick={() => navigate('/charging')}
-            className="app-card cursor-pointer hover:border-blue-400 transition-colors py-2.5 px-3 bg-white"
-          >
+          <div className="app-card py-2.5 px-3 bg-white">
             <span className="pill-tag sky">
               Booking confirmed
             </span>
