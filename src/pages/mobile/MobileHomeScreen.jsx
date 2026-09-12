@@ -12,7 +12,7 @@ export const MobileHomeScreen = () => {
   const [showWhyPrice, setShowWhyPrice] = useState(false);
 
   return (
-    <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-card dark:bg-[#121815] select-none">
+    <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
       {/* Top Section */}
       <div className="flex-1 flex flex-col overflow-y-auto">
         <MobileStatusBar />
@@ -22,39 +22,39 @@ export const MobileHomeScreen = () => {
           {/* Greeting Header with Notification Bell */}
           <div className="flex items-center justify-between mt-1">
             <div>
-              <div className="text-[11px] text-ink-soft dark:text-ink-muted">
+              <div className="text-[11px] text-slate-500">
                 Good morning, {user?.name?.split(' ')[0] || 'Shani'}
               </div>
-              <div className="font-heading font-bold text-[16px] text-ink dark:text-white -mt-0.5">
+              <div className="font-heading font-extrabold text-[17px] text-slate-900 -mt-0.5">
                 Drive green today
               </div>
             </div>
             <button
               onClick={() => navigate('/notifications')}
-              className="relative p-2 rounded-xl bg-paper dark:bg-paper-cardDark text-ink-soft dark:text-ink-muted hover:text-forest transition-colors"
+              className="relative p-2 rounded-xl bg-slate-100 text-slate-600 hover:text-emerald-700 transition-colors"
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber animate-pulse" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
             </button>
           </div>
 
-          {/* Live Charging Price Main Card matching attachment */}
+          {/* Live Charging Price Main Card */}
           <div
             onClick={() => setShowWhyPrice(true)}
-            className="app-card cursor-pointer hover:border-forest/40 transition-all hover:shadow-xs group"
+            className="app-card cursor-pointer hover:border-emerald-400 transition-all hover:shadow-sm group bg-white"
           >
             <div className="flex justify-between items-center">
               <div>
-                <div className="text-[10px] text-ink-soft dark:text-ink-muted flex items-center gap-1">
+                <div className="text-[10px] text-slate-500 flex items-center gap-1">
                   <span>Live charging price</span>
-                  <span className="text-[9px] text-forest dark:text-emerald-400 group-hover:underline flex items-center">
+                  <span className="text-[9.5px] text-emerald-700 font-semibold group-hover:underline flex items-center">
                     (Why this price?)
                   </span>
                 </div>
-                <div className="font-heading font-bold text-[22px] text-forest dark:text-emerald-400 leading-tight">
+                <div className="font-heading font-extrabold text-[24px] text-emerald-700 leading-tight">
                   ₹8.40
-                  <span className="text-[11px] font-medium text-ink-soft dark:text-ink-muted ml-0.5">
+                  <span className="text-[11px] font-medium text-slate-500 ml-0.5">
                     /kWh
                   </span>
                 </div>
@@ -65,34 +65,34 @@ export const MobileHomeScreen = () => {
             </div>
           </div>
 
-          {/* Renewable & Green Score Row matching attachment */}
+          {/* Renewable & Green Score Row */}
           <div className="flex gap-2">
             <div
               onClick={() => navigate('/smart-charge')}
-              className="app-card flex-1 text-center py-2.5 cursor-pointer hover:border-forest/40 transition-colors"
+              className="app-card flex-1 text-center py-2.5 cursor-pointer hover:border-emerald-300 transition-colors"
             >
-              <div className="text-[9.5px] text-ink-soft dark:text-ink-muted">
+              <div className="text-[9.5px] text-slate-500 font-medium">
                 Renewable
               </div>
-              <b className="font-heading text-forest-600 dark:text-emerald-400 text-base">
+              <b className="font-heading text-emerald-700 text-base font-bold">
                 72%
               </b>
             </div>
 
             <div
               onClick={() => navigate('/price-score')}
-              className="app-card flex-1 text-center py-2.5 cursor-pointer hover:border-forest/40 transition-colors"
+              className="app-card flex-1 text-center py-2.5 cursor-pointer hover:border-emerald-300 transition-colors"
             >
-              <div className="text-[9.5px] text-ink-soft dark:text-ink-muted">
+              <div className="text-[9.5px] text-slate-500 font-medium">
                 Green Score
               </div>
-              <b className="font-heading text-forest-600 dark:text-emerald-400 text-base">
+              <b className="font-heading text-emerald-700 text-base font-bold">
                 87
               </b>
             </div>
           </div>
 
-          {/* Action Buttons Row matching attachment */}
+          {/* Action Buttons Row */}
           <div className="flex gap-2">
             <button
               onClick={() => navigate('/map')}
@@ -111,36 +111,36 @@ export const MobileHomeScreen = () => {
           {/* Live Recommendation Mini Banner */}
           <div
             onClick={() => navigate('/smart-charge')}
-            className="p-2.5 rounded-xl bg-forest-50 dark:bg-forest-950/40 border border-forest/10 dark:border-white/10 flex items-center justify-between cursor-pointer text-xs"
+            className="p-3 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 flex items-center justify-between cursor-pointer text-xs hover:border-green-300 transition-colors"
           >
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber shrink-0" />
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
               <div>
-                <span className="font-heading font-semibold text-forest dark:text-emerald-300 text-[11px] block">
+                <span className="font-heading font-bold text-emerald-950 text-[11.5px] block">
                   Best window at 2:00 PM (₹6.50/kWh)
                 </span>
-                <span className="text-[10px] text-ink-soft dark:text-ink-muted">
+                <span className="text-[10px] text-slate-600 font-medium">
                   89% solar energy • Save ₹72
                 </span>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-ink-soft" />
+            <ChevronRight className="w-4 h-4 text-slate-400" />
           </div>
 
           {/* Active Vehicle Quick Snippet */}
           <div
             onClick={() => navigate('/charging')}
-            className="p-2.5 rounded-xl bg-paper dark:bg-paper-cardDark border border-line flex items-center justify-between cursor-pointer"
+            className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-green-200 transition-colors"
           >
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-forest/10 dark:bg-emerald-500/20 text-forest dark:text-emerald-400 flex items-center justify-center font-bold text-xs">
+              <div className="w-7 h-7 rounded-lg bg-green-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
                 ⚡
               </div>
               <div>
-                <div className="font-heading font-semibold text-xs text-ink dark:text-white">
+                <div className="font-heading font-bold text-xs text-slate-900">
                   Tata Nexon EV (68%)
                 </div>
-                <div className="text-[10px] text-ink-soft dark:text-ink-muted">
+                <div className="text-[10px] text-slate-500">
                   308 km range estimate
                 </div>
               </div>

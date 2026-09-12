@@ -52,7 +52,7 @@ export const MobileHistoryScreen = () => {
     filter === 'month' ? historySessions.slice(0, 2) : historySessions;
 
   return (
-    <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-card dark:bg-[#121815] select-none">
+    <div className="w-full h-full min-h-[580px] flex flex-col justify-between bg-white select-none">
       <div className="flex-1 flex flex-col overflow-y-auto">
         <MobileStatusBar />
         <MobileTopNav title="Charging History" onBack={() => navigate('/')} />
@@ -66,7 +66,7 @@ export const MobileHistoryScreen = () => {
               className={`pill-tag ${
                 filter === 'all'
                   ? 'green'
-                  : 'bg-[#F1EFE6] dark:bg-neutral-800 text-ink-soft dark:text-ink-muted'
+                  : 'bg-slate-100 text-slate-600 border border-slate-200'
               }`}
             >
               All
@@ -76,7 +76,7 @@ export const MobileHistoryScreen = () => {
               className={`pill-tag ${
                 filter === 'month'
                   ? 'green'
-                  : 'bg-[#F1EFE6] dark:bg-neutral-800 text-ink-soft dark:text-ink-muted'
+                  : 'bg-slate-100 text-slate-600 border border-slate-200'
               }`}
             >
               This month
@@ -88,35 +88,35 @@ export const MobileHistoryScreen = () => {
             <div
               key={session.id}
               onClick={() => navigate('/price-score')}
-              className="app-card cursor-pointer hover:border-forest/40 transition-colors py-2.5 px-3"
+              className="app-card cursor-pointer hover:border-emerald-400 transition-colors py-2.5 px-3 bg-white"
             >
               <div className="flex justify-between items-center">
-                <b className="font-heading text-[12.5px] text-ink dark:text-white">
+                <b className="font-heading text-[13px] text-slate-900 font-bold">
                   {session.station}
                 </b>
-                <span className="text-[10px] text-ink-soft dark:text-ink-muted">
+                <span className="text-[10px] text-slate-400">
                   {session.date}
                 </span>
               </div>
-              <div className="text-[10.5px] text-ink-soft dark:text-ink-muted mt-1 flex items-center justify-between">
+              <div className="text-[10.5px] text-slate-500 mt-1 flex items-center justify-between">
                 <span>
                   {session.kwh} · {session.cost} ·{' '}
-                  <span className="text-forest-600 dark:text-emerald-400 font-medium">
+                  <span className="text-emerald-700 font-bold">
                     {session.renewable}
                   </span>
                 </span>
-                <ChevronRight className="w-3.5 h-3.5 text-ink-soft/60" />
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               </div>
             </div>
           ))}
 
           {/* Month Summary Bar */}
-          <div className="p-3 rounded-xl bg-paper dark:bg-paper-cardDark border border-line text-xs flex justify-between items-center mt-1">
+          <div className="p-3 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-xs flex justify-between items-center mt-1">
             <div>
-              <div className="text-[9.5px] text-ink-soft dark:text-ink-muted uppercase">
+              <div className="text-[9.5px] text-slate-500 uppercase font-semibold">
                 September Total
               </div>
-              <b className="font-heading text-sm text-forest dark:text-emerald-400">
+              <b className="font-heading text-sm text-emerald-900 font-extrabold">
                 42.7 kWh (₹769)
               </b>
             </div>

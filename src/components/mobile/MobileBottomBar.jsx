@@ -21,7 +21,7 @@ export const MobileBottomBar = () => {
   ];
 
   return (
-    <div className="flex justify-around items-center pt-2 pb-3 px-2 border-t border-forest/10 dark:border-white/10 bg-paper/95 dark:bg-paper-dark/95 backdrop-blur-md select-none text-[10px] font-heading font-semibold text-ink-soft dark:text-ink-muted">
+    <div className="flex justify-around items-center pt-2 pb-3 px-2 border-t border-green-200/80 bg-white/95 backdrop-blur-md select-none text-[10px] font-heading font-semibold text-slate-500">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
@@ -30,15 +30,15 @@ export const MobileBottomBar = () => {
             onClick={() => navigate(tab.path)}
             className={`flex flex-col items-center gap-1 flex-1 py-1 transition-all active:scale-95 ${
               tab.active
-                ? 'text-forest dark:text-emerald-400 font-bold'
-                : 'hover:text-forest dark:hover:text-emerald-300'
+                ? 'text-emerald-800 font-extrabold'
+                : 'hover:text-emerald-700 text-slate-500'
             }`}
           >
             <div
-              className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
+              className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${
                 tab.active
-                  ? 'bg-forest/10 dark:bg-emerald-500/20 text-forest dark:text-emerald-400'
-                  : 'text-ink-soft dark:text-ink-muted'
+                  ? 'bg-green-100 text-emerald-800 border border-green-300 shadow-2xs'
+                  : 'text-slate-400'
               }`}
             >
               <Icon className="w-4 h-4" strokeWidth={tab.active ? 2.5 : 2} />
