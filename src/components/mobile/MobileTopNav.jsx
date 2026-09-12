@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { HamburgerButton } from '../navigation/HamburgerButton';
 
-export const MobileTopNav = ({ title, onBack, showBack = true, rightAction = null }) => {
+export const MobileTopNav = ({ title, onBack, showBack = true, showMenu = true, rightAction = null }) => {
   const navigate = useNavigate();
 
   const handleBack = () => {
@@ -27,13 +28,15 @@ export const MobileTopNav = ({ title, onBack, showBack = true, rightAction = nul
         <span className="text-slate-900 font-extrabold truncate">{title}</span>
       </div>
 
-      {rightAction && (
-        <div className="flex items-center">
-          {rightAction}
-        </div>
-      )}
+      <div className="flex items-center gap-1.5">
+        {rightAction}
+        {showMenu && (
+          <HamburgerButton className="p-1.5 rounded-lg border-0 bg-transparent text-slate-600 hover:text-emerald-700 hover:bg-slate-100 shadow-none" />
+        )}
+      </div>
     </div>
   );
 };
 
 export default MobileTopNav;
+

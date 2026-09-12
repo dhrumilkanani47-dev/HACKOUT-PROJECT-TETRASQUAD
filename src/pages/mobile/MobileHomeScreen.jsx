@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { MobileStatusBar } from '../../components/mobile/MobileStatusBar';
 import { MobileBottomBar } from '../../components/mobile/MobileBottomBar';
 import { WhyThisPriceModal } from '../../components/mobile/WhyThisPriceModal';
+import { HamburgerButton } from '../../components/navigation/HamburgerButton';
 import { Bell, Sparkles, ChevronRight, Zap } from 'lucide-react';
 
 export const MobileHomeScreen = () => {
@@ -19,14 +20,17 @@ export const MobileHomeScreen = () => {
 
         {/* Content Container */}
         <div className="px-4 pt-2 pb-3 flex flex-col gap-3">
-          {/* Greeting Header with Notification Bell */}
+          {/* Greeting Header with Hamburger Menu and Notification Bell */}
           <div className="flex items-center justify-between mt-1">
-            <div>
-              <div className="text-[11px] text-slate-500">
-                Good morning, {user?.name?.split(' ')[0] || 'Shani'}
-              </div>
-              <div className="font-heading font-extrabold text-[17px] text-slate-900 -mt-0.5">
-                Drive green today
+            <div className="flex items-center gap-2.5">
+              <HamburgerButton className="p-1.5 bg-slate-100/90 text-slate-700 hover:text-emerald-700 rounded-xl" />
+              <div>
+                <div className="text-[11px] text-slate-500">
+                  Good morning, {user?.name?.split(' ')[0] || 'Shani'}
+                </div>
+                <div className="font-heading font-extrabold text-[17px] text-slate-900 -mt-0.5">
+                  Drive green today
+                </div>
               </div>
             </div>
             <button
